@@ -189,7 +189,7 @@ public final class ExprUnary extends Expr {
         }
 
         /** The human readable label for this operator */
-        private final String label;
+        public final String label;
 
         /**
          * Construct an ExprUnary node.

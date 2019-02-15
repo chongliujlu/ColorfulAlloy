@@ -201,7 +201,7 @@ public final class CompModule extends Browsable implements Module {
     private final Map<String,Open>            opens       = new LinkedHashMap<String,Open>();
 
     /** Each sig name is mapped to its corresponding SigAST. */
-    private final Map<String,Sig>             sigs        = new LinkedHashMap<String,Sig>();
+    public final Map<String,Sig>             sigs        = new LinkedHashMap<String,Sig>();
 
     /**
      * The list of params in this module whose scope shall be deemed "exact"
@@ -767,7 +767,7 @@ public final class CompModule extends Browsable implements Module {
      * @param filename - the filename corresponding to this module
      * @param path - one of the path pointing to this module
      */
-    CompModule(CompModule world, String filename, String path) throws Err {
+    public CompModule(CompModule world, String filename, String path) throws Err {
         if (world == null) {
             if (path.length() > 0)
                 throw new ErrorFatal("Root module misparsed by parser.");
@@ -1560,7 +1560,7 @@ public final class CompModule extends Browsable implements Module {
     }
 
     /** Add a FUN or PRED declaration. */
-    void addFunc(Pos p, Pos isPrivate, String n, Expr f, List<Decl> decls, Expr t, Expr v) throws Err {
+    public void addFunc(Pos p, Pos isPrivate, String n, Expr f, List<Decl> decls, Expr t, Expr v) throws Err {
         if (decls == null)
             decls = new ArrayList<Decl>();
         else
@@ -1741,7 +1741,7 @@ public final class CompModule extends Browsable implements Module {
     // ============================================================================================================================//
 
     /** Add a FACT declaration. */
-    void addFact(Pos pos, String name, Expr value) throws Err {
+    public void addFact(Pos pos, String name, Expr value) throws Err {
         status = 3;
         if (name == null || name.length() == 0)
             name = "fact$" + (1 + facts.size());

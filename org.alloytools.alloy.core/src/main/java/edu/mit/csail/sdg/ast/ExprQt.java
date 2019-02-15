@@ -188,7 +188,9 @@ public final class ExprQt extends Expr {
         }
 
         /** The human readable label for this operator. */
-        private final String label;
+        //colorfulAlloy
+        public final String label;
+        //private final String label;
 
         /**
          * Constructs a quantification expression with "this" as the operator.

@@ -28,17 +28,13 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.tree.TreePath;
 
 import edu.mit.csail.sdg.alloy4.*;
-//import edu.mit.csail.sdg.alloy4whole.SwingLogPanel;
 import edu.mit.csail.sdg.parser.CompModule;
-import edu.mit.csail.sdg.parser.CompUtil;
 import edu.mit.csail.sdg.translator.A4Options;
 import edu.mit.csail.sdg.translator.A4Solution;
 import edu.mit.csail.sdg.translator.TranslateAlloyToKodkod;
 
 import static edu.mit.csail.sdg.ast.Sig.*;
-import static edu.mit.csail.sdg.ast.Sig.NONE;
 import edu.mit.csail.sdg.alloy4viz.*;
-import org.alloytools.alloy.core.AlloyCore;
 
 /**
  * This abstract class represents a node that can be browsed in the graphical
@@ -57,10 +53,11 @@ public abstract class Browsable {
     Set <Integer >selectedFeature= new HashSet<>();
     // store new sigs
     Map <Sig,Sig> sigOld2new=new HashMap<>();
-    Map <Field,Field> field2newField =new HashMap<>();
+   // Map <Field,Field> field2newField =new HashMap<>();
 
     JTextArea textLabel=new JTextArea();
     JFrame x;
+
 
 
 
@@ -206,11 +203,12 @@ public abstract class Browsable {
 
         CompModule root= (CompModule) tree.getModel().getRoot();
 
-        // String path=root.path();
-
-
-        //store all Expr(funs and facts)  Using a ArrayList named exprArrayList
-        // storeExpr(root);
+       // fields
+        SafeList<Field> fields=new SafeList<>();
+        for(Sig sigf: root.getAllSigs()){
+            if(!sigf.getFields().isEmpty())
+                fields.addAll(sigf.getFields().makeConstList());
+        }
 
 
         tree.setEditable(true);
@@ -243,8 +241,6 @@ public abstract class Browsable {
         JButton feature1=new JButton("F1");
         feature1.addActionListener(new ActionListener() {
 
-            //     Listeners listeners = new Listeners();
-
             @Override
             public void actionPerformed(ActionEvent e) {
 
@@ -263,25 +259,20 @@ public abstract class Browsable {
                         //Field selected
                         (root.find(((Browsable) selectedNode).pos())) instanceof Field){
 
-                   ((Browsable) selectedNode).paint(1);
+                    for(Field f:fields){
+                        if(f.pos.equals(((Browsable) selectedNode).pos()))
+                        {f.paint(1);
+                            break;
+                        }
+                    }
 
                     textLabel.setText("\r\n"+ selectedNode.toString() +" : "+((Browsable) selectedNode).color);
 
                     x.repaint();
-
                 }
-
-
-
-                //    textLabel.setText(" Add feature 1  !"+ mapExprToFeatures.get(newNode));
-                //  x.repaint();
-
-                //   listeners.add(listener);
-                //  listeners.fire(feature1, Listener.Event.CLICK, path.getLastPathComponent());
 
             }
         });
-//
 
         Cancelfeature1.addActionListener(new ActionListener() {
 
@@ -330,10 +321,7 @@ public abstract class Browsable {
         negFeature1.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                TreePath path = tree.getSelectionPath();
                 Object selectedNode= tree.getLastSelectedPathComponent();
-
-                // Browsable newNode= (Browsable) selectedNode;
                 if(selectedNode instanceof Expr){
                     ((Expr) selectedNode).paint(-1);
 
@@ -341,8 +329,13 @@ public abstract class Browsable {
                 }else if (selectedNode instanceof Browsable &&
                         //Field selected
                         (root.find(((Browsable) selectedNode).pos())) instanceof Field){
+                    for(Field f:fields){
+                        if(f.pos.equals(((Browsable) selectedNode).pos()))
+                        {f.paint(-1);
+                            break;
+                        }
 
-                   ((Browsable) selectedNode).paint(-1);
+                    }
                     x.repaint();
                 }
             }
@@ -364,36 +357,31 @@ public abstract class Browsable {
                 }else if (selectedNode instanceof Browsable &&
                         //Field selected
                         (root.find(((Browsable) selectedNode).pos())) instanceof Field){
+                    for(Field f:fields){
+                        if(f.pos.equals(((Browsable) selectedNode).pos()))
+                        {f.paint(2);
+                            break;
+                        }
 
-                   ((Browsable) selectedNode).paint(2);
+                    }
                 }
 
                 textLabel.setText("\r\n"+"  :" +selectedNode.toString()+" : "+ ((Browsable) selectedNode).color);
-
-
                 x.repaint();
-
-                //listeners.add(listener);
-                // listeners.fire(feature2, Listener.Event.CLICK, path.getLastPathComponent());
-
-
             }
         });
 
         Cancelfeature2.addActionListener(new ActionListener() {
-            Listeners listeners = new Listeners();
+
             @Override
             public void actionPerformed(ActionEvent e) {
 
                 TreePath path = tree.getSelectionPath();
                 Object selectedNode= tree.getLastSelectedPathComponent();
 
-                Browsable newNode= (Browsable) selectedNode;
-
                 TreePath parent=path.getParentPath();
 
                 Object patrentNode= parent.getLastPathComponent();
-                Browsable pNode= (Browsable) patrentNode;
                 ((Browsable) selectedNode).color.remove(2);
 
 
@@ -430,7 +418,6 @@ public abstract class Browsable {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                TreePath path = tree.getSelectionPath();
                 Object selectedNode = tree.getLastSelectedPathComponent();
 
                 Browsable newNode = (Browsable) selectedNode;
@@ -440,35 +427,28 @@ public abstract class Browsable {
                         //Field selected
                         (root.find(((Browsable) selectedNode).pos())) instanceof Field){
 
-                    ((Browsable) selectedNode).paint(-2);
+                    for(Field f:fields){
+                        if(f.pos.equals(((Browsable) selectedNode).pos()))
+                        {f.paint(-2);
+                            break;
+                        }
+
+                    }
                 }
 
                 textLabel.setText("\r\n"+selectedNode.toString()+" :" + newNode.color);
-
-
-
                 x.repaint();
-
-                // listeners.add(listener);
-                // listeners.fire(feature1, Listener.Event.CLICK, path.getLastPathComponent());
             }
         });
 
 
         CancelnegFeature2.addActionListener(new ActionListener() {
 
-
-            //Listeners listeners = new Listeners();
             @Override
             public void actionPerformed(ActionEvent e) {
 
                 TreePath path = tree.getSelectionPath();
                 Object selectedNode= tree.getLastSelectedPathComponent();
-
-                TreePath parent=path.getParentPath();
-
-                Object patrentNode= parent.getLastPathComponent();
-
 
                 ((Browsable) selectedNode).color.remove(-2);
             }
@@ -547,23 +527,20 @@ public abstract class Browsable {
 
                     print.append("sig Product in Feature{}\r\n\r\n");
 
-    // ------------------------------------------------------
+    // print sig ------------------------------------------------------
                     for(int i=0; i<root.sigs.size();i++){
                         Sig s =root.getAllSigs().get(i);
 
-                        if(s.isAbstract!=null){
+                        if(s.isAbstract!=null)
                             print.append("abstract ");
-                        }
-
-                        if(s.isLone !=null){
+                        if(s.isLone !=null)
                             print.append("lone ");
-                        }
-                        if (s.isOne!=null){
-                            print.append("one ");
-                        }
-                        if(s.isSome != null){
-                            print.append("some ");
-                        }
+                        // change to lone
+                        if (s.isOne!=null)
+                            print.append("lone ");
+                        //change to set
+                        //if(s.isSome != null)
+                          //  print.append(" ");
 
                         print.append("sig "+ s.label.substring(5));
 
@@ -571,7 +548,6 @@ public abstract class Browsable {
                         if(s.isSubsig!=null ){
                             if(((Sig.PrimSig) s).parent!=UNIV){
                                 print.append(" extends ");
-                                // String temp=((Sig.PrimSig) s).parent.label.substring(5);
                                 print.append( ((Sig.PrimSig) s).parent.label.substring(5));
                             }
                         }
@@ -579,34 +555,52 @@ public abstract class Browsable {
                         if(s.isSubset!=null){
                             print.append(" in ");
 
-                            //添加In 的第一个
+                            //add first parent sig
                             print.append(((Sig.SubsetSig) s).parents.get(0).label.substring(5));
-                            //添加后续的父sig
+                            // not one parent
                             if(((Sig.SubsetSig) s).parents.size()>1){
                                 for (int j=1;j< ((Sig.SubsetSig) s).parents.size()-1;j ++){
                                     print.append(" + "+((Sig.SubsetSig) s).parents.get(j).label.substring(5));
                                 }
                             }
                         }
-                        //打印 fields
+
+
+                        //print fields
                         print.append(" { ");
                         if(s.getFields().size()>0){
 
                             for (Sig.Field f:s.getFields()){
                                 print.append("\r\n   "+f.label +" : ");
-                                print.append( f.decl().expr.accept(printExprs)+",");
+
+                                if(f.decl().expr instanceof ExprUnary)
+                                {
+                                    // one  ----> lone
+                                    if(((ExprUnary) f.decl().expr).op.equals(ExprUnary.Op.ONEOF)) {
+                                        print.append( "lone ");
+                                        print.append( ((ExprUnary) f.decl().expr).sub.accept(printExprs)+",");
+                                    }
+                                    // some -----> set
+                                    else if(((ExprUnary) f.decl().expr).op.equals(ExprUnary.Op.SOMEOF)) {
+                                        print.append( "set ");
+                                        print.append( ((ExprUnary) f.decl().expr).sub.accept(printExprs)+",");
+                                    }
+                                    else {
+                                        print.append( f.decl().expr.accept(printExprs)+",");
+                                    }
+
+                                }else
+                                    print.append( f.decl().expr.accept(printExprs)+",");
                             }
                         }
 
                         print.deleteCharAt(print.length()-1);
 
                         //} of Sig
-                          print.append("}\r\n");
-
+                          print.append("\r\n }\r\n");
+     // add feature facts to sig and field  ------------------------------
                         addFeatureFact(s, print);
-
-
-
+                        // facts for Field
                         if(s.getFields().size()>0){
 
                             for (Sig.Field f:s.getFields()){
@@ -614,35 +608,110 @@ public abstract class Browsable {
                                 addFeatureFact(f,print);
                             }
                         }
-                        print.append("\r\n");
+                        print.append("\r\n\r\n");
                     }
 
 
 
-                    //打印 facts
-                    //----------------------------------------------------------------
+                    //print facts
+    //----------------------------------------------------------------
                     for (Pair<String, Expr> f: root.getAllFacts()){
 
                         print.append("\r\nfact ");
                         if (f.a.startsWith("fact$")){
-                            print.append(" {");
+                            print.append(" {\r\n");
 
                         }else {
-                            print.append("  "+f.a+ " {" );
+                            print.append("  "+f.a+ " {\r\n" );
                         }
-                        // print.append(f.b.accept(printExprs) +"}\r\n");
-                        String temp=f.b.accept(printUnionModule);
-                        if (temp!=null){
-                            // print.append(" fact { \r\n ");
+                        print.append("    "+f.b.accept(printUnionModule));
+                        print.append(" }\r\n ");
+                    }
 
-                            print.append(temp);
-                            print.append(" }\r\n ");
+     //  print funs------------------------------------------------------
+
+                   for(Func func: root.getAllFunc()){
+
+                       if(!(func.label.equals("this/$$Default"))){
+
+                           print.append("\r\n");
+                           if (func.isPred )
+                               print.append("pred " +func.label.substring(5)+" ");
+                           else
+                               print.append("fun "+func.label.substring(5)+" ");
+
+                           if(func.decls.size()>0)
+                           {
+                               print.append("[");
+                               for (Decl decl :func.decls){
+
+                                   for (Expr expr: decl.names){
+                                       print.append(expr.accept(printUnionModule)+" ,");
+                                   }
+                                   print.deleteCharAt(print.length() - 1);
+                                   print.append(": ");
+                                   print.append(decl.expr.accept(printUnionModule)+",");
+                               }
+                               print.deleteCharAt(print.length()-1);
+                               print.append("]");
+                           }
+
+
+                           if(!func.isPred && !func.returnDecl.equals(ExprConstant.Op.FALSE))
+                           {
+                               print.append(":");
+                               print.append(func.returnDecl.accept(printUnionModule));
+                           }
+
+                           print.append("{\r\n  ");
+                           print.append(func.getBody().accept(printUnionModule));
+                           print.append("\r\n}");
+                       }
+                   }
+
+    // print assert-----------------------------------------------------------------
+               for(Pair<String,Expr> asser:root.getAllAssertions()){
+                   print.append("\r\n  ");
+
+                       print.append("assert  ");
+                       if(!asser.a.contains("assert$"))
+                            print.append(asser.a);
+                       print.append("{\r\n");
+
+                       print.append(asser.b.accept(printUnionModule));
+
+                       print.append("\r\n}");
+
+               }
+
+    //print run /check----------------------------------------------------------------
+
+                    for (Command command :root.getAllCommands()){
+
+                        if(!command.label.equals("Default")){
+
+                            if (command.check)
+                                print.append("\r\n check ");
+                            else print.append("\r\n run ");
+
+                            print.append(command.label +" " + " for "+command.overall);
+
+                            if(command.scope.size()==1)
+                                print.append(" but ");
+                            for(CommandScope cs:command.scope){
+                                if(cs.isExact)
+                                    print.append(" exactly ");
+                                print.append(cs.startingScope+" ");
+                                print.append(cs.sig.label.substring(5)+",");
+                            }
+
+                            print.deleteCharAt(print.length()-1);
                         }
                     }
 
                     System.out.println(print);
 
-// 输出 结果
+
 
                     final JFrame frame = new JFrame("Alloy Analyzer");
                     frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -662,8 +731,6 @@ public abstract class Browsable {
 
                     JSplitPane            splitpane;
 
-
-                    //SwingLogPanel log;
 
 
 
@@ -913,10 +980,12 @@ public abstract class Browsable {
             }
 
             private void printOpenLine( StringBuilder print) {
-                for (CompModule.Open open:root.getOpens()){
-                    if(open.filename.equals("util/integer")){
 
-                    }else{
+                for (CompModule.Open open:root.getOpens()){
+
+
+                    if(!open.filename.equals("util/integer")){
+
                         print.append("open "+open.filename+" ");
                         if(open.args.size()!=0){
                             print.append("[");
@@ -927,6 +996,7 @@ public abstract class Browsable {
                             print.append("] \r\n");
                         }
                     }
+
                 }
             }
         });
@@ -944,8 +1014,8 @@ public abstract class Browsable {
 
         right.getViewport().add(textLabel);
 
-        textLabel.setLineWrap(true);        //激活自动换行功能
-        textLabel.setWrapStyleWord(true);            // 激活断行不断字功能
+        textLabel.setLineWrap(true);
+        textLabel.setWrapStyleWord(true);
 
         bottomPane.setLeftComponent(scr);
         bottomPane.setDividerLocation(450);
@@ -970,50 +1040,86 @@ public abstract class Browsable {
         if (listener != null)
             tree.listeners.add(listener);
         return x;
-
-
     }
 
-    private void addFeatureFact(Expr s, StringBuilder print) {
-        String label = null;
-        if (s instanceof Sig){
-            label=((Sig) s).label.substring(5);
+
+
+    private void addFeatureFact(Sig s, StringBuilder print) {
+
+        String label=((Sig) s).label.substring(5);
+        Set<Integer> NFeatures=new HashSet<>();
+        Set<Integer> PFeatures=new HashSet<>();
+        for(Integer i: s.color){
+            if(i<0)
+                NFeatures.add(-i);
+            else PFeatures.add(i);
         }
-        else if (s instanceof Field){
-            label=((Field) s).label;
+//marked with NF
+        if(!NFeatures.isEmpty()){
+            print.append("\r\n fact { \r\n ");
+
+            // implies none
+            addFeatureprefix(NFeatures,print,"in","or");
+
+            print.append(" no "+ label);
+
+            print.append( " else (some " +label +" or no "+label+") \r\n}" );
         }
 
-        if(containsNegaF(s)){
-            print.append(" } \r\n \r\n fact { \r\n ");
-            print.append("\r\n (");
-            Set<Integer> nFfeature =computeNFeature(s);
-            // in Product implies no s
-            for (Integer feature: nFfeature) {
-                print.append( "F"+feature +" in Product or");
-            }
-
-            print.deleteCharAt(print.length()-1);
-            print.deleteCharAt(print.length()-1);
-            print.append(") implies no  " + label + "/r/n }");
-
-
-        }else if(!s.color.isEmpty()){
+        if(!PFeatures.isEmpty()){
 
             print.append(" } \r\n fact { \r\n ");
-            for (Integer feature: s.color) {
-                print.append( "F"+feature +" in Product and");
-            }
-            print.deleteCharAt(print.length()-1);
-            print.deleteCharAt(print.length()-1);
-            print.deleteCharAt(print.length()-1);
 
+            //F in P implies
+            addFeatureprefix(PFeatures,print,"in","and");
 
-            print.append(") implies some  "+label +" else no "+label+"\r\n}");
+            print.append(" (some  "+label +"  or no "+label+ ") else no "+label+"\r\n}");
         }
     }
 
+    private void addFeatureFact(Field f, StringBuilder print){
+        printUnionModule printUnionModule=new printUnionModule();
+        Set<Integer> NFeatures=new HashSet<>();
+        Set<Integer> PFeatures=new HashSet<>();
+        for(Integer i: f.color){
+            if(i<0)
+                NFeatures.add(-i);
+            else PFeatures.add(i);
+        }
+
+        if(NFeatures.size()>0){
+            print.append("\r\nfact { \r\n ");
+            print.append("  ");
+
+            // F in P implies
+            addFeatureprefix(NFeatures,print,"in","or");
+            print.append( " no " + f.label);
+            print.append(" else ");
+
+            print.append(f.label+" in " +f.sig.label.substring(5) +" ->");
+            print.append(f.decl().expr.accept(printUnionModule));
+
+            print.append("\r\n }");
+        }
+
+        if(PFeatures.size()>0){
+
+            print.append("\r\n fact { \r\n ");
+
+            //F in P implies
+            print.append("  ");
+            addFeatureprefix(PFeatures,print,"in","and");
+
+            print.append( f.label +" in "+ f.sig.label.substring(5)+" ->" );
+            print.append(f.decl().expr.accept(printUnionModule));
+
+            print.append( " else no " + f.label);
+            print.append("\r\n }");
+        }
+    }
+
+
     private void printFunc(StringBuilder print, CompModule newModule,printExpr printExprs) {
-        //打印 fun
         for(Func f: newModule.getAllFunc()){
             if(!(f.label.equals("$$Default"))){
 
@@ -1040,8 +1146,6 @@ public abstract class Browsable {
                 print.append(f.getBody().accept(printExprs)+" \r\n}\r\n");
 
             }
-
-
         }
     }
 
@@ -1057,11 +1161,9 @@ public abstract class Browsable {
             }
             print.append(f.b.accept(printExprs) +"}\r\n");
         }
-
     }
 
     private void printSigs(StringBuilder print,ConstList<Sig>sigsFinal,printExpr printExprs) {
-        //打印sig
         for(int i=0; i<sigsFinal.size();i++){
 
             Sig s =sigsFinal.get(i);
@@ -1092,20 +1194,17 @@ public abstract class Browsable {
 
             if(s.isSubset!=null){
                 print.append(" in ");
-
-                //添加In 的第一个
                 print.append(((SubsetSig) s).parents.get(0).label.substring(5));
-                //添加后续的父sig
+
                 if(((SubsetSig) s).parents.size()>1){
                     for (int j = 1; j< ((SubsetSig) s).parents.size()-1; j ++){
                         print.append(" + "+((SubsetSig) s).parents.get(j).label.substring(5));
                     }
                 }
             }
-            //打印 fields
+            //print fields
             print.append(" { ");
             if(s.getFields().size()>0){
-
                 for (Field f:s.getFields()){
                     print.append("\r\n   "+f.label +" : ");
                     print.append( f.decl().expr.accept(printExprs)+",");
@@ -1113,7 +1212,6 @@ public abstract class Browsable {
             }
             print.deleteCharAt(print.length()-1);
             print.append("}\r\n");
-            // System.out.println(print);
         }
     }
 
@@ -1132,10 +1230,10 @@ public abstract class Browsable {
         @Override
         public String visit(ExprBinary x) throws Err {
             if(x.right instanceof ExprBinary){
-                return"("+ visitThis(x.left) +" " +x.op.label +" ("+visitThis(x.right)+")"+")";
+                return" "+ visitThis(x.left) +" " +x.op.label +" "+visitThis(x.right)+" ";
             }
 
-            return "("+visitThis(x.left) +" " +x.op.label +" "+visitThis(x.right)+")";
+            return " "+visitThis(x.left) +" " +x.op.label +" "+visitThis(x.right)+" ";
 
         }
 
@@ -1409,7 +1507,7 @@ public abstract class Browsable {
                                 List<Field> list=signew.getFields().makeCopy();
 
                                 list.removeAll(listold);
-                                field2newField.put(f,list.get(0));
+                               // field2newField.put(f,list.get(0));
                             }
                         }
                     }
@@ -1457,9 +1555,9 @@ public abstract class Browsable {
                    rightExpr= visitThis(x.right);
                 }
             }
-            if (leftExpr==null){
+            if (leftExpr==null)
                 return rightExpr;
-            }else if (rightExpr==null){
+            else if (rightExpr==null){
                 return leftExpr;
             }else
                 return  x.op.make(x.pos, x.closingBracket, leftExpr, rightExpr);
@@ -1659,270 +1757,517 @@ public abstract class Browsable {
         public Expr visit(Sig x) throws Err {
 
             if(x.color.isEmpty())
-            {
                 return x;
-            }
-           else if ( !containsNegaF(x)&& selectedFeature.containsAll(x.color)){
+
+           if ( !containsNegaF(x)&& selectedFeature.containsAll(x.color))
                 return x;
-            }
-/*
-            if(sigOld2new.containsKey(x)){
-                return sigOld2new.get(x);
-            }else if (x.equals(SIGINT)||x.equals(SEQIDX)||x.equals(STRING)||x.equals(NONE)) {
-                return x;
-            }
             return null;
-            */
-        else return null;
         }
         @Override
         public Expr visit(Field x) throws Err {
             if(x.color.isEmpty())
-            {
                 return x;
-            }
-            else if ( !containsNegaF(x)&& selectedFeature.containsAll(x.color)){
+            if ( !containsNegaF(x)&& selectedFeature.containsAll(x.color))
                 return x;
-            }
-            else return null;
 
-
-           /* if(field2newField.containsKey(x)){
-                return field2newField.get(x);
-            }
-            //用来修改Field 的decl 的Expr
-            if(declExpr.containsKey(x)){
-
-                return declExpr.get(x);
-            }
             return null;
-
-            */
         }
     }
 
 
 //generate Union Module
     class printUnionModule extends VisitReturn<String>{
-    printExpr printExpression =new printExpr();
+
         @Override
         public String visit(ExprBinary x) throws Err {
+            //only for + ,&  operator
+
+            Set<Integer> NFeatures=new HashSet<>();
+            Set<Integer> PFeatures=new HashSet<>();
+            for(Integer i: x.color){
+                if(i<0)
+                    NFeatures.add(-i);
+                else PFeatures.add(i);
+            }
+
             StringBuilder str=new StringBuilder();
-            //not marked
-            if (x.color.isEmpty()){
-                if(x.left.color.isEmpty()){
-                    str.append(x.accept(printExpression)+" ");
-                }else if(!containsNegaF(x) && selectedFeature.containsAll(x.left.color)){
-                    str.append("( ");
-                    for (Integer i: x.color){
-                        str.append(" "+i +" in Product and");
-                    }
-                    str.deleteCharAt(str.length()-1);
-                    str.deleteCharAt(str.length()-1);
-                    str.deleteCharAt(str.length()-1);
-                    str.append(") implies ");
-                    str.append(visitThis(x.left));
-                    str.append("else none");
-                    str.append(visitThis(x.right)==null? visitThis(x.right): "");
 
+            int arity= x.type.arity();
+            int arityLeft= x.left.type.arity();
+            if(! x.color.isEmpty()){
+                if(!NFeatures.isEmpty()){
 
+                    addFeatureprefix(PFeatures,str, "not in","and");
+                    str.append( visitThis(x.left));
+                    str.append(x.op.label);
+                    str.append( visitThis(x.right));
                 }
 
-            }else if(selectedFeature.containsAll(x.color)){
-                return x.accept(printExpression);
+
+                if (!PFeatures.isEmpty()) { //Fi in Product implies
+
+                    addFeatureprefix(PFeatures,str, "in","and");
+                    str.append( visitThis(x.left));
+                    str.append(x.op.label);
+                    str.append( visitThis(x.right));
+                }
+
             }
+
+            //check left
+
+ // ---print x.left --------------------------------------------------------
+            //x.left marked
+            if(!x.left.color.isEmpty()){
+                // "F in product implies"
+
+                Set<Integer> NFeaturesleft=new HashSet<>();
+                Set<Integer> PFeaturesleft=new HashSet<>();
+                for(Integer i: x.left.color){
+                    if(i<0)
+                        NFeaturesleft.add(-i);
+                    else PFeaturesleft.add(i);
+                }
+                    str.append("(");
+                    str.append( visitThis(x.left));
+                    str.append(" else ");
+                    // and : " none-> none-> none->......" (&:   "univ->univ->univ..." )
+                    printElse(str, arityLeft, x);
+                    str.append(")");
+             }else str.append( visitThis(x.left));
+
+
+            // ---print x.op  ---------
+            str.append(x.op.label);
+            //-----print x.right ------
+            str.append( visitThis(x.right));
 
             return str.toString();
         }
 
         @Override
         public String visit(ExprList x) throws Err {
-            StringBuilder strtemp=new StringBuilder();
-            String name =null;
-            if (x.op.equals(ExprList.Op.AND)){
-                name=" and ";
-            }else if(x.op.equals(ExprList.Op.OR)){
-                name=" or ";
 
-            }else if (x.op.equals(ExprList.Op.DISJOINT)){
-                name= "disjoint";
+            StringBuilder str=new StringBuilder();
 
-            }else if(x.op.equals(ExprList.Op.TOTALORDER)){
-                name ="totalorder";
-
+            Set<Integer> NFeatures=new HashSet<>();
+            Set<Integer> PFeatures=new HashSet<>();
+            for(Integer i: x.color){
+                if(i<0)
+                    NFeatures.add(-i);
+                else PFeatures.add(i);
             }
-            if(x.op.equals(ExprList.Op.AND) || x.op.equals(ExprList.Op.OR)){
+            //x marked
+            if(!x.color.isEmpty()){
+                //Marked with NFeature
+                if(!NFeatures.isEmpty()){
+                    str.append("(");
+                    addFeatureprefix(PFeatures,str, "not in","and");
 
-                if(x.args.size()>0){
-                    //String temp=visitThis( x.args.get(0));
+                    for(Expr arg: x.args){
+                        str.append(" "+visitThis(arg));
+                        str.append(" "+x.op.name());
+                    }
 
-                    strtemp.append(visitThis( x.args.get(0)));
-                    if(x.args.size()>1){
-                        for (int i=1;i<x.args.size();i++){
+                }
 
-                            strtemp.append(visitThis(x.args.get(i)) ==null ? name +" \r\n    "+ visitThis(x.args.get(i)):"" );
+                if(!PFeatures.isEmpty()){
+                    //F in Product implies
+                    str.append("(");
+                    addFeatureprefix(PFeatures,str, "in","and");
 
-
-                        }
+                    for(Expr arg: x.args){
+                        str.append(" "+visitThis(arg));
+                        str.append(" "+x.op.name());
                     }
                 }
+
+                str.deleteCharAt(str.length()-1);
+                str.deleteCharAt(str.length()-1);
+                if(x.op.equals(ExprList.Op.AND))
+                    str.deleteCharAt(str.length()-1);
+                str.append(")");
             }
-            return strtemp.toString();
+
+
+//--------------------x.argi (i=0,1,2,3)----------------
+                for(Expr arg: x.args){
+                    str.append("\r\n    ");
+                    if(arg.color.isEmpty()){
+                        str.append(visitThis(arg));
+                    }else{
+                        // x not marked but arg i marked
+                        Set<Integer> NFeaturessub=new HashSet<>();
+                        Set<Integer> PFeaturessub=new HashSet<>();
+                        for(Integer i: x.color){
+                            if(i<0)
+                                NFeaturessub.add(-i);
+                            else PFeaturessub.add(i);
+                        }
+                            str.append("(");
+                            str.append(visitThis(arg));
+                           // str.append(" else ");
+                            //printElse(str,x);
+                            str.append(")");
+                    }
+                    String name=x.op.name();
+                    if(name.equals("AND")) name="and";
+                    if(name.equals("OR")) name="or";
+                    str.append(name);
+                }
+
+                // delete the last "or" or "and" string
+                str.deleteCharAt(str.length()-1);
+                str.deleteCharAt(str.length()-1);
+
+                if(x.op.equals(ExprList.Op.AND))
+                    str.deleteCharAt(str.length()-1);
+            return str.toString();
         }
 
         @Override
         public String visit(ExprCall x) throws Err {
 
-            StringBuilder temp=new StringBuilder();
+            StringBuilder str=new StringBuilder();
 
-            if (x.color.isEmpty() || selectedFeature.containsAll(x.color)){
-                temp.append(x.fun.label.substring(x.fun.label.indexOf("/")+1));
-                if(x.args.size()>0){
-                    temp.append("[");
-                    for(Expr arg :x.args){
-                        temp.append(visitThis(arg)+",");
-                    }
-                    temp.deleteCharAt(temp.length()-1);
-                    temp.append("]");
-                }
+            StringBuilder tempExpr =new StringBuilder();
+            tempExpr.append(x.fun.label.substring(x.fun.label.indexOf("/")+1));
+            if(x.args.size()>0)
+                tempExpr.append("[");
+            for(Expr arg :x.args){
+                tempExpr.append(visitThis(arg)+",");
+            }
+            tempExpr.deleteCharAt(tempExpr.length()-1);
+
+            if(x.args.size()>0)
+                tempExpr.append("]");
+
+
+            Set<Integer> NFeatures=new HashSet<>();
+            Set<Integer> PFeatures=new HashSet<>();
+            for(Integer i: x.color){
+                if(i<0)
+                    NFeatures.add(-i);
+                else PFeatures.add(i);
             }
 
-            return temp.toString();
+
+            if(!x.color.isEmpty()){
+
+                if(!NFeatures.isEmpty()){
+                    addFeatureprefix(PFeatures,str, "not in","and");
+                    str.append(tempExpr);
+
+                }
+                if(!PFeatures.isEmpty()){
+                    addFeatureprefix(NFeatures,str, "in","and");
+                    str.append(tempExpr);
+                }
+            }else {
+
+                str.append(tempExpr);
+            }
+            return str.toString();
 
         }
 
         @Override
         public String visit(ExprConstant x) throws Err {
-            if(x.color.isEmpty()|| selectedFeature.containsAll(x.color)){
-                switch (x.op) {
-                    case TRUE :
-                        return " true";
-                    case FALSE :
-                        return " false>";
-                    case IDEN :
-                        return " iden";
-                    case MAX :
-                        return " fun/max";
-                    case MIN :
-                        return " fun/min";
-                    case NEXT :
-                        return " fun/next";
-                    case EMPTYNESS :
-                        return " none";
-                    case STRING :
-                        return " " + x.string ;
+            StringBuilder str=new StringBuilder();
+            StringBuilder tempExpr =new StringBuilder();
+
+
+            if(x.op.equals(ExprConstant.Op.TRUE))
+                tempExpr.append( " true ");
+            if(x.op.equals(ExprConstant.Op.FALSE))
+                tempExpr.append( " false ");
+            if(x.op.equals(ExprConstant.Op.IDEN))
+                tempExpr.append(" iden ");
+
+            if(x.op.equals(ExprConstant.Op.MAX))
+                tempExpr.append(" fun/max ");
+            if(x.op.equals(ExprConstant.Op.MIN))
+                tempExpr.append(" fun/min ");
+            if(x.op.equals(ExprConstant.Op.NEXT))
+                tempExpr.append( " fun/next ");
+            if(x.op.equals(ExprConstant.Op.EMPTYNESS))
+                tempExpr.append( " none ");
+            if(x.op.equals(ExprConstant.Op.STRING))
+                tempExpr.append( " " + x.string+" ");
+            if(x.op.equals(ExprConstant.Op.NUMBER))
+                tempExpr.append( " " + x.num+" ");
+
+
+            if(!x.color.isEmpty()){
+                Set<Integer> NFeatures=new HashSet<>();
+                Set<Integer> PFeatures=new HashSet<>();
+                for(Integer i: x.color){
+                    if(i<0)
+                        NFeatures.add(-i);
+                    else PFeatures.add(i);
                 }
-                return " " + x.num;
-            }
-            return null;
+
+
+                if(!NFeatures.isEmpty()){
+                    addFeatureprefix(PFeatures,str, "not in","and");
+                    str.append(tempExpr);
+
+                }
+                if(!PFeatures.isEmpty()){
+                    addFeatureprefix(NFeatures,str, "in","and");
+                    str.append(tempExpr);
+                }
+
+
+            } else str.append(tempExpr);
+
+            return str.toString();
         }
 
         @Override
         public String visit(ExprITE x) throws Err {
-            if(x.color.isEmpty()|| selectedFeature.containsAll(x.color)){
-                return x.accept(printExpression);
-            }
-            return null;
+            StringBuilder str=new StringBuilder();
+
+
+
+            if(!x.color.isEmpty()){
+                Set<Integer> NFeatures=new HashSet<>();
+                Set<Integer> PFeatures=new HashSet<>();
+                for(Integer i: x.color){
+                    if(i<0)
+                        NFeatures.add(-i);
+                    else PFeatures.add(i);
+                }
+
+
+                if(!NFeatures.isEmpty()){
+                    addFeatureprefix(PFeatures,str, "not in","and");
+
+                    str.append(visitThis(x.cond));
+                    str.append(" implies ");
+
+                    str.append(visitThis(x.left));
+                    str.append(" else ");
+                    str.append(visitThis(x.right));
+
+
+                }
+                if(!PFeatures.isEmpty()){
+                    addFeatureprefix(NFeatures,str, "in","and");
+                    str.append(visitThis(x.cond));
+                    str.append(" implies ");
+
+                    str.append(visitThis(x.left));
+                    str.append(" else ");
+                    str.append(visitThis(x.right));
+                }
+
+
+            } else
+            {str.append(visitThis(x.cond));
+            str.append(" implies ");
+
+            str.append(visitThis(x.left));
+            str.append(" else ");
+            str.append(visitThis(x.right));}
+
+
+
+            return str.toString();
         }
 
         @Override
         public String visit(ExprLet x) throws Err {
-            if(x.color.isEmpty()|| selectedFeature.containsAll(x.color)){
-                return x.accept(printExpression);
-            }
-            return null;
+            StringBuilder str=new StringBuilder();
+            str.append(visitThis(x.var));
+            str.append("=");
+
+            str.append(visitThis(x.expr));
+            return str.toString();
+
         }
 
         @Override
         public String visit(ExprQt x) throws Err {
-            if( x.color.isEmpty()||selectedFeature.containsAll(x.color)){
-                return x.accept(printExpression);
+            StringBuilder str=new StringBuilder();
+
+            StringBuilder tempExpr=new StringBuilder();
+
+            if(!x.op.equals(ExprQt.Op.COMPREHENSION))
+                //all
+                tempExpr.append(x.op.label +" ");
+
+            for (Decl decl :x.decls){
+                for (Expr e: decl.names){
+                    tempExpr.append(visitThis(e)+" ,");
+                }
+                tempExpr.deleteCharAt(str.length() - 1);
+                tempExpr.append(": ");
+                tempExpr.append(visitThis(decl.expr)+",");
             }
-            /*
-            else if(x.color.isEmpty()){
+            tempExpr.deleteCharAt(str.length()-1);
 
-                StringBuilder s= new StringBuilder();
-                if(!x.op.equals(ExprQt.Op.COMPREHENSION)){
-                    s.append(x.op.label +" ");
-                }else {
-                    s.append("{");
+            tempExpr.append("|");
+
+            tempExpr.append(visitThis(x.sub));
+
+
+
+            if(!x.color.isEmpty()) {
+                Set<Integer> NFeatures = new HashSet<>();
+                Set<Integer> PFeatures = new HashSet<>();
+                for (Integer i : x.color) {
+                    if (i < 0)
+                        NFeatures.add(-i);
+                    else PFeatures.add(i);
                 }
 
-                for (Decl decl :x.decls){
-                    for (Expr e: decl.names){
-                        s.append(visitThis(e)+" ,");
-                    }
-                    s.deleteCharAt(s.length() - 1);
-                    s.append(": ");
-                    s.append(visitThis(decl.expr)+",");
+                if(!NFeatures.isEmpty()) {
+                    addFeatureprefix(NFeatures,str,"not in","and");
+                    str.append(tempExpr);
                 }
-                s.deleteCharAt(s.length()-1);
-                if(x.op.equals(ExprQt.Op.COMPREHENSION)){
-                    s.append("}");
+                if(!PFeatures.isEmpty()){
+                    addFeatureprefix(PFeatures,str, "in","and");
+                    str.append(tempExpr);
                 }
 
-                s.append("|");
 
-                //表达式
-                s.append(visitThis(x.sub));
 
-                return s.toString();
+            }else
+                str.append(tempExpr);
 
-            }
-            */
-
-            return null;
+            return str.toString();
         }
 
         @Override
         public String visit(ExprUnary x) throws Err {
-            if(!containsNegaF(x)){
-                if(x.color.isEmpty() || selectedFeature.containsAll(x.color)){
-                    if (visitThis(x.sub)!=null){
-                        switch (x.op){
-                            case NOOP:
-                            case CAST2INT:
-                            case CAST2SIGINT:
-                                return visitThis(x.sub);
-                            default:  return x.op.label.replaceAll(" of"," ") +" "+ visitThis(x.sub);
-                        }
-                    }
-                }
+            Set<Integer> NFeatures=new HashSet<>();
+            Set<Integer> PFeatures=new HashSet<>();
+            for(Integer i: x.color){
+                if(i<0)
+                    NFeatures.add(-i);
+                else PFeatures.add(i);
             }
-           return null;
+
+            StringBuilder str=new StringBuilder();
+
+            StringBuilder tempExpr= new StringBuilder();
+            if(x.op.equals(ExprUnary.Op.SETOF))
+                tempExpr.append(" set ");
+            if(x.op.equals(ExprUnary.Op.SOMEOF))
+                tempExpr.append(" some ");
+            if(x.op.equals(ExprUnary.Op.LONEOF))
+                tempExpr.append(" lone ");
+            if(x.op.equals(ExprUnary.Op.ONEOF))
+                tempExpr.append(" ");
+            if(x.op.equals(ExprUnary.Op.EXACTLYOF))
+                tempExpr.append(" exactly ");
+            if(x.op.equals(ExprUnary.Op.NOT)||x.op.equals(ExprUnary.Op.NO)||
+                    x.op.equals(ExprUnary.Op.SOME)||x.op.equals(ExprUnary.Op.ONE)||
+                    x.op.equals(ExprUnary.Op.LONE)||x.op.equals(ExprUnary.Op.TRANSPOSE)||
+                    x.op.equals(ExprUnary.Op.RCLOSURE)||x.op.equals(ExprUnary.Op.CLOSURE)||
+                    x.op.equals(ExprUnary.Op.CARDINALITY))
+                tempExpr.append(" "+x.op.label+" ");
+            tempExpr.append(visitThis(x.sub));
+
+
+            if(!x.color.isEmpty()) {
+                //negative Feature
+                if(!NFeatures.isEmpty())
+                    addFeatureprefix(NFeatures,str,"not in","and");
+
+                if(!PFeatures.isEmpty())
+                    addFeatureprefix(PFeatures, str, "in","and");
+            }
+
+            str.append(tempExpr);
+           return str.toString();
         }
 
         @Override
         public String visit(ExprVar x) throws Err {
-            if(!containsNegaF(x)){
-                if (x.color.isEmpty() || selectedFeature.containsAll(x.color)){
-                    return x.label;
-                }
-            }
-            return null;
+
+           // StringBuilder str=new StringBuilder();
+           // if(!x.color.isEmpty())
+               // addFeatureprefix(str, x);
+           // str.append(x.label);
+
+                return " "+x.label+ " ";
+
         }
 
         @Override
         public String visit(Sig x) throws Err {
-            if(!containsNegaF(x)){
-                if(x.color.isEmpty() || selectedFeature.containsAll(x.color))
-                {
-                    if (x.builtin){
-                        return x.label;
-                    }else
-                        return x.label.substring(5);
-                }
-            }
-           return null;
+            return x.label.substring(5)+" ";
         }
 
         @Override
         public String visit(Sig.Field x) throws Err {
-            return x.label;
+            return x.label+" ";
         }
 
     }
 
+    /**
+     * for ExprList "and","or" operator
+     * @param str
+     * @param x
+     *
+     */
+
+    private void printElse(StringBuilder str, int arity,ExprBinary x) {
+
+        //    + operator
+        if(x.op.equals(ExprBinary.Op.PLUS))
+            printElseString(str,arity," none ");
+        //   & operator
+        if(x.op.equals(ExprBinary.Op.INTERSECT))
+            printElseString(str,arity," univ ");
+    }
+
+
+
+    private void printElseString(StringBuilder str, int arity, String s) {
+        StringBuilder elseString=new StringBuilder();
+        for (int i=0; i< arity;i++){
+            elseString.append( " none " +"->");
+        }
+        elseString.deleteCharAt(elseString.length()-1);
+        elseString.deleteCharAt(elseString.length()-1);
+        str.append(elseString);
+    }
+
+    /**
+     *
+     *
+     * @param str
+     * @param
+     * @param
+     * @param
+     */
+
+    private void addFeatureprefix(Set<Integer> PFeature,StringBuilder str, String inOrNot,String operator) {
+
+        if(PFeature.size()>1)
+            str.append("    (");
+
+        for (Integer i: PFeature){
+
+            str.append(" F"+i + " "+inOrNot+" Product "+operator);
+        }
+        if(str.length()>=2){
+
+            str.deleteCharAt(str.length()-1);
+            str.deleteCharAt(str.length()-1);
+            if(operator.equals("and"))
+                str.deleteCharAt(str.length()-1);
+
+        }
+
+        if(PFeature.size()>1)
+            str.append(")");
+        str.append(" implies ");
+    }
 
     /**
      *
@@ -1939,16 +2284,6 @@ public abstract class Browsable {
         return false;
     }
 
-    Set <Integer> computeNFeature(Expr expr) {
-        Set<Integer> NFeature = new HashSet<>();
-        for (Integer i : expr.color) {
-            if (i < 0) {
-                NFeature.add(-i);
-            }
-
-        }
-        return NFeature;
-    }
 
     /**
      * compute if the two set "set1" and "set2" are equal

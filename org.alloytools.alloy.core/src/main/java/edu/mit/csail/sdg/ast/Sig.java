@@ -148,7 +148,9 @@ public abstract class Sig extends Expr implements Clause {
     /**
      * Store the list of attributes.
      */
-    public final ConstList<Attr> attributes;
+    //colorfulAlloy
+    public  ConstList<Attr> attributes;
+    //public final ConstList<Attr> attributes;
 
     /**
      * True if this sig is one of the built-in sig.
@@ -666,7 +668,9 @@ public abstract class Sig extends Expr implements Clause {
     public static final class Field extends ExprHasName implements Clause {
 
         /** The sig that this field belongs to; never null. */
-        public final Sig     sig;
+        //colorfulAlloy
+        public  Sig     sig;
+        //public final Sig     sig;
 
         /** Nonnull if the user wanted this field to be private. */
         public final Pos     isPrivate;
