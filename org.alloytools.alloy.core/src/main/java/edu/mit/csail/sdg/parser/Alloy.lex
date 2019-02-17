@@ -218,6 +218,26 @@ import java_cup.runtime.*;
 "sum"                 { return alloy_sym(yytext(), CompSym.SUM         );}
 "this"                { return alloy_sym(yytext(), CompSym.THIS        );}
 "univ"                { return alloy_sym(yytext(), CompSym.UNIV        );}
+"\u1F10B"          	  { return alloy_sym(yytext(), CompSym.PFEAT0      );} // [HASLab] colors
+"\u2780"           	  { return alloy_sym(yytext(), CompSym.PFEAT1      );} // [HASLab] colors
+"\u2781"           	  { return alloy_sym(yytext(), CompSym.PFEAT2      );} // [HASLab] colors
+"\u2782"           	  { return alloy_sym(yytext(), CompSym.PFEAT3      );} // [HASLab] colors
+"\u2783"           	  { return alloy_sym(yytext(), CompSym.PFEAT4      );} // [HASLab] colors
+"\u2784"           	  { return alloy_sym(yytext(), CompSym.PFEAT5      );} // [HASLab] colors
+"\u2785"           	  { return alloy_sym(yytext(), CompSym.PFEAT6      );} // [HASLab] colors
+"\u2786"           	  { return alloy_sym(yytext(), CompSym.PFEAT7      );} // [HASLab] colors
+"\u2787"           	  { return alloy_sym(yytext(), CompSym.PFEAT8      );} // [HASLab] colors
+"\u2788"           	  { return alloy_sym(yytext(), CompSym.PFEAT9      );} // [HASLab] colors
+"\u1F10C"          	  { return alloy_sym(yytext(), CompSym.NFEAT0      );} // [HASLab] colors
+"\u278A"          	  { return alloy_sym(yytext(), CompSym.NFEAT1      );} // [HASLab] colors
+"\u278B"          	  { return alloy_sym(yytext(), CompSym.NFEAT2      );} // [HASLab] colors
+"\u278C"          	  { return alloy_sym(yytext(), CompSym.NFEAT3      );} // [HASLab] colors
+"\u278D"          	  { return alloy_sym(yytext(), CompSym.NFEAT4      );} // [HASLab] colors
+"\u278E"          	  { return alloy_sym(yytext(), CompSym.NFEAT5      );} // [HASLab] colors
+"\u278F"          	  { return alloy_sym(yytext(), CompSym.NFEAT6      );} // [HASLab] colors
+"\u2790"          	  { return alloy_sym(yytext(), CompSym.NFEAT7      );} // [HASLab] colors
+"\u2791"          	  { return alloy_sym(yytext(), CompSym.NFEAT8      );} // [HASLab] colors
+"\u2792"          	  { return alloy_sym(yytext(), CompSym.NFEAT9      );} // [HASLab] colors
 
 [\"] ([^\\\"] | ("\\" .))* [\"] [\$0-9a-zA-Z_\'\"] [\$0-9a-zA-Z_\'\"]* { throw new ErrorSyntax(alloy_here(yytext()),"String literal cannot be followed by a legal identifier character."); }
 [\"] ([^\\\"] | ("\\" .))* [\"]                                        { return alloy_string(yytext()); }

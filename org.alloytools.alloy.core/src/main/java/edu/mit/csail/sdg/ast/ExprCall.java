@@ -18,7 +18,9 @@ package edu.mit.csail.sdg.ast;
 import static edu.mit.csail.sdg.ast.Type.EMPTY;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import edu.mit.csail.sdg.alloy4.ConstList;
 import edu.mit.csail.sdg.alloy4.ConstList.TempList;
@@ -275,8 +277,9 @@ public final class ExprCall extends Expr {
      * Constructs an ExprCall node with the given function "pred/fun" and the list
      * of arguments "args".
      */
-    private ExprCall(Pos pos, Pos closingBracket, boolean ambiguous, Type type, Func fun, ConstList<Expr> args, long extraWeight, long weight, JoinableList<Err> errs) {
-        super(pos, closingBracket, ambiguous, type, 0, weight, errs);
+    // [HASLab] colorful electrum
+    private ExprCall(Pos pos, Pos closingBracket, boolean ambiguous, Type type, Func fun, ConstList<Expr> args, long extraWeight, long weight, JoinableList<Err> errs, Set<Integer> color) {
+        super(pos, closingBracket, ambiguous, type, 0, weight, errs, color); // [HASLab] colorful electrum
         this.fun = fun;
         this.args = args;
         this.extraWeight = extraWeight;
@@ -307,11 +310,22 @@ public final class ExprCall extends Expr {
 
     // ============================================================================================================//
 
+
     /**
      * Constructs an ExprCall node with the given predicate/function "fun" and the
      * list of arguments "args".
      */
+    // [HASLab] colorful electrum
     public static Expr make(Pos pos, Pos closingBracket, Func fun, List<Expr> args, long extraPenalty) {
+        return make(pos, closingBracket, fun, args, extraPenalty, new HashSet<Integer>());
+    }
+
+    /**
+     * Constructs an ExprCall node with the given predicate/function "fun" and the
+     * list of arguments "args".
+     */
+    // [HASLab] colorful electrum
+    public static Expr make(Pos pos, Pos closingBracket, Func fun, List<Expr> args, long extraPenalty, Set<Integer> color) {
         if (extraPenalty < 0)
             extraPenalty = 0;
         if (args == null)
@@ -354,7 +368,7 @@ public final class ExprCall extends Expr {
                 t = tt; // Just in case an error occurred...
             }
         }
-        return new ExprCall(pos, closingBracket, ambiguous, t, fun, newargs.makeConst(), extraPenalty, weight, errs);
+        return new ExprCall(pos, closingBracket, ambiguous, t, fun, newargs.makeConst(), extraPenalty, weight, errs, color); // [HASLab] colorful electrum
     }
 
     // ============================================================================================================//

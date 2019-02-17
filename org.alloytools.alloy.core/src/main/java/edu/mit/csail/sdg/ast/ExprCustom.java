@@ -18,6 +18,7 @@ package edu.mit.csail.sdg.ast;
 import static edu.mit.csail.sdg.ast.Type.EMPTY;
 
 import java.util.Collection;
+import java.util.Set;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.ErrorWarning;
@@ -44,8 +45,9 @@ public abstract class ExprCustom extends Expr {
      * @param pos - the Pos for this expression (can be Pos.UNKNOWN if unknown)
      * @param error - the error to display if this node does not get desugared
      */
-    public ExprCustom(Pos pos, Err error) {
-        super(pos, null, false, EMPTY, 0, 0, new JoinableList<Err>(error));
+    // [HASLab] colorful electrum
+    public ExprCustom(Pos pos, Err error, Set<Integer> color) {
+        super(pos, null, false, EMPTY, 0, 0, new JoinableList<Err>(error), color); // [HASLab] colorful electrum
         if (error == null)
             throw new NullPointerException();
     }

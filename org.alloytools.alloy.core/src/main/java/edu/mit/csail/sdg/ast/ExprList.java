@@ -19,7 +19,9 @@ import static edu.mit.csail.sdg.ast.Type.EMPTY;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import edu.mit.csail.sdg.alloy4.ConstList;
 import edu.mit.csail.sdg.alloy4.ConstList.TempList;
@@ -108,8 +110,9 @@ public final class ExprList extends Expr {
     // ============================================================================================================//
 
     /** Constructs an ExprList node. */
-    private ExprList(Pos pos, Pos closingBracket, Op op, boolean ambiguous, ConstList<Expr> args, long weight, JoinableList<Err> errs) {
-        super(pos, closingBracket, ambiguous, Type.FORMULA, 0, weight, errs);
+    // [HASLab] colorful electrum
+    private ExprList(Pos pos, Pos closingBracket, Op op, boolean ambiguous, ConstList<Expr> args, long weight, JoinableList<Err> errs, Set<Integer> color) {
+        super(pos, closingBracket, ambiguous, Type.FORMULA, 0, weight, errs, color); // [HASLab] colorful electrum
         this.op = op;
         this.args = args;
     }
@@ -159,7 +162,14 @@ public final class ExprList extends Expr {
     }
 
     /** Generates a call to a builtin predicate */
+    // [HASLab] colorful electrum
     public static ExprList make(Pos pos, Pos closingBracket, Op op, List< ? extends Expr> args) {
+        return make(pos, closingBracket, op, args, new HashSet<Integer>());
+    }
+
+    /** Generates a call to a builtin predicate */
+    // [HASLab] colorful electrum
+    public static ExprList make(Pos pos, Pos closingBracket, Op op, List< ? extends Expr> args, Set<Integer> color) {
         boolean ambiguous = false;
         JoinableList<Err> errs = emptyListOfErrors;
         TempList<Expr> newargs = new TempList<Expr>(args.size());
@@ -202,7 +212,7 @@ public final class ExprList extends Expr {
             if (commonArity == EMPTY)
                 errs = errs.make(new ErrorType(pos, "The builtin predicate disjoint[] cannot be used among expressions of different arities."));
         }
-        return new ExprList(pos, closingBracket, op, ambiguous, newargs.makeConst(), weight, errs);
+        return new ExprList(pos, closingBracket, op, ambiguous, newargs.makeConst(), weight, errs, color); // [HASLab] colorful electrum
     }
 
     /** Generates the expression (arg1 and arg2) */
@@ -284,7 +294,7 @@ public final class ExprList extends Expr {
             changed = (a != args.get(0) || b != args.get(1) || c != args.get(2));
             newargs.add(a).add(b).add(c);
         }
-        return changed ? make(pos, closingBracket, op, newargs.makeConst()) : this;
+        return changed ? make(pos, closingBracket, op, newargs.makeConst(), color) : this; // [HASLab] colorful electrum
     }
 
     // ============================================================================================================//
