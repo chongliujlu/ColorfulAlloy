@@ -33,11 +33,17 @@ import javax.swing.text.JTextComponent;
 public final class OurHighlighter implements Highlighter.HighlightPainter {
 
     /** The color to use when drawing highlights. */
-    public final Color color;
+    public final Color   color;
 
-    /** Construct a highlighter with the given color. */
-    public OurHighlighter(Color color) {
+    /** Whether to strike out rather than highlight. */
+    // [HASLab] colorful electrum
+    public final boolean strike;
+
+    /** Construct a highlighter with the given color and whether to strike out. */
+    // [HASLab] colorful electrum
+    public OurHighlighter(Color color, boolean strike) {
         this.color = color;
+        this.strike = strike;
     }
 
     /** This method is called by Swing to draw highlights. */
@@ -52,7 +58,12 @@ public final class OurHighlighter implements Highlighter.HighlightPainter {
                 // same line (Note: furthermore, if start==end, then we draw all
                 // the way to the right edge)
                 Rectangle r = a.union(b);
-                gr.fillRect(r.x, r.y, (r.width <= 1 ? (box.x + box.width - r.x) : r.width), r.height);
+                // [HASLab] colorful electrum
+                // if strike, strike out rather than highlight
+                if (!strike)
+                    gr.fillRect(r.x, r.y, (r.width <= 1 ? (box.x + box.width - r.x) : r.width), r.height);
+                else
+                    gr.fillRect(r.x, r.y + (r.height / 2), (r.width <= 1 ? (box.x + box.width - r.x) : r.width), 2);
             } else {
                 // Multiple lines; (Note: on first line we'll draw from "start"
                 // and extend to rightmost)
