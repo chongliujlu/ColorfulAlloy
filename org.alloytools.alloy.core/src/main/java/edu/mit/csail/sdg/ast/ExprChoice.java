@@ -17,9 +17,7 @@ package edu.mit.csail.sdg.ast;
 
 import static edu.mit.csail.sdg.ast.Type.EMPTY;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import edu.mit.csail.sdg.alloy4.ConstList;
 import edu.mit.csail.sdg.alloy4.ConstList.TempList;
@@ -101,16 +99,22 @@ public final class ExprChoice extends Expr {
     // ============================================================================================================//
 
     /** Constructs an ExprChoice node. */
-    private ExprChoice(Pos pos, ConstList<Expr> choices, ConstList<String> reasons, Type type, long weight) {
-        super(pos, null, true, type, 0, weight, emptyListOfErrors.make(type == EMPTY ? complain(pos, choices) : null));
+    // [HASLab] colorful Alloy
+    private ExprChoice(Pos pos, ConstList<Expr> choices, ConstList<String> reasons, Type type, long weight, Set<Integer> color) {
+        super(pos, null, true, type, 0, weight, emptyListOfErrors.make(type == EMPTY ? complain(pos, choices) : null),color);
         this.choices = choices;
         this.reasons = reasons;
     }
 
     // ============================================================================================================//
 
+    // [HASLab] colorful Alloy
+    public static Expr make(boolean ignoreIntFuns,Pos pos, ConstList<Expr> choices, ConstList<String> reasons) {
+        return make(ignoreIntFuns,pos,choices,reasons,new HashSet<Integer>());
+    }
     /** Construct an ExprChoice node. */
-    public static Expr make(boolean ignoreIntFuns, Pos pos, ConstList<Expr> choices, ConstList<String> reasons) {
+    // [HASLab] colorful Alloy
+    public static Expr make(boolean ignoreIntFuns, Pos pos, ConstList<Expr> choices, ConstList<String> reasons,Set<Integer>color) {
         if (choices.size() == 0)
             return new ExprBad(pos, "", new ErrorType(pos, "This expression failed to be typechecked."));
         if (choices.size() == 1 && choices.get(0).errors.isEmpty())
@@ -126,7 +130,7 @@ public final class ExprChoice extends Expr {
                     rs.add(reasons.get(i));
                 }
             }
-            return make(false, pos, ch.makeConst(), rs.makeConst());
+            return make(false, pos, ch.makeConst(), rs.makeConst(),color); // [HASLab] colorful Alloy
         }
         Type type = EMPTY;
         boolean first = true;
@@ -139,7 +143,7 @@ public final class ExprChoice extends Expr {
                     first = false;
                 }
         }
-        return new ExprChoice(pos, choices, reasons, type, weight);
+        return new ExprChoice(pos, choices, reasons, type, weight,color); // [HASLab] colorful Alloy
     }
 
     // ============================================================================================================//
@@ -148,7 +152,8 @@ public final class ExprChoice extends Expr {
      * Resolve the list of choices, or return an ExprBad object containing the list
      * of unresolvable ambiguities.
      */
-    private Expr resolveHelper(boolean firstPass, final Type t, List<Expr> choices, List<String> reasons, Collection<ErrorWarning> warns) {
+    // [HASLab] colorful Alloy
+    private Expr resolveHelper(boolean firstPass, final Type t, List<Expr> choices, List<String> reasons, Collection<ErrorWarning> warns,Set<Integer> color) {
         List<Expr> ch = new ArrayList<Expr>(choices.size());
         List<String> re = new ArrayList<String>(choices.size());
         // We first prefer exact matches
@@ -205,7 +210,7 @@ public final class ExprChoice extends Expr {
                 ch2 = new ArrayList<Expr>(ch.size());
                 for (Expr c : ch)
                     ch2.add(c.resolve(t, null));
-                return resolveHelper(false, t, ch2, re, warns);
+                return resolveHelper(false, t, ch2, re, warns,color); // [HASLab] colorful Alloy
             }
         }
         // If we are down to exactly 1 match, return it
@@ -231,7 +236,7 @@ public final class ExprChoice extends Expr {
                 ans = ans.product(Sig.NONE);
                 arity--;
             }
-            return ExprUnary.Op.NOOP.make(span(), ans);
+            return ExprUnary.Op.NOOP.make(span(), ans,color);  // [HASLab] colorful Alloy
         }
         // Otherwise, complain!
         String txt;
@@ -249,11 +254,12 @@ public final class ExprChoice extends Expr {
 
     /** {@inheritDoc} */
     @Override
+    // [HASLab] colorful Alloy
     public Expr resolve(Type t, Collection<ErrorWarning> warns) {
         if (errors.size() > 0)
             return this;
         else
-            return resolveHelper(true, t, choices, reasons, warns);
+            return resolveHelper(true, t, choices, reasons, warns,color);  // [HASLab] colorful Alloy
     }
 
     // ============================================================================================================//

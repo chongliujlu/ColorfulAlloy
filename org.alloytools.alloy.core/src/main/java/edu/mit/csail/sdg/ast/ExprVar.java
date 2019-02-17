@@ -15,14 +15,13 @@
 
 package edu.mit.csail.sdg.ast;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.ErrorWarning;
 import edu.mit.csail.sdg.alloy4.Pos;
 import edu.mit.csail.sdg.alloy4.TableView;
+import kodkod.engine.bool.Int;
 
 /**
  * Immutable; represents a LET or QUANTIFICATION variable in the AST.
@@ -46,8 +45,9 @@ public final class ExprVar extends ExprHasName implements Clause {
     }
 
     /** Constructs an ExprVar object */
-    private ExprVar(Pos pos, String label, Type type) {
-        super(pos, label, type);
+    // [HASLab] colorful Alloy
+    private ExprVar(Pos pos, String label, Type type, Set<Integer> color) {
+        super(pos, label, type,color);
     }
 
     /**
@@ -59,8 +59,14 @@ public final class ExprVar extends ExprHasName implements Clause {
      *            pretty-printing and does not have to be unique)
      */
     public static ExprVar make(Pos pos, String label) {
-        return new ExprVar(pos, label, Type.EMPTY);
+        return new ExprVar(pos, label, Type.EMPTY,new HashSet<Integer>());// [HASLab] colorful Alloy
     }
+
+    // [HASLab] colorful Alloy
+    public static ExprVar make(Pos pos, String label, Type type) {
+        return make(pos,label,type,new HashSet<Integer>());
+    }
+
 
     /**
      * Constructs an ExprVar variable with the given type
@@ -71,8 +77,9 @@ public final class ExprVar extends ExprHasName implements Clause {
      *            pretty-printing and does not have to be unique)
      * @param type - the type
      */
-    public static ExprVar make(Pos pos, String label, Type type) {
-        return new ExprVar(pos, label, type);
+    // [HASLab] colorful electrum
+    public static ExprVar make(Pos pos, String label, Type type,Set<Integer> color) {
+        return new ExprVar(pos, label, type,color);
     }
 
     /** {@inheritDoc} */

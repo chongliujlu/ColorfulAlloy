@@ -22,13 +22,7 @@ import static edu.mit.csail.sdg.ast.Sig.STRING;
 import static edu.mit.csail.sdg.ast.Sig.UNIV;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.ErrorFatal;
@@ -297,7 +291,7 @@ public final class A4SolutionReader {
         if (field == null)
             field = parent.addTrickyField(Pos.UNKNOWN, isPrivate, null, null, isMeta, new String[] {
                                                                                                     label
-            }, UNIV.join(type))[0];
+            }, UNIV.join(type),new HashSet<Integer>())[0]; //[HASLab] colorful Alloy
         TupleSet ts = parseTuples(node, arity);
         expr2ts.put(field, ts);
         return field;

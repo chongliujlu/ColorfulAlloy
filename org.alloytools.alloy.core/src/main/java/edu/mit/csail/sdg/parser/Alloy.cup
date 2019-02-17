@@ -176,6 +176,28 @@ parser code {:
     ch.put(CompSym.LONE, "lone");
     ch.put(CompSym.LPAREN, "(");
     ch.put(CompSym.LT, "<");
+
+    ch.put(CompSym.PFEAT0,"\u1F10B"); // [HASLab] colorful electrum
+    	ch.put(CompSym.PFEAT1,"\u2780" ); // [HASLab] colorful Alloy
+    	ch.put(CompSym.PFEAT2,"\u2781" ); // [HASLab] colorful electrum
+    	ch.put(CompSym.PFEAT3,"\u2782" ); // [HASLab] colorful electrum
+    	ch.put(CompSym.PFEAT4,"\u2783" ); // [HASLab] colorful electrum
+    	ch.put(CompSym.PFEAT5,"\u2784" ); // [HASLab] colorful electrum
+    	ch.put(CompSym.PFEAT6,"\u2785" ); // [HASLab] colorful electrum
+    	ch.put(CompSym.PFEAT7,"\u2786" ); // [HASLab] colorful electrum
+    	ch.put(CompSym.PFEAT8,"\u2787" ); // [HASLab] colorful electrum
+    	ch.put(CompSym.PFEAT9,"\u2788" ); // [HASLab] colorful electrum
+    	ch.put(CompSym.NFEAT0,"\u1F10C"); // [HASLab] colorful electrum
+    	ch.put(CompSym.NFEAT1,"\u278A" ); // [HASLab] colorful electrum
+    	ch.put(CompSym.NFEAT2,"\u278B" ); // [HASLab] colorful electrum
+    	ch.put(CompSym.NFEAT3,"\u278C" ); // [HASLab] colorful electrum
+    	ch.put(CompSym.NFEAT4,"\u278D" ); // [HASLab] colorful electrum
+    	ch.put(CompSym.NFEAT5,"\u278E" ); // [HASLab] colorful electrum
+    	ch.put(CompSym.NFEAT6,"\u278F" ); // [HASLab] colorful electrum
+    	ch.put(CompSym.NFEAT7,"\u2790" ); // [HASLab] colorful electrum
+    	ch.put(CompSym.NFEAT8,"\u2791" ); // [HASLab] colorful electrum
+    	ch.put(CompSym.NFEAT9,"\u2792" ); // [HASLab] colorful electrum
+
     ch.put(CompSym.LTE, "<=");
     ch.put(CompSym.MINUS, "-");
     ch.put(CompSym.MODULE, "module");
@@ -430,6 +452,28 @@ terminal Pos LET;              //  let
 terminal Pos LONE2;            //  lone      // The filter enables us to disambiguate
 terminal Pos LONE;             //  lone      // The filter enables us to disambiguate
 terminal Pos LPAREN;           //  (
+
+terminal Pos PFEAT1;           //  // [HASLab] colorful electrum
+terminal Pos PFEAT2;           //  // [HASLab] colorful electrum
+terminal Pos PFEAT3;           //  // [HASLab] colorful electrum
+terminal Pos PFEAT4;           //  // [HASLab] colorful electrum
+terminal Pos PFEAT5;           //  // [HASLab] colorful electrum
+terminal Pos PFEAT6;           //  // [HASLab] colorful electrum
+terminal Pos PFEAT7;           //  // [HASLab] colorful electrum
+terminal Pos PFEAT8;           //  // [HASLab] colorful electrum
+terminal Pos PFEAT9;           //  // [HASLab] colorful electrum
+terminal Pos PFEAT0;           //  // [HASLab] colorful electrum
+terminal Pos NFEAT1;           //  // [HASLab] colorful electrum
+terminal Pos NFEAT2;           //  // [HASLab] colorful electrum
+terminal Pos NFEAT3;           //  // [HASLab] colorful electrum
+terminal Pos NFEAT4;           //  // [HASLab] colorful electrum
+terminal Pos NFEAT5;           //  // [HASLab] colorful electrum
+terminal Pos NFEAT6;           //  // [HASLab] colorful electrum
+terminal Pos NFEAT7;           //  // [HASLab] colorful electrum
+terminal Pos NFEAT8;           //  // [HASLab] colorful electrum
+terminal Pos NFEAT9;           //  // [HASLab] colorful electrum
+terminal Pos NFEAT0;           //  // [HASLab] colorful electrum
+
 terminal Pos LT;               //  <
 terminal Pos LTE;              //  <=     =<
 terminal Pos MINUS;            //  -
@@ -542,7 +586,7 @@ nonterminal Pair<Pos,ExprBinary.Op>    RelOp;
 nonterminal Expr                       RelationExprA;
 nonterminal Expr                       RelationExprB;
 nonterminal List<CommandScope>         Scope;
-nonterminal                            Sig;
+nonterminal List<Sig>                           Sig;   //colorful Alloy
 nonterminal List<ExprVar>              SigIn;
 nonterminal List<Pos>                  SigQual;
 nonterminal List<Pos>                  SigQuals;
@@ -678,7 +722,27 @@ Predicate ::= Vis:p PRED:o              Name:n LBRACKET Decls:d RBRACKET Super:v
 Predicate ::= Vis:p PRED:o              Name:n                           Super:v             {: nod(n); parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, null, null , null, v); :};
 Predicate ::= Vis:p PRED:o SigRef:f DOT Name:n LPAREN   Decls:d RPAREN   Super:v             {: nod(n); parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, f   , d    , null, v); :};
 Predicate ::= Vis:p PRED:o SigRef:f DOT Name:n LBRACKET Decls:d RBRACKET Super:v             {: nod(n); parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, f   , d    , null, v); :};
-Predicate ::= Vis:p PRED:o SigRef:f DOT Name:n                           Super:v             {: nod(n); parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, f   , null , null, v); :};
+
+Sig ::= PFEAT1 Sig:x PFEAT1 {: for (Sig s : x) s.paint(1); RESULT = x;   :}; // [HASLab] colorful electrum
+Sig ::= PFEAT2 Sig:x PFEAT2 {: for (Sig s : x) s.paint(2); RESULT = x;   :}; // [HASLab] colorful electrum
+Sig ::= PFEAT3 Sig:x PFEAT3 {: for (Sig s : x) s.paint(3); RESULT = x;   :}; // [HASLab] colorful electrum
+Sig ::= PFEAT4 Sig:x PFEAT4 {: for (Sig s : x) s.paint(4); RESULT = x;   :}; // [HASLab] colorful electrum
+Sig ::= PFEAT5 Sig:x PFEAT5 {: for (Sig s : x) s.paint(5); RESULT = x;   :}; // [HASLab] colorful electrum
+Sig ::= PFEAT6 Sig:x PFEAT6 {: for (Sig s : x) s.paint(6); RESULT = x;   :}; // [HASLab] colorful electrum
+Sig ::= PFEAT7 Sig:x PFEAT7 {: for (Sig s : x) s.paint(7); RESULT = x;   :}; // [HASLab] colorful electrum
+Sig ::= PFEAT8 Sig:x PFEAT8 {: for (Sig s : x) s.paint(8); RESULT = x;   :}; // [HASLab] colorful electrum
+Sig ::= PFEAT9 Sig:x PFEAT9 {: for (Sig s : x) s.paint(9); RESULT = x;   :}; // [HASLab] colorful electrum
+Sig ::= PFEAT0 Sig:x PFEAT0 {: for (Sig s : x) s.paint(0); RESULT = x;   :}; // [HASLab] colorful electrum
+Sig ::= NFEAT1 Sig:x NFEAT1 {: for (Sig s : x) s.paint(-1); RESULT = x;  :}; // [HASLab] colorful electrum
+Sig ::= NFEAT2 Sig:x NFEAT2 {: for (Sig s : x) s.paint(-2); RESULT = x;  :}; // [HASLab] colorful electrum
+Sig ::= NFEAT3 Sig:x NFEAT3 {: for (Sig s : x) s.paint(-3); RESULT = x;  :}; // [HASLab] colorful electrum
+Sig ::= NFEAT4 Sig:x NFEAT4 {: for (Sig s : x) s.paint(-4); RESULT = x;  :}; // [HASLab] colorful electrum
+Sig ::= NFEAT5 Sig:x NFEAT5 {: for (Sig s : x) s.paint(-5); RESULT = x;  :}; // [HASLab] colorful electrum
+Sig ::= NFEAT6 Sig:x NFEAT6 {: for (Sig s : x) s.paint(-6); RESULT = x;  :}; // [HASLab] colorful electrum
+Sig ::= NFEAT7 Sig:x NFEAT7 {: for (Sig s : x) s.paint(-7); RESULT = x;  :}; // [HASLab] colorful electrum
+Sig ::= NFEAT8 Sig:x NFEAT8 {: for (Sig s : x) s.paint(-8); RESULT = x;  :}; // [HASLab] colorful electrum
+Sig ::= NFEAT9 Sig:x NFEAT9 {: for (Sig s : x) s.paint(-9); RESULT = x;  :}; // [HASLab] colorful electrum
+Sig ::= NFEAT0 Sig:x NFEAT0 {: for (Sig s : x) s.paint(-0); RESULT = x;  :}; // [HASLab] colorful electrum
 
 Vis ::=           {: RESULT=null; :};
 Vis ::= PRIVATE:p {: RESULT=p;    :};
@@ -687,14 +751,16 @@ Sig ::= SigQuals:a Names:b SigIn:c LBRACE Decls:d RBRACE:o SuperOpt:e
  {:
    if (e==null) e = ExprConstant.Op.TRUE.make(o, 0);
    ExprVar cc = (c!=null && c.size()>0) ? c.remove(c.size()-1) : null;
+    RESULT = new ArrayList<Sig>();
    for(ExprVar bb:b) {
-      parser.alloymodule.addSig(bb.label, cc, c, d, e,
+     Sig s = parser.alloymodule.addSig(bb.label, cc, c, d, e,   // colorful Alloy
          AttrType.WHERE   .makenull(bb.pos.merge(e==null ? o : e.span())),
          AttrType.ABSTRACT.makenull(a.get(0)),
          AttrType.LONE    .makenull(a.get(1)),
          AttrType.ONE     .makenull(a.get(2)),
          AttrType.SOME    .makenull(a.get(3)),
          AttrType.PRIVATE .makenull(a.get(4)));
+         RESULT.add(s);                         //colorful Alloy
    }
  :};
 
@@ -742,6 +808,28 @@ Namex ::=         Name:x               {: nod(x); RESULT=new ArrayList<ExprVar>(
 Namex ::= EXACTLY Name:x               {: nod(x); RESULT=new ArrayList<ExprVar>(); RESULT.add(null); RESULT.add(x);  :};
 Namex ::= Namex:a COMMA         Name:b {: nod(b);              a.add(b); RESULT=a;                                   :};
 Namex ::= Namex:a COMMA EXACTLY Name:b {: nod(b); a.add(null); a.add(b); RESULT=a;                                   :};
+
+
+Decla ::= PFEAT1 Decla:x PFEAT1    {: RESULT = x.paint(1);   :}; // [HASLab] colorful electrum
+Decla ::= PFEAT2 Decla:x PFEAT2    {: RESULT = x.paint(2);   :}; // [HASLab] colorful electrum
+Decla ::= PFEAT3 Decla:x PFEAT3    {: RESULT = x.paint(3);   :}; // [HASLab] colorful electrum
+Decla ::= PFEAT4 Decla:x PFEAT4    {: RESULT = x.paint(4);   :}; // [HASLab] colorful electrum
+Decla ::= PFEAT5 Decla:x PFEAT5    {: RESULT = x.paint(5);   :}; // [HASLab] colorful electrum
+Decla ::= PFEAT6 Decla:x PFEAT6    {: RESULT = x.paint(6);   :}; // [HASLab] colorful electrum
+Decla ::= PFEAT7 Decla:x PFEAT7    {: RESULT = x.paint(7);   :}; // [HASLab] colorful electrum
+Decla ::= PFEAT8 Decla:x PFEAT8    {: RESULT = x.paint(8);   :}; // [HASLab] colorful electrum
+Decla ::= PFEAT9 Decla:x PFEAT9    {: RESULT = x.paint(9);   :}; // [HASLab] colorful electrum
+Decla ::= PFEAT0 Decla:x PFEAT0    {: RESULT = x.paint(0);   :}; // [HASLab] colorful electrum
+Decla ::= NFEAT1 Decla:x NFEAT1    {: RESULT = x.paint(-1);  :}; // [HASLab] colorful electrum
+Decla ::= NFEAT2 Decla:x NFEAT2    {: RESULT = x.paint(-2);  :}; // [HASLab] colorful electrum
+Decla ::= NFEAT3 Decla:x NFEAT3    {: RESULT = x.paint(-3);  :}; // [HASLab] colorful electrum
+Decla ::= NFEAT4 Decla:x NFEAT4    {: RESULT = x.paint(-4);  :}; // [HASLab] colorful electrum
+Decla ::= NFEAT5 Decla:x NFEAT5    {: RESULT = x.paint(-5);  :}; // [HASLab] colorful electrum
+Decla ::= NFEAT6 Decla:x NFEAT6    {: RESULT = x.paint(-6);  :}; // [HASLab] colorful electrum
+Decla ::= NFEAT7 Decla:x NFEAT7    {: RESULT = x.paint(-7);  :}; // [HASLab] colorful electrum
+Decla ::= NFEAT8 Decla:x NFEAT8    {: RESULT = x.paint(-8);  :}; // [HASLab] colorful electrum
+Decla ::= NFEAT9 Decla:x NFEAT9    {: RESULT = x.paint(-9);  :}; // [HASLab] colorful electrum
+Decla ::= NFEAT0 Decla:x NFEAT0    {: RESULT = x.paint(-0);  :}; // [HASLab] colorful electrum
 
 Decla ::=           PART:k Names   COLON                 Expr    {: if (1==1) throw CompModule.hint(k, "part");        :};
 Decla ::=           EXH:k  Names   COLON                 Expr    {: if (1==1) throw CompModule.hint(k, "exh");         :};
@@ -1030,6 +1118,28 @@ BaseExpr ::= INTMIN:o                               {: RESULT = ExprConstant.Op.
 BaseExpr ::= INTMAX:o                               {: RESULT = ExprConstant.Op.MAX.make(o, 0);                           :};
 BaseExpr ::= INTNEXT:o                              {: RESULT = ExprConstant.Op.NEXT.make(o, 0);                          :};
 BaseExpr ::= LPAREN Expr:x RPAREN                   {: RESULT = x;                                                        :};
+
+BaseExpr ::= PFEAT1 Expr:x PFEAT1                   {: RESULT = x.paint(1);                                               :}; // [HASLab] colorful electrum
+BaseExpr ::= PFEAT2 Expr:x PFEAT2                   {: RESULT = x.paint(2);                                               :}; // [HASLab] colorful electrum
+BaseExpr ::= PFEAT3 Expr:x PFEAT3                   {: RESULT = x.paint(3);                                               :}; // [HASLab] colorful electrum
+BaseExpr ::= PFEAT4 Expr:x PFEAT4                   {: RESULT = x.paint(4);                                               :}; // [HASLab] colorful electrum
+BaseExpr ::= PFEAT5 Expr:x PFEAT5                   {: RESULT = x.paint(5);                                               :}; // [HASLab] colorful electrum
+BaseExpr ::= PFEAT6 Expr:x PFEAT6                   {: RESULT = x.paint(6);                                               :}; // [HASLab] colorful electrum
+BaseExpr ::= PFEAT7 Expr:x PFEAT7                   {: RESULT = x.paint(7);                                               :}; // [HASLab] colorful electrum
+BaseExpr ::= PFEAT8 Expr:x PFEAT8                   {: RESULT = x.paint(8);                                               :}; // [HASLab] colorful electrum
+BaseExpr ::= PFEAT9 Expr:x PFEAT9                   {: RESULT = x.paint(9);                                               :}; // [HASLab] colorful electrum
+BaseExpr ::= PFEAT0 Expr:x PFEAT0                   {: RESULT = x.paint(0);                                               :}; // [HASLab] colorful electrum
+BaseExpr ::= NFEAT1 Expr:x NFEAT1                   {: RESULT = x.paint(-1);                                              :}; // [HASLab] colorful electrum
+BaseExpr ::= NFEAT2 Expr:x NFEAT2                   {: RESULT = x.paint(-2);                                              :}; // [HASLab] colorful electrum
+BaseExpr ::= NFEAT3 Expr:x NFEAT3                   {: RESULT = x.paint(-3);                                              :}; // [HASLab] colorful electrum
+BaseExpr ::= NFEAT4 Expr:x NFEAT4                   {: RESULT = x.paint(-4);                                              :}; // [HASLab] colorful electrum
+BaseExpr ::= NFEAT5 Expr:x NFEAT5                   {: RESULT = x.paint(-5);                                              :}; // [HASLab] colorful electrum
+BaseExpr ::= NFEAT6 Expr:x NFEAT6                   {: RESULT = x.paint(-6);                                              :}; // [HASLab] colorful electrum
+BaseExpr ::= NFEAT7 Expr:x NFEAT7                   {: RESULT = x.paint(-7);                                              :}; // [HASLab] colorful electrum
+BaseExpr ::= NFEAT8 Expr:x NFEAT8                   {: RESULT = x.paint(-8);                                              :}; // [HASLab] colorful electrum
+BaseExpr ::= NFEAT9 Expr:x NFEAT9                   {: RESULT = x.paint(-9);                                              :}; // [HASLab] colorful electrum
+BaseExpr ::= NFEAT0 Expr:x NFEAT0                   {: RESULT = x.paint(-0);                                              :}; // [HASLab] colorful electrum
+
 BaseExpr ::= SigRef:x                               {: RESULT = x;                                                        :};
 BaseExpr ::= AT:o Name:x                            {: nod(x); RESULT = ExprVar.make(o.merge(x.pos), "@"+x.label);        :};
 BaseExpr ::= Super:x                                {: RESULT = x;                                                        :};
