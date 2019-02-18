@@ -48,9 +48,9 @@ public final class ExprVar extends ExprHasName implements Clause {
     }
 
     /** Constructs an ExprVar object */
-    // [HASLab] colorful electrum
+    // [HASLab] colorful Alloy
     private ExprVar(Pos pos, String label, Type type, Set<Integer> color) {
-        super(pos, label, type, color); // [HASLab] colorful electrum
+        super(pos, label, type, color); // [HASLab] colorful Alloy
     }
 
     /**
@@ -62,7 +62,7 @@ public final class ExprVar extends ExprHasName implements Clause {
      *            pretty-printing and does not have to be unique)
      */
     public static ExprVar make(Pos pos, String label) {
-        return new ExprVar(pos, label, Type.EMPTY, new HashSet<Integer>()); // [HASLab] colorful electrum
+        return new ExprVar(pos, label, Type.EMPTY, new HashSet<Integer>()); // [HASLab] colorful Alloy
     }
 
     /**
@@ -74,7 +74,7 @@ public final class ExprVar extends ExprHasName implements Clause {
      *            pretty-printing and does not have to be unique)
      * @param type - the type
      */
-    // [HASLab] colorful electrum
+    // [HASLab] colorful Alloy
     public static ExprVar make(Pos pos, String label, Type type) {
         return make(pos, label, type, new HashSet<Integer>());
     }
@@ -88,9 +88,9 @@ public final class ExprVar extends ExprHasName implements Clause {
      *            pretty-printing and does not have to be unique)
      * @param type - the type
      */
-    // [HASLab] colorful electrum
+    // [HASLab] colorful Alloy
     public static ExprVar make(Pos pos, String label, Type type, Set<Integer> color) {
-        return new ExprVar(pos, label, type, color); // [HASLab] colorful electrum
+        return new ExprVar(pos, label, type, color); // [HASLab] colorful Alloy
     }
 
     /** {@inheritDoc} */

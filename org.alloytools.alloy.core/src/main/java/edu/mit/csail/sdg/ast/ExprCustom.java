@@ -45,9 +45,9 @@ public abstract class ExprCustom extends Expr {
      * @param pos - the Pos for this expression (can be Pos.UNKNOWN if unknown)
      * @param error - the error to display if this node does not get desugared
      */
-    // [HASLab] colorful electrum
+    // [HASLab] colorful Alloy
     public ExprCustom(Pos pos, Err error, Set<Integer> color) {
-        super(pos, null, false, EMPTY, 0, 0, new JoinableList<Err>(error), color); // [HASLab] colorful electrum
+        super(pos, null, false, EMPTY, 0, 0, new JoinableList<Err>(error), color); // [HASLab] colorful Alloy
         if (error == null)
             throw new NullPointerException();
     }

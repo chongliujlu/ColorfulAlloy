@@ -156,9 +156,9 @@ public final class ExprQt extends Expr {
     // =============================================================================================================//
 
     /** Constructs a new quantified expression. */
-    // [HASLab] colorful electrum
+    // [HASLab] colorful Alloy
     private ExprQt(Pos pos, Pos closingBracket, Op op, Type type, ConstList<Decl> decls, Expr sub, boolean ambiguous, long weight, JoinableList<Err> errs, Set<Integer> color) {
-        super(pos, closingBracket, ambiguous, type, 0, weight, errs, color); // [HASLab] colorful electrum
+        super(pos, closingBracket, ambiguous, type, 0, weight, errs, color); // [HASLab] colorful Alloy
         this.op = op;
         this.decls = decls;
         this.sub = sub;
@@ -204,7 +204,7 @@ public final class ExprQt extends Expr {
          *            a set or relation)
          * @param sub - the body of the expression
          */
-        // [HASLab] colorful electrum
+        // [HASLab] colorful Alloy
         public final Expr make(Pos pos, Pos closingBracket, List<Decl> decls, Expr sub) {
             return make(pos, closingBracket, decls, sub, new HashSet<Integer>());
         }
@@ -220,7 +220,7 @@ public final class ExprQt extends Expr {
          *            a set or relation)
          * @param sub - the body of the expression
          */
-        // [HASLab] colorful electrum
+        // [HASLab] colorful Alloy
         public final Expr make(Pos pos, Pos closingBracket, List<Decl> decls, Expr sub, Set<Integer> color) {
             Type t = this == SUM ? Type.smallIntType() : (this == COMPREHENSION ? Type.EMPTY : Type.FORMULA);
             if (this != SUM)
@@ -277,7 +277,7 @@ public final class ExprQt extends Expr {
                 errs = sub.errors; // if the vars have errors, then the
                                   // subexpression's errors will be too
                                   // confusing, so let's skip them
-            return new ExprQt(pos, closingBracket, this, t, ConstList.make(decls), sub, ambiguous, weight, errs, color); // [HASLab] colorful electrum
+            return new ExprQt(pos, closingBracket, this, t, ConstList.make(decls), sub, ambiguous, weight, errs, color); // [HASLab] colorful Alloy
         }
 
         /** Returns the human readable label for this operator */

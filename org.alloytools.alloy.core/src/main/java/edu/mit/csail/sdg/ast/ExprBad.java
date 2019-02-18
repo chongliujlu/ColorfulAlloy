@@ -59,7 +59,7 @@ public final class ExprBad extends Expr {
 
     /** Constructs an ExprBad object. */
     public ExprBad(Pos pos, String originalText, Err error) {
-        super(pos, null, false, EMPTY, 0, 0, new JoinableList<Err>(error), new HashSet<Integer>()); // [HASLab] colorful electrum
+        super(pos, null, false, EMPTY, 0, 0, new JoinableList<Err>(error), new HashSet<Integer>()); // [HASLab] colorful Alloy
         this.originalText = originalText;
     }
 

@@ -143,8 +143,6 @@ public final class OurConsole extends JScrollPane {
         StyleConstants.setLeftIndent(s, leftIndent);
         StyleConstants.setStrikeThrough(s, strike);
 
-        s.removeAttribute("strike-color"); // [HASLab] colorful electrum, needed?
-
         return s;
     }
 
@@ -152,10 +150,10 @@ public final class OurConsole extends JScrollPane {
      * Helper method that construct a mutable style with the given font name, font
      * size, boldness, color, feature coloring, and left indentation.
      */
-    // [HASLab] colorful electrum
+    // [HASLab] colorful Alloy
     static MutableAttributeSet style(String fontName, int fontSize, boolean boldness, boolean italic, boolean strike, Color color, Set<Color> pos, Set<Color> neg, int leftIndent) {
         MutableAttributeSet s = style(fontName, fontSize, boldness, italic, strike, color, leftIndent);
-        // [HASLab] colorful electrum, mix all positive colors
+        // [HASLab] colorful Alloy, mix all positive colors
         Color bg = new Color(255, 255, 255);
         if (!pos.isEmpty()) {
             int r = 0, g = 0, b = 0;
@@ -169,7 +167,7 @@ public final class OurConsole extends JScrollPane {
         }
         StyleConstants.setBackground(s, bg);
 
-        // [HASLab] colorful electrum, mix all negative colors
+        // [HASLab] colorful Alloy, mix all negative colors
         if (!neg.isEmpty()) {
             int r = 0, g = 0, b = 0;
             for (Color c : neg) {

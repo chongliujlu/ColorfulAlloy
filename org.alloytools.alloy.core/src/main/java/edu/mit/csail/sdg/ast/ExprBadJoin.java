@@ -73,7 +73,7 @@ public final class ExprBadJoin extends Expr {
 
     /** Constructs an ExprBadJoin node. */
     private ExprBadJoin(Pos pos, Pos closingBracket, Expr left, Expr right, JoinableList<Err> errors) {
-        super(pos, closingBracket, (left.ambiguous || right.ambiguous), EMPTY, 0, 0, errors, new HashSet<Integer>()); // [HASLab] colorful electrum
+        super(pos, closingBracket, (left.ambiguous || right.ambiguous), EMPTY, 0, 0, errors, new HashSet<Integer>()); // [HASLab] colorful Alloy
         this.left = left;
         this.right = right;
     }

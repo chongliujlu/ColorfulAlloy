@@ -3677,26 +3677,26 @@ public class CompParser extends java_cup.runtime.lr_parser {
     ch.put(CompSym.ID, "NAME");
     ch.put(CompSym.NUMBER, "NUMBER");
     ch.put(CompSym.STR, "STRING");
-    ch.put(CompSym.PFEAT0,"\u1F10B"); // [HASLab] colorful electrum
-    ch.put(CompSym.PFEAT1,"\u2780" ); // [HASLab] colorful electrum
-    ch.put(CompSym.PFEAT2,"\u2781" ); // [HASLab] colorful electrum
-    ch.put(CompSym.PFEAT3,"\u2782" ); // [HASLab] colorful electrum
-    ch.put(CompSym.PFEAT4,"\u2783" ); // [HASLab] colorful electrum
-    ch.put(CompSym.PFEAT5,"\u2784" ); // [HASLab] colorful electrum
-    ch.put(CompSym.PFEAT6,"\u2785" ); // [HASLab] colorful electrum
-    ch.put(CompSym.PFEAT7,"\u2786" ); // [HASLab] colorful electrum
-    ch.put(CompSym.PFEAT8,"\u2787" ); // [HASLab] colorful electrum
-    ch.put(CompSym.PFEAT9,"\u2788" ); // [HASLab] colorful electrum
-    ch.put(CompSym.NFEAT0,"\u1F10C"); // [HASLab] colorful electrum
-    ch.put(CompSym.NFEAT1,"\u278A" ); // [HASLab] colorful electrum
-    ch.put(CompSym.NFEAT2,"\u278B" ); // [HASLab] colorful electrum
-    ch.put(CompSym.NFEAT3,"\u278C" ); // [HASLab] colorful electrum
-    ch.put(CompSym.NFEAT4,"\u278D" ); // [HASLab] colorful electrum
-    ch.put(CompSym.NFEAT5,"\u278E" ); // [HASLab] colorful electrum
-    ch.put(CompSym.NFEAT6,"\u278F" ); // [HASLab] colorful electrum
-    ch.put(CompSym.NFEAT7,"\u2790" ); // [HASLab] colorful electrum
-    ch.put(CompSym.NFEAT8,"\u2791" ); // [HASLab] colorful electrum
-	ch.put(CompSym.NFEAT9,"\u2792" ); // [HASLab] colorful electrum
+    ch.put(CompSym.PFEAT0,"\u1F10B"); // [HASLab] colorful Alloy
+    ch.put(CompSym.PFEAT1,"\u2780" ); // [HASLab] colorful Alloy
+    ch.put(CompSym.PFEAT2,"\u2781" ); // [HASLab] colorful Alloy
+    ch.put(CompSym.PFEAT3,"\u2782" ); // [HASLab] colorful Alloy
+    ch.put(CompSym.PFEAT4,"\u2783" ); // [HASLab] colorful Alloy
+    ch.put(CompSym.PFEAT5,"\u2784" ); // [HASLab] colorful Alloy
+    ch.put(CompSym.PFEAT6,"\u2785" ); // [HASLab] colorful Alloy
+    ch.put(CompSym.PFEAT7,"\u2786" ); // [HASLab] colorful Alloy
+    ch.put(CompSym.PFEAT8,"\u2787" ); // [HASLab] colorful Alloy
+    ch.put(CompSym.PFEAT9,"\u2788" ); // [HASLab] colorful Alloy
+    ch.put(CompSym.NFEAT0,"\u1F10C"); // [HASLab] colorful Alloy
+    ch.put(CompSym.NFEAT1,"\u278A" ); // [HASLab] colorful Alloy
+    ch.put(CompSym.NFEAT2,"\u278B" ); // [HASLab] colorful Alloy
+    ch.put(CompSym.NFEAT3,"\u278C" ); // [HASLab] colorful Alloy
+    ch.put(CompSym.NFEAT4,"\u278D" ); // [HASLab] colorful Alloy
+    ch.put(CompSym.NFEAT5,"\u278E" ); // [HASLab] colorful Alloy
+    ch.put(CompSym.NFEAT6,"\u278F" ); // [HASLab] colorful Alloy
+    ch.put(CompSym.NFEAT7,"\u2790" ); // [HASLab] colorful Alloy
+    ch.put(CompSym.NFEAT8,"\u2791" ); // [HASLab] colorful Alloy
+	ch.put(CompSym.NFEAT9,"\u2792" ); // [HASLab] colorful Alloy
 	TreeSet<String> list = new TreeSet<String>();
     Pos p=Pos.UNKNOWN;
     if (x!=null && x.value instanceof Pos) p=(Pos)(x.value);
@@ -8417,7 +8417,7 @@ class CUP$CompParser$actions {
 		
    if (e==null) e = ExprConstant.Op.TRUE.make(o, 0);
    ExprVar cc = (c!=null && c.size()>0) ? c.remove(c.size()-1) : null;
-   RESULT = new ArrayList<Sig>(); // [HASLab] colorful electrum
+   RESULT = new ArrayList<Sig>(); // [HASLab] colorful Alloy
    for(ExprVar bb:b) {
       Sig s = parser.alloymodule.addSig(bb.label, cc, c, d, e,
          AttrType.WHERE   .makenull(bb.pos.merge(e==null ? o : e.span())),
@@ -8426,7 +8426,7 @@ class CUP$CompParser$actions {
          AttrType.ONE     .makenull(a.get(2)),
          AttrType.SOME    .makenull(a.get(3)),
          AttrType.PRIVATE .makenull(a.get(4)));
-      RESULT.add(s); // [HASLab] colorful electrum
+      RESULT.add(s); // [HASLab] colorful Alloy
    }
  
               CUP$CompParser$result = parser.getSymbolFactory().newSymbol("Sig",60, ((java_cup.runtime.Symbol)CUP$CompParser$stack.elementAt(CUP$CompParser$top-6)), ((java_cup.runtime.Symbol)CUP$CompParser$stack.peek()), RESULT);

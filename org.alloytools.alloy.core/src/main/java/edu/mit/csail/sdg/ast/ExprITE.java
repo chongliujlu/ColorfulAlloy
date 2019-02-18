@@ -83,9 +83,9 @@ public final class ExprITE extends Expr {
     }
 
     /** Constructs a ExprITE expression. */
-    // [HASLab] colorful electrum
+    // [HASLab] colorful Alloy
     private ExprITE(Pos pos, Expr cond, Expr left, Expr right, Type type, JoinableList<Err> errs, Set<Integer> color) {
-        super(pos, null, (cond.ambiguous || left.ambiguous || (right != null && right.ambiguous)), type, 0, cond.weight + left.weight + (right != null ? right.weight : 0), errs, color); // [HASLab] colorful electrum
+        super(pos, null, (cond.ambiguous || left.ambiguous || (right != null && right.ambiguous)), type, 0, cond.weight + left.weight + (right != null ? right.weight : 0), errs, color); // [HASLab] colorful Alloy
         this.cond = cond;
         this.left = left;
         this.right = right;
@@ -114,7 +114,7 @@ public final class ExprITE extends Expr {
      * @param left - the then-clause
      * @param right - the else-clause
      */
-    // [HASLab] colorful electrum
+    // [HASLab] colorful Alloy
     public static Expr make(Pos pos, Expr cond, Expr left, Expr right) {
         return make(pos, cond, left, right, new HashSet<Integer>());
     }
@@ -126,7 +126,7 @@ public final class ExprITE extends Expr {
      * @param left - the then-clause
      * @param right - the else-clause
      */
-    // [HASLab] colorful electrum
+    // [HASLab] colorful Alloy
     public static Expr make(Pos pos, Expr cond, Expr left, Expr right, Set<Integer> color) {
         JoinableList<Err> errs = emptyListOfErrors;
         if (cond.mult != 0)
@@ -162,7 +162,7 @@ public final class ExprITE extends Expr {
             break;
         }
         cond = cond.typecheck_as_formula();
-        return new ExprITE(pos, cond, left, right, c, errs.make(cond.errors).make(left.errors).make(right.errors), color); // [HASLab] colorful electrum
+        return new ExprITE(pos, cond, left, right, c, errs.make(cond.errors).make(left.errors).make(right.errors), color); // [HASLab] colorful Alloy
     }
 
     /** {@inheritDoc} */
@@ -190,7 +190,7 @@ public final class ExprITE extends Expr {
         Expr cond = this.cond.resolve(Type.FORMULA, warns);
         Expr left = this.left.resolve(a, warns);
         Expr right = this.right.resolve(b, warns);
-        return (cond == this.cond && left == this.left && right == this.right) ? this : make(pos, cond, left, right, color); // [HASLab] colorful electrum
+        return (cond == this.cond && left == this.left && right == this.right) ? this : make(pos, cond, left, right, color); // [HASLab] colorful Alloy
     }
 
     /** {@inheritDoc} */

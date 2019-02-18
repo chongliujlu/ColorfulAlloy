@@ -87,7 +87,7 @@ public final class Decl {
     /**
      * This constructs a declaration; the list of names must not be empty.
      */
-    // [HASLab] colorful electrum
+    // [HASLab] colorful Alloy
     public Decl(Pos isPrivate, Pos disjoint, Pos disjoint2, List< ? extends ExprHasName> names, Expr expr) {
         this(isPrivate, disjoint, disjoint2, names, expr, new HashSet<Integer>());
     }
@@ -95,7 +95,7 @@ public final class Decl {
     /**
      * This constructs a declaration; the list of names must not be empty.
      */
-    // [HASLab] colorful electrum
+    // [HASLab] colorful Alloy
     public Decl(Pos isPrivate, Pos disjoint, Pos disjoint2, List< ? extends ExprHasName> names, Expr expr, Set<Integer> color) {
         if (names.size() == 0)
             throw new NullPointerException();
@@ -104,7 +104,7 @@ public final class Decl {
         this.disjoint2 = disjoint2;
         this.names = ConstList.make(names);
         this.expr = expr;
-        this.color = color; // [HASLab] colorful electrum
+        this.color = color; // [HASLab] colorful Alloy
     }
 
     /** Return the first variable in this declaration. */

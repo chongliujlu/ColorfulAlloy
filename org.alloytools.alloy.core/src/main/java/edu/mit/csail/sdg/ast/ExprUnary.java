@@ -118,9 +118,9 @@ public final class ExprUnary extends Expr {
     // ============================================================================================================//
 
     /** Constructs an unary expression. */
-    // [HASLab] colorful electrum
+    // [HASLab] colorful Alloy
     private ExprUnary(Pos pos, Op op, Expr sub, Type type, long weight, JoinableList<Err> errors, Set<Integer> color) {
-        super(pos, null, sub.ambiguous, type, (op == Op.EXACTLYOF || op == Op.SOMEOF || op == Op.LONEOF || op == Op.ONEOF || op == Op.SETOF) ? 1 : 0, weight, errors, color); // [HASLab] colorful electrum
+        super(pos, null, sub.ambiguous, type, (op == Op.EXACTLYOF || op == Op.SOMEOF || op == Op.LONEOF || op == Op.ONEOF || op == Op.SETOF) ? 1 : 0, weight, errors, color); // [HASLab] colorful Alloy
         this.op = op;
         this.sub = sub;
     }
@@ -210,9 +210,9 @@ public final class ExprUnary extends Expr {
          *            (This desugaring is done by the ExprUnary.Op.make() method, so
          *            ExprUnary's constructor never sees it)
          */
-        // [HASLab] colorful electrum
+        // [HASLab] colorful Alloy
         public final Expr make(Pos pos, Expr sub) {
-            return make(pos, sub, null, 0, new HashSet<Integer>()); // [HASLab] colorful electrum
+            return make(pos, sub, null, 0, new HashSet<Integer>()); // [HASLab] colorful Alloy
         }
 
         /**
@@ -231,9 +231,9 @@ public final class ExprUnary extends Expr {
          *            (This desugaring is done by the ExprUnary.Op.make() method, so
          *            ExprUnary's constructor never sees it)
          */
-        // [HASLab] colorful electrum
+        // [HASLab] colorful Alloy
         public final Expr make(Pos pos, Expr sub, Set<Integer> color) {
-            return make(pos, sub, null, 0, color); // [HASLab] colorful electrum
+            return make(pos, sub, null, 0, color); // [HASLab] colorful Alloy
         }
 
         /**
@@ -254,7 +254,7 @@ public final class ExprUnary extends Expr {
          *            (This desugaring is done by the ExprUnary.Op.make() method, so
          *            ExprUnary's constructor never sees it)
          */
-        // [HASLab] colorful electrum
+        // [HASLab] colorful Alloy
         public final Expr make(Pos pos, Expr sub, Err extraError, long extraWeight) {
             return make(pos, sub, extraError, extraWeight, new HashSet<Integer>());
         }
@@ -277,7 +277,7 @@ public final class ExprUnary extends Expr {
          *            (This desugaring is done by the ExprUnary.Op.make() method, so
          *            ExprUnary's constructor never sees it)
          */
-        // [HASLab] colorful electrum
+        // [HASLab] colorful Alloy
         public final Expr make(Pos pos, Expr sub, Err extraError, long extraWeight, Set<Integer> color) {
             if (pos == null || pos == Pos.UNKNOWN) {
                 if (this == NOOP)
@@ -374,7 +374,7 @@ public final class ExprUnary extends Expr {
                         type = SIGINT.type;
                         break;
                 }
-            return new ExprUnary(pos, this, sub, type, extraWeight + sub.weight, errors.make(extraError), color); // [HASLab] colorful electrum
+            return new ExprUnary(pos, this, sub, type, extraWeight + sub.weight, errors.make(extraError), color); // [HASLab] colorful Alloy
         }
 
         /** Returns the human readable label for this operator */
@@ -438,7 +438,7 @@ public final class ExprUnary extends Expr {
             warns.add(w1);
         if (w2 != null)
             warns.add(w2);
-        return (sub == this.sub) ? this : op.make(pos, sub, null, weight - (this.sub.weight), color); // [HASLab] colorful electrum
+        return (sub == this.sub) ? this : op.make(pos, sub, null, weight - (this.sub.weight), color); // [HASLab] colorful Alloy
     }
 
     // ============================================================================================================//
