@@ -66,6 +66,7 @@ import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Pos;
 import edu.mit.csail.sdg.alloy4.SafeList;
 import edu.mit.csail.sdg.alloy4.Util;
+import edu.mit.csail.sdg.alloy4viz.VizGUI;
 import edu.mit.csail.sdg.ast.Sig.Field;
 import edu.mit.csail.sdg.ast.Sig.PrimSig;
 import edu.mit.csail.sdg.ast.Sig.SubsetSig;
@@ -818,7 +819,7 @@ public abstract class Browsable {
                     }
                     selectedFeature = Feature;
 
-                    //                    VizGUI viz = null;
+                    VizGUI viz = null;
 
                     A4Reporter rep = new A4Reporter() {
 
@@ -872,11 +873,11 @@ public abstract class Browsable {
                             ans.writeXML("alloy_example_output.xml");
                             //
                             // You can then visualize the XML file by calling this:
-                            //                            if (viz == null) {
-                            //                                viz = new VizGUI(false, "alloy_example_output.xml", null);
-                            //                            } else {
-                            //                                viz.loadXML("alloy_example_output.xml", true);
-                            //                            }
+                            if (viz == null) {
+                                viz = new VizGUI(false, "alloy_example_output.xml", null);
+                            } else {
+                                viz.loadXML("alloy_example_output.xml", true);
+                            }
                         }
                     }
                 }
