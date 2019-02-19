@@ -21,15 +21,12 @@ import edu.mit.csail.sdg.alloy4.ErrorSyntax;
 import edu.mit.csail.sdg.alloy4.Pos;
 
 /**
- * Immutable; reresents a scope in a "run" or "check" command.
+ * Immutable; represents a feature scope in a "run" or "check" command.
  * <p>
- * <b>Invariant:</b> sig != null
+ * <b>Invariant:</b> -9 >= feats <= -1 || 1 >= feats <= 9
  * <p>
- * <b>Invariant:</b> endingScope >= startingScope >= 0
- * <p>
- * <b>Invariant:</b> increment > 0
  */
-
+// [HASLab] colorful Alloy
 public class FeatureScope {
 
     /**
@@ -55,6 +52,7 @@ public class FeatureScope {
      * @param feats - the selected features
      * @throws ErrorSyntax if features outside available
      */
+    // this needs additional type checking
     public FeatureScope(Pos pos, boolean isExact, List<Integer> feats) throws ErrorSyntax {
         if (pos == null)
             pos = Pos.UNKNOWN;
