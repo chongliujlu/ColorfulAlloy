@@ -32,6 +32,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.AbstractAction;
 import javax.swing.JPanel;
@@ -141,6 +142,45 @@ public final class OurConsole extends JScrollPane {
         StyleConstants.setForeground(s, color);
         StyleConstants.setLeftIndent(s, leftIndent);
         StyleConstants.setStrikeThrough(s, strike);
+
+        return s;
+    }
+
+    /**
+     * Helper method that construct a mutable style with the given font name, font
+     * size, boldness, color, feature coloring, and left indentation.
+     */
+    // [HASLab] colorful Alloy
+    static MutableAttributeSet style(String fontName, int fontSize, boolean boldness, boolean italic, boolean strike, Color color, Set<Color> pos, Set<Color> neg, int leftIndent) {
+        MutableAttributeSet s = style(fontName, fontSize, boldness, italic, strike, color, leftIndent);
+        // [HASLab] colorful Alloy, mix all positive colors
+        Color bg = new Color(255, 255, 255);
+        if (!pos.isEmpty()) {
+            int r = 0, g = 0, b = 0;
+            for (Color c : pos) {
+                r += c.getRed();
+                g += c.getGreen();
+                b += c.getBlue();
+            }
+            int n = pos.size();
+            bg = new Color(Math.min(r / n, 255), Math.min(g / n, 255), Math.min(b / n, 255));
+        }
+        StyleConstants.setBackground(s, bg);
+
+        // [HASLab] colorful Alloy, mix all negative colors
+        if (!neg.isEmpty()) {
+            int r = 0, g = 0, b = 0;
+            for (Color c : neg) {
+                r += c.getRed();
+                g += c.getGreen();
+                b += c.getBlue();
+            }
+            int n = neg.size();
+            bg = new Color(Math.min(r / n, 255), Math.min(g / n, 255), Math.min(b / n, 255));
+            s.addAttribute("strike-color", bg);
+        } else {
+            s.removeAttribute("strike-color");
+        }
         return s;
     }
 

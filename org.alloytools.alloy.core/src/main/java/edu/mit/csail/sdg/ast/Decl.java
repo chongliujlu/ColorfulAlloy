@@ -15,7 +15,10 @@
 
 package edu.mit.csail.sdg.ast;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import edu.mit.csail.sdg.alloy4.ConstList;
 import edu.mit.csail.sdg.alloy4.Pos;
@@ -25,6 +28,19 @@ import edu.mit.csail.sdg.alloy4.Pos;
  */
 
 public final class Decl {
+
+    // [HASLab] colorful Alloy
+    public Set<Integer> color = new HashSet<Integer>();
+
+    // [HASLab] colorful Alloy
+    public void paint(int c) {
+        color.add(c);
+    }
+
+    // [HASLab] colorful Alloy
+    public void paint(Collection<Integer> c) {
+        color.addAll(c);
+    }
 
     /**
      * If nonnull, then this decl is private (and this.isPrivate is the location of
@@ -71,7 +87,16 @@ public final class Decl {
     /**
      * This constructs a declaration; the list of names must not be empty.
      */
+    // [HASLab] colorful Alloy
     public Decl(Pos isPrivate, Pos disjoint, Pos disjoint2, List< ? extends ExprHasName> names, Expr expr) {
+        this(isPrivate, disjoint, disjoint2, names, expr, new HashSet<Integer>());
+    }
+
+    /**
+     * This constructs a declaration; the list of names must not be empty.
+     */
+    // [HASLab] colorful Alloy
+    public Decl(Pos isPrivate, Pos disjoint, Pos disjoint2, List< ? extends ExprHasName> names, Expr expr, Set<Integer> color) {
         if (names.size() == 0)
             throw new NullPointerException();
         this.isPrivate = isPrivate;
@@ -79,6 +104,7 @@ public final class Decl {
         this.disjoint2 = disjoint2;
         this.names = ConstList.make(names);
         this.expr = expr;
+        this.color = color; // [HASLab] colorful Alloy
     }
 
     /** Return the first variable in this declaration. */

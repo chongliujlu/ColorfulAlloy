@@ -21,7 +21,10 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,10 +50,13 @@ class OurSyntaxDocument extends DefaultStyledDocument {
     private static final long               serialVersionUID = 0;
 
     /**
-     * The "comment mode" at the start of each line (0 = no comment) (1 = block
-     * comment) (2 = javadoc comment) (-1 = unknown)
+     * The style mode at the start of each line. First field is "comment mode" (0 =
+     * no comment) (1 = block comment) (2 = javadoc comment) (-1 = unknown).
+     * Remainder are colorful features (0 = not marked) (1 = positive mark) (2 =
+     * negative mark) (-1 = unknown).
      */
-    private final List<Mode>                comments         = new ArrayList<>();
+    // [HASLab] colorful Alloy, adapted to also consider features
+    private final List<List<Mode>>          comments         = new ArrayList<List<Mode>>();
 
     /**
      * Whether syntax highlighting is currently enabled or not.
@@ -78,11 +84,19 @@ class OurSyntaxDocument extends DefaultStyledDocument {
         all.add(styleNormal);
     }
 
+    private final MutableAttributeSet styleNormal(List<Mode> n) {
+        return style(font, fontSize, false, false, false, Color.BLACK, getPos(n), getNeg(n), 0);
+    } // [HASLab] colorful Alloy
+
     /** The character style for symbols. */
     private final MutableAttributeSet styleSymbol = style(font, fontSize, true, false, false, Color.BLACK, 0);
     {
         all.add(styleSymbol);
     }
+
+    private final MutableAttributeSet styleSymbol(List<Mode> n) {
+        return style(font, fontSize, true, false, false, Color.BLACK, getPos(n), getNeg(n), 0);
+    } // [HASLab] colorful Alloy
 
     /** The character style for YAML header bars. */
     private final MutableAttributeSet yamlHeaderBars = style(font, fontSize, false, false, false, new Color(0xD86556), 0);
@@ -139,16 +153,60 @@ class OurSyntaxDocument extends DefaultStyledDocument {
         all.add(styleNumber);
     }
 
+    private final MutableAttributeSet styleNumber(List<Mode> n) {
+        return style(font, fontSize, true, false, false, new Color(0xA80A0A), getPos(n), getNeg(n), 0);
+    } // [HASLab] colorful Alloy
+
     /** The character style for keywords. */
     private final MutableAttributeSet styleKeyword = style(font, fontSize, true, false, false, new Color(0x1E1EA8), 0);
     {
         all.add(styleKeyword);
     }
 
+    private final MutableAttributeSet styleKeyword(List<Mode> n) {
+        return style(font, fontSize, true, false, false, new Color(0x1E1EA8), getPos(n), getNeg(n), 0);
+    } // [HASLab] colorful Alloy
+
     /** The character style for string literals. */
     private final MutableAttributeSet styleString = style(font, fontSize, false, false, false, new Color(0xA80AA8), 0);
     {
         all.add(styleString);
+    }
+
+    private final MutableAttributeSet styleString(List<Mode> n) {
+        return style(font, fontSize, false, false, false, new Color(0xA80AA8), getPos(n), getNeg(n), 0);
+    } // [HASLab] colorful Alloy
+
+    /** The character style for featured text. */
+    // [HASLab] colorful Alloy
+    private final MutableAttributeSet styleColorMark(List<Mode> n, Color c) {
+        return style(font, fontSize, true, false, false, new Color(c.getRed() - 41, c.getGreen() - 41, c.getBlue() - 41), getPos(n), getNeg(n), 0);
+    }
+
+    /** The colors of each of the features. */
+    // [HASLab] colorful Alloy
+    static Color C[] = {
+                        new Color(255, 225, 205), new Color(255, 205, 225), new Color(205, 255, 225), new Color(225, 255, 205), new Color(225, 205, 255), new Color(205, 225, 255), new Color(225, 255, 225), new Color(225, 225, 255), new Color(255, 225, 225)
+    };
+
+    /** Convert the list of positive features (1) into a list of colors. */
+    // [HASLab] colorful Alloy
+    private static Set<Color> getPos(List<Mode> n) {
+        Set<Color> res = new HashSet<Color>();
+        for (int i = 1; i <= 9; i++)
+            if (n.contains(Mode.valueOf("PFEAT" + i)))
+                res.add(C[i - 1]);
+        return res;
+    }
+
+    /** Convert the list of negative features (2) into a list of colors. */
+    // [HASLab] colorful Alloy
+    private static Set<Color> getNeg(List<Mode> n) {
+        Set<Color> res = new HashSet<Color>();
+        for (int i = 1; i <= 9; i++)
+            if (n.contains(Mode.valueOf("NFEAT" + i)))
+                res.add(C[i - 1]);
+        return res;
     }
 
     /**
@@ -206,6 +264,22 @@ class OurSyntaxDocument extends DefaultStyledDocument {
      */
     private static final boolean do_iden(char c) {
         return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '$' || (c >= '0' && c <= '9') || c == '_' || c == '\'' || c == '\"';
+    }
+
+    /** The first positive/negative color feature delimiters. */
+    // [HASLab] colorful Alloy
+    public static char O1 = '\u2780', E1 = '\u278A';
+
+    /** Whether a positive color feature delimiter. */
+    // [HASLab] colorful Alloy
+    private static final boolean isPositiveColor(char c) {
+        return (c >= O1 && c <= (char) (O1 + 8));
+    }
+
+    /** Whether a negative color feature delimiter. */
+    // [HASLab] colorful Alloy
+    private static final boolean isNegativeColor(char c) {
+        return (c >= E1 && c <= (char) (E1 + 8));
     }
 
     /** Constructor. */
@@ -300,7 +374,7 @@ class OurSyntaxDocument extends DefaultStyledDocument {
                                                    // in "comments" array down
             if (string.charAt(i) == '\n') {
                 if (startLine < comments.size() - 1)
-                    comments.add(startLine + 1, Mode.NONE);
+                    comments.add(startLine + 1, new ArrayList<Mode>(Arrays.asList(Mode.NONE))); // [HASLab] colorful Alloy
             }
         }
         super.insertString(offset, string, styleNormal);
@@ -356,14 +430,14 @@ class OurSyntaxDocument extends DefaultStyledDocument {
     private final void do_update(int line) throws BadLocationException {
         String content = toString();
         int lineCount = do_getLineCount();
-        while (line > 0 && (line >= comments.size() || comments.get(line) == Mode.NONE))
+        while (line > 0 && (line >= comments.size() || comments.get(line).contains(Mode.NONE))) // [HASLab] colorful Alloy
             line--; // "-1" in comments array are always contiguous
-        Mode comment = do_reapply(line == 0 ? Mode.ALLOY : comments.get(line), content, line);
+        List<Mode> comment = do_reapply(line == 0 ? new ArrayList<Mode>(Arrays.asList(Mode.ALLOY)) : comments.get(line), content, line); // [HASLab] colorful Alloy
         for (line++; line < lineCount; line++) { // update each subsequent line
                                                 // until it already starts
                                                 // with its expected comment
                                                 // mode
-            if (line < comments.size() && comments.get(line) == comment)
+            if (line < comments.size() && comments.get(line).containsAll(comment) && comment.containsAll(comments.get(line)))
                 break;
             else
                 comment = do_reapply(comment, content, line);
@@ -381,48 +455,70 @@ class OurSyntaxDocument extends DefaultStyledDocument {
                BLOCK_COMMENT,
                LINE_COMMENT,
                YAML,
-               MARKDOWN;
+               MARKDOWN,
+               // [HASLab] colorful Alloy, feature modes
+               PFEAT1,
+               PFEAT2,
+               PFEAT3,
+               PFEAT4,
+               PFEAT5,
+               PFEAT6,
+               PFEAT7,
+               PFEAT8,
+               PFEAT9,
+               NFEAT1,
+               NFEAT2,
+               NFEAT3,
+               NFEAT4,
+               NFEAT5,
+               NFEAT6,
+               NFEAT7,
+               NFEAT8,
+               NFEAT9;
     }
 
-    private final Mode do_reapply(Mode mode, final String txt, final int line) {
+    // [HASLab] colorful Alloy, list of color modes rather than single comment mode
+    private final List<Mode> do_reapply(List<Mode> mode, final String txt, final int line) {
+        // [HASLab] color modes
         while (line >= comments.size())
-            comments.add(Mode.NONE); // enlarge array if needed
+            comments.add(new ArrayList<Mode>(Arrays.asList(Mode.NONE))); // enlarge array if needed
 
-        comments.set(line, mode); // record the fact that this line starts
-                                 // with the given comment mode
+        // [HASLab] colorful Alloy, must clone list
+        comments.set(line, new ArrayList<Mode>(mode)); // record the fact that this line starts
+        // with the given comment mode
         int startOfLine = do_getLineStartOffset(line);
         int endOfLine = txt.indexOf('\n', startOfLine);
 
-        if (mode == Mode.ALLOY && line == 0 && match(txt, 0, "---\n")) {
+        if (mode.contains(Mode.ALLOY) && line == 0 && match(txt, 0, "---\n")) {
             setCharacterAttributes(startOfLine, 4, yamlHeaderBars, false);
-            return Mode.YAML;
+            return new ArrayList<Mode>(Arrays.asList(Mode.YAML));
         }
 
-        if (mode == Mode.YAML) {
+        if (mode.contains(Mode.YAML)) {
             if (match(txt, startOfLine, "---\n")) {
                 setCharacterAttributes(startOfLine, 4, yamlHeaderBars, false);
-                return Mode.MARKDOWN;
+                return new ArrayList<Mode>(Arrays.asList(Mode.MARKDOWN));
             } else {
                 setCharacterAttributes(startOfLine, endOfLine - startOfLine, yamlHeaderLines, false);
-                return Mode.YAML;
+                return new ArrayList<Mode>(Arrays.asList(Mode.YAML));
             }
         }
 
-        if (mode == Mode.MARKDOWN) {
+        if (mode.contains(Mode.MARKDOWN)) {
             if (match(txt, startOfLine, "```alloy\n")) {
                 setCharacterAttributes(startOfLine, endOfLine - startOfLine, alloyMarker, false);
-                return Mode.ALLOY;
+                return new ArrayList<Mode>(Arrays.asList(Mode.ALLOY));
             }
         }
 
-        if (mode == Mode.ALLOY) {
+        if (mode.contains(Mode.ALLOY)) {
             if (match(txt, startOfLine, "```\n")) {
                 setCharacterAttributes(startOfLine, endOfLine - startOfLine, alloyMarker, false);
-                return Mode.MARKDOWN;
+                return new ArrayList<Mode>(Arrays.asList(Mode.MARKDOWN));
             }
         }
 
-        if (mode == Mode.MARKDOWN) {
+        if (mode.contains(Mode.MARKDOWN)) {
             if (match(txt, startOfLine, "###")) {
                 setCharacterAttributes(startOfLine, endOfLine - startOfLine, styleHead3, false);
             } else if (match(txt, startOfLine, "##")) {
@@ -460,7 +556,7 @@ class OurSyntaxDocument extends DefaultStyledDocument {
                     }
                 }
             }
-            return Mode.MARKDOWN;
+            return new ArrayList<Mode>(Arrays.asList(Mode.MARKDOWN));
         }
 
         for (int n = txt.length(), i = startOfLine; i < n;) {
@@ -470,22 +566,22 @@ class OurSyntaxDocument extends DefaultStyledDocument {
             if (c == '\n')
                 break;
 
-            if (mode == Mode.ALLOY && c == '/' && i < n - 3 && txt.charAt(i + 1) == '*' && txt.charAt(i + 2) == '*' && txt.charAt(i + 3) != '/')
-                mode = Mode.LINE_COMMENT;
-            if (mode == Mode.ALLOY && c == '/' && i == n - 3 && txt.charAt(i + 1) == '*' && txt.charAt(i + 2) == '*')
-                mode = Mode.LINE_COMMENT;
-            if (mode == Mode.ALLOY && c == '/' && i < n - 1 && txt.charAt(i + 1) == '*') {
-                mode = Mode.BLOCK_COMMENT;
+            if (mode.contains(Mode.ALLOY) && c == '/' && i < n - 3 && txt.charAt(i + 1) == '*' && txt.charAt(i + 2) == '*' && txt.charAt(i + 3) != '/')
+                mode = new ArrayList<Mode>(Arrays.asList(Mode.LINE_COMMENT));
+            if (mode.contains(Mode.ALLOY) && c == '/' && i == n - 3 && txt.charAt(i + 1) == '*' && txt.charAt(i + 2) == '*')
+                mode = new ArrayList<Mode>(Arrays.asList(Mode.LINE_COMMENT));
+            if (mode.contains(Mode.ALLOY) && c == '/' && i < n - 1 && txt.charAt(i + 1) == '*') {
+                mode = new ArrayList<Mode>(Arrays.asList(Mode.BLOCK_COMMENT));
                 i = i + 2;
             }
 
-            if (mode != Mode.ALLOY) {
-                AttributeSet style = (mode == Mode.BLOCK_COMMENT ? styleBlock : styleJavadoc);
+            if (!mode.contains(Mode.ALLOY)) {
+                AttributeSet style = (mode.contains(Mode.BLOCK_COMMENT) ? styleBlock : styleJavadoc);
                 while (i < n && txt.charAt(i) != '\n' && (txt.charAt(i) != '*' || i + 1 == n || txt.charAt(i + 1) != '/'))
                     i = i + 1;
                 if (i < n - 1 && txt.charAt(i) == '*' && txt.charAt(i + 1) == '/') {
                     i = i + 2;
-                    mode = Mode.ALLOY;
+                    mode = new ArrayList<Mode>(Arrays.asList(Mode.ALLOY));
                 }
                 setCharacterAttributes(oldi, i - oldi, style, false);
             } else if ((c == '/' || c == '-') && i < n - 1 && txt.charAt(i + 1) == c) {
@@ -503,17 +599,39 @@ class OurSyntaxDocument extends DefaultStyledDocument {
                     if (txt.charAt(i) == '\\' && i + 1 < n && txt.charAt(i + 1) != '\n')
                         i++;
                 }
-                setCharacterAttributes(oldi, i - oldi, styleString, false);
+                setCharacterAttributes(oldi, i - oldi, styleString(mode), true); // [HASLab] colorful Alloy, must force update for strikes
+            } else if (isNegativeColor(c) || isPositiveColor(c)) { // [HASLab] colorful Alloy, check for delimiters and change style mode
+                i++;
+                boolean opens = true;
+                // if already with style, invert
+                if (isPositiveColor(c) && mode.contains(Mode.valueOf("PFEAT" + (c - O1 + 1)))) {
+                    mode.remove(Mode.valueOf("PFEAT" + (c - O1 + 1)));
+                    opens = false;
+                } else if (isNegativeColor(c) && mode.contains(Mode.valueOf("NFEAT" + (c - E1 + 1)))) {
+                    mode.remove(Mode.valueOf("NFEAT" + (c - E1 + 1)));
+                    opens = false;
+                }
+                for (int k = 0; k < 9; k++) // paint the delimiters
+                    if (c == (char) (O1 + k) || c == (char) (E1 + k))
+                        setCharacterAttributes(oldi, i - oldi, styleColorMark(mode, C[k]), true);
+                // if not in style, apply
+                if (opens && isPositiveColor(c) && !mode.contains(Mode.valueOf("PFEAT" + (c - O1 + 1)))) {
+                    mode.add(Mode.valueOf("PFEAT" + (c - O1 + 1)));
+                } else if (opens && isNegativeColor(c) && !mode.contains(Mode.valueOf("NFEAT" + (c - E1 + 1)))) {
+                    mode.add(Mode.valueOf("NFEAT" + (c - E1 + 1)));
+                }
+
             } else if (do_iden(c)) {
                 for (i++; i < n && do_iden(txt.charAt(i)); i++) {}
-                AttributeSet style = (c >= '0' && c <= '9') ? styleNumber : (do_keyword(txt, oldi, i - oldi) ? styleKeyword : styleNormal);
-                setCharacterAttributes(oldi, i - oldi, style, false);
+                AttributeSet style = (c >= '0' && c <= '9') ? styleNumber(mode) : (do_keyword(txt, oldi, i - oldi) ? styleKeyword(mode) : styleNormal(mode));
+                setCharacterAttributes(oldi, i - oldi, style, true); // [HASLab] colorful Alloy, must force update for strikes
             } else {
-                for (i++; i < n && !do_iden(txt.charAt(i)) && txt.charAt(i) != '\n' && txt.charAt(i) != '-' && txt.charAt(i) != '/'; i++) {}
-                setCharacterAttributes(oldi, i - oldi, styleSymbol, false);
+                for (i++; i < n && !do_iden(txt.charAt(i)) && txt.charAt(i) != '\n' && txt.charAt(i) != '-' && txt.charAt(i) != '/' && !isPositiveColor(txt.charAt(i)) && !isNegativeColor(txt.charAt(i)); i++) {}  // [HASLab] colorful Alloy, do not ignore color marks
+                setCharacterAttributes(oldi, i - oldi, styleSymbol(mode), true); // [HASLab] colorful Alloy, must force update for strikes
             }
         }
         return mode;
+
     }
 
     private boolean match(String source, int startIndex, String find) {
@@ -532,9 +650,9 @@ class OurSyntaxDocument extends DefaultStyledDocument {
         setCharacterAttributes(0, getLength(), styleNormal, true);
         comments.clear();
         String content = toString();
-        Mode mode = Mode.ALLOY;
+        List<Mode> mode = new ArrayList<Mode>(Arrays.asList(Mode.ALLOY)); // [HASLab] colorful Alloy
         for (int i = 0, n = do_getLineCount(); i < n; i++)
-            mode = do_reapply(mode, content, i);
+            mode = do_reapply(mode, content, i); // [HASLab] colorful Alloy
     }
 
     /** Changes the font and tabsize for the document. */

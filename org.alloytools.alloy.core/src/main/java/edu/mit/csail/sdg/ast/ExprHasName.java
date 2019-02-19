@@ -15,6 +15,8 @@
 
 package edu.mit.csail.sdg.ast;
 
+import java.util.Set;
+
 import edu.mit.csail.sdg.alloy4.Pos;
 
 /**
@@ -31,8 +33,9 @@ public abstract class ExprHasName extends Expr {
     public final String label;
 
     /** Constructs an ExprHasName object */
-    ExprHasName(Pos pos, String label, Type type) {
-        super(pos, null, false, type, 0, 0, null);
+    // [HASLab] colorful Alloy
+    ExprHasName(Pos pos, String label, Type type, Set<Integer> color) {
+        super(pos, null, false, type, 0, 0, null, color); // [HASLab] colorful Alloy
         this.label = (label == null ? "" : label);
     }
 
