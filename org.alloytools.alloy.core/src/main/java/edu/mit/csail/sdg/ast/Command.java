@@ -95,6 +95,10 @@ public final class Command extends Browsable {
     /** The list of scopes. */
     public final ConstList<CommandScope> scope;
 
+    /** The feature scopes. */
+    // [HASLab] colorful alloy
+    public final FeatureScope            feats;
+
     /**
      * This stores a list of Sig whose scope shall be considered "exact", but we may
      * or may not know what its scope is yet.
@@ -152,7 +156,7 @@ public final class Command extends Browsable {
      * @param formula - the formula that must be satisfied by this command
      */
     public Command(boolean check, int overall, int bitwidth, int maxseq, Expr formula) throws ErrorSyntax {
-        this(null, null, "", check, overall, bitwidth, maxseq, -1, null, null, formula, null);
+        this(null, null, "", check, overall, bitwidth, maxseq, -1, null, null, null, formula, null);
     }
 
     /**
@@ -175,7 +179,8 @@ public final class Command extends Browsable {
      *            exact though we may or may not know what the scope is yet
      * @param formula - the formula that must be satisfied by this command
      */
-    public Command(Pos pos, Expr e, String label, boolean check, int overall, int bitwidth, int maxseq, int expects, Iterable<CommandScope> scope, Iterable<Sig> additionalExactSig, Expr formula, Command parent) {
+    // [HASLab] colorful Alloy
+    public Command(Pos pos, Expr e, String label, boolean check, int overall, int bitwidth, int maxseq, int expects, Iterable<CommandScope> scope, FeatureScope feats, Iterable<Sig> additionalExactSig, Expr formula, Command parent) {
         if (pos == null)
             pos = Pos.UNKNOWN;
         this.nameExpr = e;
@@ -189,6 +194,7 @@ public final class Command extends Browsable {
         this.maxstring = (-1);
         this.expects = (expects < 0 ? -1 : (expects > 0 ? 1 : 0));
         this.scope = ConstList.make(scope);
+        this.feats = feats; // [HASLab] colorful Alloy
         this.additionalExactScopes = ConstList.make(additionalExactSig);
         this.parent = parent;
     }
@@ -198,7 +204,7 @@ public final class Command extends Browsable {
      * except with a different formula.
      */
     public Command change(Expr newFormula) {
-        return new Command(pos, nameExpr, label, check, overall, bitwidth, maxseq, expects, scope, additionalExactScopes, newFormula, parent);
+        return new Command(pos, nameExpr, label, check, overall, bitwidth, maxseq, expects, scope, feats, additionalExactScopes, newFormula, parent);
     }
 
     /**
@@ -206,7 +212,7 @@ public final class Command extends Browsable {
      * except with a different scope.
      */
     public Command change(ConstList<CommandScope> scope) {
-        return new Command(pos, nameExpr, label, check, overall, bitwidth, maxseq, expects, scope, additionalExactScopes, formula, parent);
+        return new Command(pos, nameExpr, label, check, overall, bitwidth, maxseq, expects, scope, feats, additionalExactScopes, formula, parent);
     }
 
     /**
@@ -214,7 +220,7 @@ public final class Command extends Browsable {
      * except with a different list of "additional exact sigs".
      */
     public Command change(Sig... additionalExactScopes) {
-        return new Command(pos, nameExpr, label, check, overall, bitwidth, maxseq, expects, scope, Util.asList(additionalExactScopes), formula, parent);
+        return new Command(pos, nameExpr, label, check, overall, bitwidth, maxseq, expects, scope, feats, Util.asList(additionalExactScopes), formula, parent);
     }
 
     /**
