@@ -448,7 +448,7 @@ public final class CompModule extends Browsable implements Module {
             TempList<Expr> temp = new TempList<Expr>(x.args.size());
             for (int i = 0; i < x.args.size(); i++)
                 temp.add(visitThis(x.args.get(i)));
-            return ExprList.make(x.pos, x.closingBracket, x.op, temp.makeConst(),x.color);  // [HASLab] colorful Alloy
+            return ExprList.make(x.pos, x.closingBracket, x.op, temp.makeConst());
         }
 
         /** {@inheritDoc} */
@@ -457,7 +457,7 @@ public final class CompModule extends Browsable implements Module {
             Expr f = visitThis(x.cond);
             Expr a = visitThis(x.left);
             Expr b = visitThis(x.right);
-            return ExprITE.make(x.pos, f, a, b,x.color);  // [HASLab] colorful Alloy
+            return ExprITE.make(x.pos, f, a, b);
         }
 
         /** {@inheritDoc} */
@@ -496,7 +496,7 @@ public final class CompModule extends Browsable implements Module {
                     return x.op.make(x.pos, x.closingBracket, left, right);
                 return process(x.pos, x.closingBracket, right.pos, ((ExprChoice) right).choices, ((ExprChoice) right).reasons, left);
             }
-            return x.op.make(x.pos, x.closingBracket, left, right,x.color);  // [HASLab] colorful Alloy
+            return x.op.make(x.pos, x.closingBracket, left, right);
         }
 
         /** {@inheritDoc} */
@@ -508,7 +508,7 @@ public final class CompModule extends Browsable implements Module {
             put(left.label, left);
             Expr sub = visitThis(x.sub);
             remove(left.label);
-            return ExprLet.make(x.pos, left, right, sub,x.color);  // [HASLab] colorful Alloy
+            return ExprLet.make(x.pos, left, right, sub);
         }
 
         private boolean isOneOf(Expr x) {
@@ -587,8 +587,8 @@ public final class CompModule extends Browsable implements Module {
                 // typechecking when we see "all x:field$" or "some x:field$"
                 TempList<ExprVar> n = new TempList<ExprVar>(d.names.size());
                 for (ExprHasName v : d.names)
-                    n.add(ExprVar.make(v.pos, v.label, exp.type(),d.color));  // [HASLab] colorful Alloy
-                Decl dd = new Decl(d.isPrivate, d.disjoint, d.disjoint2, n.makeConst(), exp,d.color);  // [HASLab] colorful Alloy
+                    n.add(ExprVar.make(v.pos, v.label, exp.type()));
+                Decl dd = new Decl(d.isPrivate, d.disjoint, d.disjoint2, n.makeConst(), exp);
                 for (ExprHasName newname : dd.names)
                     put(newname.label, newname);
                 decls.add(dd);
@@ -601,14 +601,13 @@ public final class CompModule extends Browsable implements Module {
             for (Decl d : decls.makeConst())
                 for (ExprHasName v : d.names)
                     remove(v.label);
-            return x.op.make(x.pos, x.closingBracket, decls.makeConst(), sub,x.color);  // [HASLab] colorful Alloy
+            return x.op.make(x.pos, x.closingBracket, decls.makeConst(), sub);
         }
 
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprVar x) throws Err {
             Expr obj = resolve(x.pos, x.label);
-            obj.paint(x.color); // [HASLab] colorful Alloy
             if (obj instanceof Macro) {
                 Macro macro = ((Macro) obj).copy();
                 Expr instantiated = macro.instantiate(this, warns);
@@ -633,7 +632,7 @@ public final class CompModule extends Browsable implements Module {
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprUnary x) throws Err {
-            return x.op.make(x.pos, visitThis(x.sub),x.color);// [HASLab] colorful Alloy
+            return x.op.make(x.pos, visitThis(x.sub));
         }
 
         /** {@inheritDoc} */
@@ -1502,7 +1501,7 @@ public final class CompModule extends Browsable implements Module {
                     throw new ErrorSyntax(n.pos, "The sig \"" + n.label + "\" cannot be found.");
                 parents.add(resolveSig(res, topo, parentAST));
             }
-            realSig = new SubsetSig(fullname, parents, oldS.color,oldS.attributes.toArray(new Attr[0])); // [HASLab] colorful Alloy
+            realSig = new SubsetSig(fullname, parents, oldS.attributes.toArray(new Attr[0]));
         } else {
             Sig sup = ((PrimSig) oldS).parent;
             Sig parentAST = u.getRawSIG(sup.pos, sup.label);
@@ -1512,7 +1511,7 @@ public final class CompModule extends Browsable implements Module {
             if (!(parent instanceof PrimSig))
                 throw new ErrorSyntax(sup.pos, "Cannot extend the subset signature \"" + parent + "\".\n" + "A signature can only extend a toplevel signature or a subsignature.");
             PrimSig p = (PrimSig) parent;
-            realSig = new PrimSig(fullname, p, oldS.color,oldS.attributes.toArray(new Attr[0])); // [HASLab] colorful Alloy
+            realSig = new PrimSig(fullname, p, oldS.attributes.toArray(new Attr[0]));
         }
         res.new2old.put(realSig, oldS);
         res.sig2module.put(realSig, u);
@@ -1991,7 +1990,7 @@ public final class CompModule extends Browsable implements Module {
             String[] names = new String[d.names.size()];
             for (int i = 0; i < names.length; i++)
                 names[i] = d.names.get(i).label;
-            Field[] fields = s.addTrickyField(d.span(), d.isPrivate, d.disjoint, d.disjoint2, null, names, bound,d.color);// [HASLab] colorful Alloy
+            Field[] fields = s.addTrickyField(d.span(), d.isPrivate, d.disjoint, d.disjoint2, null, names, bound);
             for (Field f : fields) {
                 rep.typecheck("Sig " + s + ", Field " + f.label + ": " + f.type() + "\n");
             }

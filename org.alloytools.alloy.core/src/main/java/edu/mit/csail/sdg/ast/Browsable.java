@@ -44,11 +44,11 @@ import edu.mit.csail.sdg.alloy4viz.*;
 public abstract class Browsable {
 
     // [HASLab] colorful Alloy
-   // public Set<Integer> color = new HashSet<Integer>();
+    public Set<Integer> color = new HashSet<Integer>();
     // [HASLab] colorful Alloy
-    //public Browsable paint(int c) {color.add(c);return this;}
+    public Browsable paint(int c) {color.add(c);return this;}
     // [HASLab] colorful Alloy
-    //public Browsable paint(Collection<Integer> c) {color.addAll(c);return this;}
+    public Browsable paint(Collection<Integer> c) {color.addAll(c);return this;}
 
     Set <Integer >selectedFeature= new HashSet<>();
     // store new sigs
@@ -228,11 +228,232 @@ public abstract class Browsable {
         x = new JFrame("Parse Tree");
 
 
-
+        JButton Cancelfeature1=new JButton("Cancel F1");
+        JButton CancelnegFeature1=new JButton("Cancel NF1");
+        JButton Cancelfeature2=new JButton("Cancel F2");
+        JButton CancelnegFeature2=new JButton("Cancel NF2");
         //layout setting
         JSplitPane verticalPane;
         JPanel topPane;
         JSplitPane bottomPane;
+
+//feature button
+        JButton feature1=new JButton("F1");
+        feature1.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                //get selected node in AST tree
+                TreePath path = tree.getSelectionPath();
+                Object selectedNode= tree.getLastSelectedPathComponent();
+                if (selectedNode instanceof Expr){
+                    ((Expr) selectedNode).paint(1);
+
+                    textLabel.setText("\r\n "+ ((Expr) selectedNode).toString()+ ":  " +((Expr) selectedNode).color);
+
+
+                    x.repaint();
+
+                }else if (selectedNode instanceof Browsable &&
+                        //Field selected
+                        (root.find(((Browsable) selectedNode).pos())) instanceof Field){
+
+                    for(Field f:fields){
+                        if(f.pos.equals(((Browsable) selectedNode).pos()))
+                        {f.paint(1);
+                            break;
+                        }
+                    }
+
+                    textLabel.setText("\r\n"+ selectedNode.toString() +" : "+((Browsable) selectedNode).color);
+
+                    x.repaint();
+                }
+
+            }
+        });
+
+        Cancelfeature1.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                Object selectedNode= tree.getLastSelectedPathComponent();
+                Browsable newNode= (Browsable) selectedNode;
+                    newNode.color.remove(1);
+
+                    x.repaint();
+
+                }
+
+
+
+
+/*
+                if (mapExprToFeatures.containsKey(pNode) && mapExprToFeatures.get(pNode).a.contains(feature1.getText())){
+
+                        textLabel.setText(" Can not cancel F1, Please cancel parent node first!");
+                        x.repaint();
+                }else if (mapExprToFeatures.containsKey(newNode) && mapExprToFeatures.get(newNode).a.contains(feature1.getText())){
+
+                       mapExprToFeatures.get(newNode).a.remove(feature1.getText());
+
+                        //send Event to text editor for cancel painting (mark the corresponding color to Expr)
+                        listeners.add(listener);
+                        listeners.fire(Cancelfeature1, Listener.Event.CLICK, path.getLastPathComponent());
+                    }
+
+                else
+
+                    {
+                textLabel.setText(" F1 not marked!");
+                x.repaint();
+
+                }*/
+
+
+
+        });
+
+
+        JButton negFeature1= new JButton("NegaFeature 1");
+        negFeature1.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Object selectedNode= tree.getLastSelectedPathComponent();
+                if(selectedNode instanceof Expr){
+                    ((Expr) selectedNode).paint(-1);
+
+                    x.repaint();
+                }else if (selectedNode instanceof Browsable &&
+                        //Field selected
+                        (root.find(((Browsable) selectedNode).pos())) instanceof Field){
+                    for(Field f:fields){
+                        if(f.pos.equals(((Browsable) selectedNode).pos()))
+                        {f.paint(-1);
+                            break;
+                        }
+
+                    }
+                    x.repaint();
+                }
+            }
+        });
+
+
+
+
+        //feature button
+        JButton feature2= new JButton("F2");
+        feature2.addActionListener(new ActionListener() {
+            Listeners listeners = new Listeners();
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Object selectedNode= tree.getLastSelectedPathComponent();
+
+                if(selectedNode instanceof Expr){
+                    ((Expr) selectedNode).paint(2);
+                }else if (selectedNode instanceof Browsable &&
+                        //Field selected
+                        (root.find(((Browsable) selectedNode).pos())) instanceof Field){
+                    for(Field f:fields){
+                        if(f.pos.equals(((Browsable) selectedNode).pos()))
+                        {f.paint(2);
+                            break;
+                        }
+
+                    }
+                }
+
+                textLabel.setText("\r\n"+"  :" +selectedNode.toString()+" : "+ ((Browsable) selectedNode).color);
+                x.repaint();
+            }
+        });
+
+        Cancelfeature2.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                TreePath path = tree.getSelectionPath();
+                Object selectedNode= tree.getLastSelectedPathComponent();
+
+                TreePath parent=path.getParentPath();
+
+                Object patrentNode= parent.getLastPathComponent();
+                ((Browsable) selectedNode).color.remove(2);
+
+
+                /*
+
+                if (mapExprToFeatures.containsKey(pNode) && mapExprToFeatures.get(pNode).a.contains(feature2.getText())){
+
+                    textLabel.setText(" Can not cancel F1, Please cancel parent node first!");
+                    x.repaint();
+                }else if (mapExprToFeatures.containsKey(newNode) && mapExprToFeatures.get(newNode).a.contains(feature2.getText())){
+
+                    mapExprToFeatures.get(newNode).a.remove(feature2.getText());
+
+                    //send Event to text editor for cancel painting (mark the corresponding color to Expr)
+                    listeners.add(listener);
+                    listeners.fire(Cancelfeature2, Listener.Event.CLICK, path.getLastPathComponent());
+                }
+
+                else
+
+                {
+                    textLabel.setText(" NF1 not marked,do not need cancel!");
+                    x.repaint();
+
+                }
+                */
+
+            }
+        });
+
+        JButton negFeature2= new JButton("NegaFeature 2");
+        negFeature2.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                Object selectedNode = tree.getLastSelectedPathComponent();
+
+                Browsable newNode = (Browsable) selectedNode;
+                if(selectedNode instanceof Expr){
+                   ((Expr) selectedNode).paint(-2);
+                }else if (selectedNode instanceof Browsable &&
+                        //Field selected
+                        (root.find(((Browsable) selectedNode).pos())) instanceof Field){
+
+                    for(Field f:fields){
+                        if(f.pos.equals(((Browsable) selectedNode).pos()))
+                        {f.paint(-2);
+                            break;
+                        }
+
+                    }
+                }
+
+                textLabel.setText("\r\n"+selectedNode.toString()+" :" + newNode.color);
+                x.repaint();
+            }
+        });
+
+
+        CancelnegFeature2.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                TreePath path = tree.getSelectionPath();
+                Object selectedNode= tree.getLastSelectedPathComponent();
+
+                ((Browsable) selectedNode).color.remove(-2);
+            }
+        });
+
 
         verticalPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 
@@ -251,7 +472,16 @@ public abstract class Browsable {
         GridLayout gridLayout = new GridLayout(2,4,3,3);
         // GridLayout gridLayoutY = new GridLayout(2,1,3,3);
         topLeftAddF.setLayout(gridLayout);
+        topLeftAddF.add(feature1);
+        topLeftAddF.add(negFeature1);
+        topLeftAddF.add(feature2);
+        topLeftAddF.add(negFeature2);
 
+
+        topLeftAddF.add(Cancelfeature1);
+        topLeftAddF.add(CancelnegFeature1);
+        topLeftAddF.add(Cancelfeature2);
+        topLeftAddF.add(CancelnegFeature2);
 
         BoxLayout leftBoxLayout = new BoxLayout(topLeftPane, BoxLayout.Y_AXIS);
         topLeftPane.setLayout(leftBoxLayout);
