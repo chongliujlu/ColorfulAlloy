@@ -46,6 +46,7 @@ import static edu.mit.csail.sdg.alloy4.A4Preferences.WarningNonfatal;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.Welcome;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menu;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menuItem;
+import static edu.mit.csail.sdg.ast.Sig.UNIV;
 import static java.awt.event.KeyEvent.VK_A;
 import static java.awt.event.KeyEvent.VK_ALT;
 import static java.awt.event.KeyEvent.VK_E;
@@ -69,15 +70,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Random;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 
 import javax.swing.Action;
 import javax.swing.Box;
@@ -112,6 +105,10 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.text.html.HTMLDocument;
 
+import edu.mit.csail.sdg.ast.*;
+import edu.mit.csail.sdg.parser.CompModule;
+import edu.mit.csail.sdg.printExpr.ExprPrinterVisitor;
+import edu.mit.csail.sdg.printExpr.UExprPrinterVisitor;
 import org.alloytools.alloy.core.AlloyCore;
 
 //import com.apple.eawt.Application;
@@ -151,12 +148,6 @@ import edu.mit.csail.sdg.alloy4viz.VizGUI;
 import edu.mit.csail.sdg.alloy4whole.SimpleReporter.SimpleCallback1;
 import edu.mit.csail.sdg.alloy4whole.SimpleReporter.SimpleTask1;
 import edu.mit.csail.sdg.alloy4whole.SimpleReporter.SimpleTask2;
-import edu.mit.csail.sdg.ast.Browsable;
-import edu.mit.csail.sdg.ast.Command;
-import edu.mit.csail.sdg.ast.Expr;
-import edu.mit.csail.sdg.ast.ExprVar;
-import edu.mit.csail.sdg.ast.Module;
-import edu.mit.csail.sdg.ast.Sig;
 import edu.mit.csail.sdg.ast.Sig.Field;
 import edu.mit.csail.sdg.parser.CompUtil;
 import edu.mit.csail.sdg.sim.SimInstance;
@@ -706,6 +697,343 @@ public final class SimpleGUI implements ComponentListener, Listener {
             wrap = false;
         }
         return null;
+    }
+
+//colorful Alloy
+
+    /**
+     * print Module with all features
+     * @return
+     */
+    private ActionListener doModule() {
+        if (wrap)
+            return wrapMe();
+
+        if (text.get().getText().isEmpty())
+            return null;
+        String print;
+
+        print=printUinonModule();
+        text.newtab(null);
+        notifyChange();
+        doShow();
+        text.get().setText(print);
+        return null;
+
+    }
+//colorful Alloy
+
+    /**
+     *
+     * @return
+     */
+    private String printUinonModule() {
+        UExprPrinterVisitor printUnionModule=new UExprPrinterVisitor();
+        ExprPrinterVisitor printExprs=new ExprPrinterVisitor();
+
+
+        StringBuilder  print =new StringBuilder();
+        print.append("abstract sig Feature{}\r\n");
+        print.append("sig F1,F2,F3,F4,F5,F6,F7,F8,F9,F0 extends Feature{}\r\n");
+        print.append("sig Product in Feature{}\r\n\r\n");
+
+        CompModule root=null;
+        try {
+            int resolutionMode = (Version.experimental && ImplicitThis.get()) ? 2 : 1;
+            A4Options opt = new A4Options();
+            opt.tempDirectory = alloyHome() + fs + "tmp";
+            opt.solverDirectory = alloyHome() + fs + "binary";
+            opt.originalFilename = Util.canon(text.get().getFilename());
+            root = CompUtil.parseEverything_fromFile(A4Reporter.NOP, text.takeSnapshot(), opt.originalFilename, resolutionMode);
+        } catch (
+                Err er) {
+            text.shade(er.pos);
+            log.logRed(er.toString() + "\n\n");
+            return null;
+        }
+
+        // print sig ------------------------------------------------------
+        for(int i=0; i<root.sigs.size();i++){
+            Sig s =root.getAllSigs().get(i);
+
+            if(s.isAbstract!=null)
+                print.append("abstract ");
+            if(s.isLone !=null)
+                print.append("lone ");
+            // change to lone
+            if (s.isOne!=null)
+                print.append("lone ");
+            //change to set
+            //if(s.isSome != null)
+            //  print.append(" ");
+
+            print.append("sig "+ s.label.substring(5));
+
+
+            if(s.isSubsig!=null ){
+                if(((Sig.PrimSig) s).parent!=UNIV){
+                    print.append(" extends ");
+                    print.append( ((Sig.PrimSig) s).parent.label.substring(5));
+                }
+            }
+
+            if(s.isSubset!=null){
+                print.append(" in ");
+
+                //add first parent sig
+                print.append(((Sig.SubsetSig) s).parents.get(0).label.substring(5));
+                // not one parent
+                if(((Sig.SubsetSig) s).parents.size()>1){
+                    for (int j=1;j< ((Sig.SubsetSig) s).parents.size()-1;j ++){
+                        print.append(" + "+((Sig.SubsetSig) s).parents.get(j).label.substring(5));
+                    }
+                }
+            }
+
+
+            //print fields
+            print.append(" { ");
+            if(s.getFields().size()>0){
+
+                for (Sig.Field f:s.getFields()){
+                    print.append("\r\n   "+f.label +" : ");
+
+                    if(f.decl().expr instanceof ExprUnary)
+                    {
+                        // one  ----> lone
+                        if(((ExprUnary) f.decl().expr).op.equals(ExprUnary.Op.ONEOF)) {
+                            print.append( "lone ");
+                            print.append( ((ExprUnary) f.decl().expr).sub.accept(printExprs)+",");
+                        }
+                        // some -----> set
+                        else if(((ExprUnary) f.decl().expr).op.equals(ExprUnary.Op.SOMEOF)) {
+                            print.append( "set ");
+                            print.append( ((ExprUnary) f.decl().expr).sub.accept(printExprs)+",");
+                        }
+                        else {
+                            print.append( f.decl().expr.accept(printExprs)+",");
+                        }
+
+                    }else
+                        print.append( f.decl().expr.accept(printExprs)+",");
+                }
+            }
+
+            print.deleteCharAt(print.length()-1);
+
+            //} of Sig
+            print.append("\r\n }\r\n");
+            // add feature facts to sig and field  ------------------------------
+            addFeatureFact(s, print);
+            // facts for Field
+            if(s.getFields().size()>0){
+
+                for (Sig.Field f:s.getFields()){
+
+                    addFeatureFact(f,print);
+                }
+            }
+            print.append("\r\n\r\n");
+        }
+
+
+
+        //print facts
+        //----------------------------------------------------------------
+        for (
+                Pair<String, Expr> f: root.getAllFacts()){
+
+            print.append("\r\nfact ");
+            if (f.a.startsWith("fact$")){
+                print.append(" {\r\n");
+
+            }else {
+                print.append("  "+f.a+ " {\r\n" );
+            }
+            print.append("    "+f.b.accept(printUnionModule));
+            print.append(" }\r\n ");
+        }
+
+        //  print funs------------------------------------------------------
+
+        for(
+                Func func: root.getAllFunc()){
+
+            if(!(func.label.equals("this/$$Default"))){
+
+                print.append("\r\n");
+                if (func.isPred )
+                    print.append("pred " +func.label.substring(5)+" ");
+                else
+                    print.append("fun "+func.label.substring(5)+" ");
+
+                if(func.decls.size()>0)
+                {
+                    print.append("[");
+                    for (Decl decl :func.decls){
+
+                        for (Expr expr: decl.names){
+                            print.append(expr.accept(printUnionModule)+" ,");
+                        }
+                        print.deleteCharAt(print.length() - 1);
+                        print.append(": ");
+                        print.append(decl.expr.accept(printUnionModule)+",");
+                    }
+                    print.deleteCharAt(print.length()-1);
+                    print.append("]");
+                }
+
+
+                if(!func.isPred && !func.returnDecl.equals(ExprConstant.Op.FALSE))
+                {
+                    print.append(":");
+                    print.append(func.returnDecl.accept(printUnionModule));
+                }
+
+                print.append("{\r\n  ");
+                print.append(func.getBody().accept(printUnionModule));
+                print.append("\r\n}");
+            }
+        }
+
+        // print assert-----------------------------------------------------------------
+        for(Pair<String,Expr> asser:root.getAllAssertions()){
+            print.append("\r\n  ");
+
+            print.append("assert  ");
+            if(!asser.a.contains("assert$"))
+                print.append(asser.a);
+            print.append("{\r\n");
+
+            print.append(asser.b.accept(printUnionModule));
+
+            print.append("\r\n}");
+
+        }
+
+        //print run /check----------------------------------------------------------------
+
+        for (Command command :root.getAllCommands()){
+
+            if(!command.label.equals("Default")){
+
+                if (command.check)
+                    print.append("\r\n check ");
+                else print.append("\r\n run ");
+
+                print.append(command.label +" " + " for "+command.overall);
+
+                if(command.scope.size()==1)
+                    print.append(" but ");
+                for(CommandScope cs:command.scope){
+                    if(cs.isExact)
+                        print.append(" exactly ");
+                    print.append(cs.startingScope+" ");
+                    print.append(cs.sig.label.substring(5)+",");
+                }
+
+                print.deleteCharAt(print.length()-1);
+            }
+        }
+        return print.toString();
+    }
+
+    //colorfull Alloy
+    private void addFeatureFact(Sig s, StringBuilder print) {
+
+        String label=((Sig) s).label.substring(5);
+        Set<Integer> NFeatures=new HashSet<>();
+        Set<Integer> PFeatures=new HashSet<>();
+        for(Integer i: s.color){
+            if(i<0)
+                NFeatures.add(-i);
+            else PFeatures.add(i);
+        }
+//marked with NF
+        if(!NFeatures.isEmpty()){
+            print.append("\r\n fact { \r\n ");
+
+            // implies none
+            addFeatureprefix(NFeatures,print,"in","or");
+
+            print.append(" no "+ label);
+
+            print.append( " else (some " +label +" or no "+label+") \r\n}" );
+        }
+
+        if(!PFeatures.isEmpty()){
+
+            print.append("  \r\n fact { \r\n ");
+
+            //F in P implies
+            addFeatureprefix(PFeatures,print,"in","and");
+
+            print.append(" (some  "+label +"  or no "+label+ ") else no "+label+"\r\n}");
+        }
+    }
+    //colorful Alloy
+    private void addFeatureprefix(Set<Integer> PFeature,StringBuilder str, String inOrNot,String operator) {
+
+        if(PFeature.size()>1)
+            str.append("    (");
+
+        for (Integer i: PFeature){
+
+            str.append(" F"+i + " "+inOrNot+" Product "+operator);
+        }
+        if(str.length()>=2){
+
+            str.deleteCharAt(str.length()-1);
+            str.deleteCharAt(str.length()-1);
+            if(operator.equals("and"))
+                str.deleteCharAt(str.length()-1);
+
+        }
+
+        if(PFeature.size()>1)
+            str.append(")");
+        str.append(" implies ");
+    }
+    //colorful Alloy
+    private void addFeatureFact(Field f, StringBuilder print){
+        UExprPrinterVisitor printUnionModule=new UExprPrinterVisitor();
+        Set<Integer> NFeatures=new HashSet<>();
+        Set<Integer> PFeatures=new HashSet<>();
+        for(Integer i: f.color){
+            if(i<0)
+                NFeatures.add(-i);
+            else PFeatures.add(i);
+        }
+
+        if(NFeatures.size()>0){
+            print.append("\r\nfact { \r\n ");
+            print.append("  ");
+
+            // F in P implies
+            addFeatureprefix(NFeatures,print,"in","or");
+            print.append( " no " + f.label);
+            print.append(" else ");
+
+            print.append(f.label+" in " +f.sig.label.substring(5) +" ->");
+            print.append(f.decl().expr.accept(printUnionModule));
+
+            print.append("\r\n }");
+        }
+
+        if(PFeatures.size()>0){
+
+            print.append("\r\n fact { \r\n ");
+
+            //F in P implies
+            print.append("  ");
+            addFeatureprefix(PFeatures,print,"in","and");
+
+            print.append( f.label +" in "+ f.sig.label.substring(5)+" ->" );
+            print.append(f.decl().expr.accept(printUnionModule));
+
+            print.append( " else no " + f.label);
+            print.append("\r\n }");
+        }
     }
 
     /** This method performs File->New. */
@@ -2087,6 +2415,11 @@ public final class SimpleGUI implements ComponentListener, Listener {
             toolbar.add(stopbutton = OurUtil.button("Stop", "Stops the current analysis", "images/24_execute_abort2.gif", doStop(2)));
             stopbutton.setVisible(false);
             toolbar.add(showbutton = OurUtil.button("Show", "Shows the latest instance", "images/24_graph.gif", doShowLatest()));
+            //colorfull Alloy
+            toolbar.add(OurUtil.button("Module","Generate one Modue with all features","images/24_execute.gif",doModule()));
+
+
+
             toolbar.add(Box.createHorizontalGlue());
             toolbar.setBorder(new OurBorder(false, false, false, false));
         } finally {
@@ -2238,6 +2571,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
         });
         t.start();
     }
+
+
 
     /** {@inheritDoc} */
     @Override
