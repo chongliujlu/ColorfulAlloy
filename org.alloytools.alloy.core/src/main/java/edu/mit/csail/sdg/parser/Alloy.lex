@@ -218,7 +218,7 @@ import java_cup.runtime.*;
 "sum"                 { return alloy_sym(yytext(), CompSym.SUM         );}
 "this"                { return alloy_sym(yytext(), CompSym.THIS        );}
 "univ"                { return alloy_sym(yytext(), CompSym.UNIV        );}
-"\u1F10B"          	  { return alloy_sym(yytext(), CompSym.PFEAT0      );} // [HASLab] colors
+"with"          	  { return alloy_sym(yytext(), CompSym.WITH        );} // [HASLab] colors
 "\u2780"           	  { return alloy_sym(yytext(), CompSym.PFEAT1      );} // [HASLab] colors
 "\u2781"           	  { return alloy_sym(yytext(), CompSym.PFEAT2      );} // [HASLab] colors
 "\u2782"           	  { return alloy_sym(yytext(), CompSym.PFEAT3      );} // [HASLab] colors
@@ -228,7 +228,6 @@ import java_cup.runtime.*;
 "\u2786"           	  { return alloy_sym(yytext(), CompSym.PFEAT7      );} // [HASLab] colors
 "\u2787"           	  { return alloy_sym(yytext(), CompSym.PFEAT8      );} // [HASLab] colors
 "\u2788"           	  { return alloy_sym(yytext(), CompSym.PFEAT9      );} // [HASLab] colors
-"\u1F10C"          	  { return alloy_sym(yytext(), CompSym.NFEAT0      );} // [HASLab] colors
 "\u278A"          	  { return alloy_sym(yytext(), CompSym.NFEAT1      );} // [HASLab] colors
 "\u278B"          	  { return alloy_sym(yytext(), CompSym.NFEAT2      );} // [HASLab] colors
 "\u278C"          	  { return alloy_sym(yytext(), CompSym.NFEAT3      );} // [HASLab] colors

@@ -150,7 +150,7 @@ public abstract class Sig extends Expr implements Clause {
     /**
      * Store the list of attributes.
      */
-    // colorful alloy, removed final
+    // [HASLab] colorful Alloy, removed final
     public ConstList<Attr>       attributes;
 
     /**
@@ -712,7 +712,7 @@ public abstract class Sig extends Expr implements Clause {
     public static final class Field extends ExprHasName implements Clause {
 
         /** The sig that this field belongs to; never null. */
-        // colorful alloy, removed final
+        // [HASLab] colorful Alloy, removed final
         public Sig           sig;
 
         /** Nonnull if the user wanted this field to be private. */

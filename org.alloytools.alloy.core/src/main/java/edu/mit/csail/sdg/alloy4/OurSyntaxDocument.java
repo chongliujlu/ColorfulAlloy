@@ -237,8 +237,8 @@ class OurSyntaxDocument extends DefaultStyledDocument {
     /**
      * This stores the currently recognized set of reserved keywords.
      */
-    private static final String[]     keywords = new String[] {
-                                                               "abstract", "all", "and", "as", "assert", "but", "check", "disj", "disjoint", "else", "enum", "exactly", "exh", "exhaustive", "expect", "extends", "fact", "for", "fun", "iden", "iff", "implies", "in", "Int", "int", "let", "lone", "module", "no", "none", "not", "one", "open", "or", "part", "partition", "pred", "private", "run", "seq", "set", "sig", "some", "String", "sum", "this", "univ"
+    private static final String[]     keywords = new String[] { // [HASLab] colorful Alloy, with keyword
+                                                               "abstract", "all", "and", "as", "assert", "but", "check", "disj", "disjoint", "else", "enum", "exactly", "exh", "exhaustive", "expect", "extends", "fact", "for", "fun", "iden", "iff", "implies", "in", "Int", "int", "let", "lone", "module", "no", "none", "not", "one", "open", "or", "part", "partition", "pred", "private", "run", "seq", "set", "sig", "some", "String", "sum", "this", "univ", "with"
     };
 
     /**
@@ -474,7 +474,8 @@ class OurSyntaxDocument extends DefaultStyledDocument {
                NFEAT6,
                NFEAT7,
                NFEAT8,
-               NFEAT9;
+               NFEAT9,
+               FEATURESCOPE;
     }
 
     // [HASLab] colorful Alloy, list of color modes rather than single comment mode
@@ -600,14 +601,14 @@ class OurSyntaxDocument extends DefaultStyledDocument {
                         i++;
                 }
                 setCharacterAttributes(oldi, i - oldi, styleString(mode), true); // [HASLab] colorful Alloy, must force update for strikes
-            } else if (isNegativeColor(c) || isPositiveColor(c)) { // [HASLab] colorful Alloy, check for delimiters and change style mode
+            } else if ((isNegativeColor(c) || isPositiveColor(c))) { // [HASLab] colorful Alloy, check for delimiters and change style mode
                 i++;
                 boolean opens = true;
                 // if already with style, invert
-                if (isPositiveColor(c) && mode.contains(Mode.valueOf("PFEAT" + (c - O1 + 1)))) {
+                if (isPositiveColor(c) && mode.contains(Mode.valueOf("PFEAT" + (c - O1 + 1))) && !mode.contains(Mode.FEATURESCOPE)) {
                     mode.remove(Mode.valueOf("PFEAT" + (c - O1 + 1)));
                     opens = false;
-                } else if (isNegativeColor(c) && mode.contains(Mode.valueOf("NFEAT" + (c - E1 + 1)))) {
+                } else if (isNegativeColor(c) && mode.contains(Mode.valueOf("NFEAT" + (c - E1 + 1))) && !mode.contains(Mode.FEATURESCOPE)) {
                     mode.remove(Mode.valueOf("NFEAT" + (c - E1 + 1)));
                     opens = false;
                 }
@@ -615,9 +616,9 @@ class OurSyntaxDocument extends DefaultStyledDocument {
                     if (c == (char) (O1 + k) || c == (char) (E1 + k))
                         setCharacterAttributes(oldi, i - oldi, styleColorMark(mode, C[k]), true);
                 // if not in style, apply
-                if (opens && isPositiveColor(c) && !mode.contains(Mode.valueOf("PFEAT" + (c - O1 + 1)))) {
+                if (opens && isPositiveColor(c) && !mode.contains(Mode.valueOf("PFEAT" + (c - O1 + 1))) && !mode.contains(Mode.FEATURESCOPE)) {
                     mode.add(Mode.valueOf("PFEAT" + (c - O1 + 1)));
-                } else if (opens && isNegativeColor(c) && !mode.contains(Mode.valueOf("NFEAT" + (c - E1 + 1)))) {
+                } else if (opens && isNegativeColor(c) && !mode.contains(Mode.valueOf("NFEAT" + (c - E1 + 1))) && !mode.contains(Mode.FEATURESCOPE)) {
                     mode.add(Mode.valueOf("NFEAT" + (c - E1 + 1)));
                 }
 
@@ -625,13 +626,19 @@ class OurSyntaxDocument extends DefaultStyledDocument {
                 for (i++; i < n && do_iden(txt.charAt(i)); i++) {}
                 AttributeSet style = (c >= '0' && c <= '9') ? styleNumber(mode) : (do_keyword(txt, oldi, i - oldi) ? styleKeyword(mode) : styleNormal(mode));
                 setCharacterAttributes(oldi, i - oldi, style, true); // [HASLab] colorful Alloy, must force update for strikes
+                if (do_keyword(txt, oldi, i - oldi)) {
+                    if (txt.charAt(oldi) == 'w')
+                        mode.add(Mode.FEATURESCOPE);
+                    else if (txt.charAt(oldi) != 'e')
+                        mode.remove(Mode.FEATURESCOPE);
+                }
             } else {
                 for (i++; i < n && !do_iden(txt.charAt(i)) && txt.charAt(i) != '\n' && txt.charAt(i) != '-' && txt.charAt(i) != '/' && !isPositiveColor(txt.charAt(i)) && !isNegativeColor(txt.charAt(i)); i++) {}  // [HASLab] colorful Alloy, do not ignore color marks
                 setCharacterAttributes(oldi, i - oldi, styleSymbol(mode), true); // [HASLab] colorful Alloy, must force update for strikes
             }
         }
+        mode.remove(Mode.FEATURESCOPE);
         return mode;
-
     }
 
     private boolean match(String source, int startIndex, String find) {
