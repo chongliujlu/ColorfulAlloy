@@ -1,4 +1,4 @@
-package edu.mit.csail.sdg.ast;
+package edu.mit.csail.sdg.printExpr;
 /**
  * Generate Feature selected Button, ( 1-0 feature buttons and  "Execute", "FModule", "UModule" button at bottom)
  */
@@ -11,9 +11,12 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class MultiComboBox extends JComponent {
+    public static Set<Integer> selectedFeatures;
 
     private Object[] values;
 
@@ -21,7 +24,7 @@ public class MultiComboBox extends JComponent {
 
     private List<ActionListener> listeners = new ArrayList<ActionListener>();
 
-    protected MultiPopup popup;
+    public MultiPopup popup;
 
     private JTextField editor;
 
@@ -44,11 +47,12 @@ public class MultiComboBox extends JComponent {
 
     private void initComponent() {
 
+        this.setBackground(Color.red);
         this.setLayout(new FlowLayout());
         popup =new  MultiPopup(values,defaultValues);
         popup.addActionListener(new PopupAction());
         editor = new JTextField();
-        editor.setBackground(Color.WHITE);
+        editor.setBackground(Color.white);
         editor.setEditable(false);
         editor.setPreferredSize(new Dimension(150,20));
 
@@ -57,9 +61,22 @@ public class MultiComboBox extends JComponent {
         arrowButton.addMouseListener(new EditorHandler());
         add(editor);
         add(arrowButton);
-        setText() ;
+        setText();
+        //editor.setText("Selected features");
 
 
+        selectedFeatures=new HashSet<Integer>(){{
+            add(1);
+            add(2);
+            add(3);
+            add(4);
+            add(5);
+            add(6);
+            add(7);
+            add(8);
+            add(9);
+            add(0); }
+        };
     }
 
     public Object[] getSelectedValues() {

@@ -1,4 +1,4 @@
-package edu.mit.csail.sdg.ast;
+package edu.mit.csail.sdg.printExpr;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,7 +21,7 @@ public class MultiPopup extends JPopupMenu {
 
     public JButton cancelButton;
     public JButton executeButton;
-    public JButton UnionModuleButton;
+
 
     public static final String PROJECT_FEATURE_EVENT = "commit";
 
@@ -62,7 +62,7 @@ public class MultiPopup extends JPopupMenu {
             checkboxPane.add(box);
         }
 
-        selectedModuleButton = new JButton("FModule");
+        selectedModuleButton = new JButton("Code");
 
         selectedModuleButton.addActionListener(new ActionListener(){
 
@@ -82,15 +82,7 @@ public class MultiPopup extends JPopupMenu {
 
         });
 
-        UnionModuleButton = new JButton("UModule");
 
-        UnionModuleButton.addActionListener(new ActionListener(){
-
-            public void actionPerformed(ActionEvent e) {
-                enumative();
-            }
-
-        });
 
         executeButton = new JButton("Execute");
 
@@ -101,11 +93,12 @@ public class MultiPopup extends JPopupMenu {
             }
 
         });
-        buttonPane.add(selectedModuleButton);
+
 
         //buttonPane.add(cancelButton);
-        buttonPane.add(UnionModuleButton);
+
         buttonPane.add(executeButton);
+        buttonPane.add(selectedModuleButton);
 
         this.add(checkboxPane , BorderLayout.CENTER);
 
@@ -159,9 +152,6 @@ public class MultiPopup extends JPopupMenu {
         fireActionPerformed(new ActionEvent(this, 0, Executed_EVENT));
     }
 
-    public void enumative(){
-        fireActionPerformed(new ActionEvent(this, 0, UnionModule_Event));
-    }
 
 
 
