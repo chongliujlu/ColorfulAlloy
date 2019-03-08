@@ -29,29 +29,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.mit.csail.sdg.alloy4.*;
+import edu.mit.csail.sdg.ast.*;
+import edu.mit.csail.sdg.parser.CompModule;
+import edu.mit.csail.sdg.printExpr.ExprPrinterVisitor;
+import edu.mit.csail.sdg.printExpr.MultiComboBox;
+import edu.mit.csail.sdg.printExpr.ProjectFeatureExprVisitor;
+import edu.mit.csail.sdg.printExpr.expressionProject;
 import org.alloytools.alloy.core.AlloyCore;
 
-import edu.mit.csail.sdg.alloy4.A4Reporter;
-import edu.mit.csail.sdg.alloy4.ConstList;
-import edu.mit.csail.sdg.alloy4.ConstMap;
-import edu.mit.csail.sdg.alloy4.Err;
-import edu.mit.csail.sdg.alloy4.ErrorSyntax;
-import edu.mit.csail.sdg.alloy4.ErrorType;
-import edu.mit.csail.sdg.alloy4.ErrorWarning;
-import edu.mit.csail.sdg.alloy4.MailBug;
-import edu.mit.csail.sdg.alloy4.OurDialog;
-import edu.mit.csail.sdg.alloy4.Pair;
-import edu.mit.csail.sdg.alloy4.Pos;
-import edu.mit.csail.sdg.alloy4.Util;
-import edu.mit.csail.sdg.alloy4.Version;
 import edu.mit.csail.sdg.alloy4.WorkerEngine.WorkerCallback;
 import edu.mit.csail.sdg.alloy4.WorkerEngine.WorkerTask;
-import edu.mit.csail.sdg.alloy4.XMLNode;
 import edu.mit.csail.sdg.alloy4viz.StaticInstanceReader;
 import edu.mit.csail.sdg.alloy4viz.VizGUI;
-import edu.mit.csail.sdg.ast.Command;
-import edu.mit.csail.sdg.ast.Module;
-import edu.mit.csail.sdg.ast.Sig;
 import edu.mit.csail.sdg.parser.CompUtil;
 import edu.mit.csail.sdg.translator.A4Options;
 import edu.mit.csail.sdg.translator.A4Solution;
@@ -59,10 +49,11 @@ import edu.mit.csail.sdg.translator.A4SolutionReader;
 import edu.mit.csail.sdg.translator.A4SolutionWriter;
 import edu.mit.csail.sdg.translator.TranslateAlloyToKodkod;
 
+import static edu.mit.csail.sdg.ast.Sig.UNIV;
+
 /** This helper method is used by SimpleGUI. */
 
 final class SimpleReporter extends A4Reporter {
-
     public static final class SimpleCallback1 implements WorkerCallback {
 
         private final SimpleGUI         gui;
@@ -134,6 +125,8 @@ final class SimpleReporter extends A4Reporter {
                     text = "syntax";
                 else if (ex instanceof ErrorType)
                     text = "type";
+                else if(ex instanceof ErrorColor) //colorful Alloy
+                    text="feature painted";      //colorful Alloy
                 else
                     fatal = true;
                 if (ex.pos == Pos.UNKNOWN)
@@ -241,16 +234,19 @@ final class SimpleReporter extends A4Reporter {
                 span.log("\n\n");
             }
             if (array[0].equals("sat")) {
+                System.out.println("sat "+array[1] +" ,"+array[2]+","+array[3]+","+array[4] +expressionProject.runfeatures); //colorful Alloy
                 boolean chk = Boolean.TRUE.equals(array[1]);
                 int expects = (Integer) (array[2]);
                 String filename = (String) (array[3]), formula = (String) (array[4]);
+                String codefile=filename.substring(0, filename.length()-3)+"als"; //colorful Alloy
                 results.add(filename);
                 (new File(filename)).deleteOnExit();
                 gui.doSetLatest(filename);
                 span.setLength(len3);
                 span.log("   ");
                 span.logLink(chk ? "Counterexample" : "Instance", "XML: " + filename);
-                span.log(" found. ");
+                span.log(" Corresponding ");//colorfull Alloy
+                span.logLink(" code. ","als: "+codefile);//colorfull Alloy
                 span.logLink(chk ? "Assertion" : "Predicate", formula);
                 span.log(chk ? " is invalid" : " is consistent");
                 if (expects == 0)
@@ -272,6 +268,9 @@ final class SimpleReporter extends A4Reporter {
                 int expects = (Integer) (array[2]);
                 span.setLength(len3);
                 span.log(chk ? "   No counterexample found." : "   No instance found.");
+
+                String filename = (String) (array[5]); //colorfull Alloy
+                span.logLink(" code. ","als: "+filename);//colorfull Alloy
                 if (chk)
                     span.log(" Assertion may be valid");
                 else
@@ -289,6 +288,9 @@ final class SimpleReporter extends A4Reporter {
                 String formula = (String) (array[4]);
                 span.setLength(len3);
                 span.log(chk ? "   No counterexample found. " : "   No instance found. ");
+
+             //   String filename = (String) (array[5]); //colorfull Alloy
+               // span.logLink(" code. ","als: "+filename);//colorfull Alloy
                 span.logLink(chk ? "Assertion" : "Predicate", formula);
                 span.log(chk ? " may be valid" : " may be inconsistent");
                 if (expects == 1)
@@ -415,7 +417,10 @@ final class SimpleReporter extends A4Reporter {
             return;
         Command cmd = (Command) command;
         minimized = System.currentTimeMillis();
-        cb("minimizing", cmd.check, cmd.expects, before, minimized - lastTime);
+
+        String filename = tempfile + ".als"; //colorful Alloy
+        //cb("minimizing", cmd.check, cmd.expects, before, minimized - lastTime);
+        cb("minimizing", cmd.check, cmd.expects, before, minimized - lastTime,filename ); //colorful Alloy
     }
 
     /** {@inheritDoc} */
@@ -461,10 +466,14 @@ final class SimpleReporter extends A4Reporter {
                 Util.close(fs);
             }
         }
+
+        String filename = tempfile + ".als"; //colorful Alloy
         if (minimized == 0)
+           // cb("unsat", cmd.check, cmd.expects, (System.currentTimeMillis() - lastTime), formulafilename,filename);//colorful Alloy
             cb("unsat", cmd.check, cmd.expects, (System.currentTimeMillis() - lastTime), formulafilename);
         else
-            cb("unsat", cmd.check, cmd.expects, minimized - lastTime, formulafilename, corefilename, minimizedBefore, minimizedAfter, (System.currentTimeMillis() - minimized));
+            //cb("unsat", cmd.check, cmd.expects, minimized - lastTime, formulafilename, corefilename, minimizedBefore, minimizedAfter, (System.currentTimeMillis() - minimized),filename);//colorful Alloy
+        cb("unsat", cmd.check, cmd.expects, minimized - lastTime, formulafilename, corefilename, minimizedBefore, minimizedAfter, (System.currentTimeMillis() - minimized));
     }
 
     private final WorkerCallback cb;
@@ -611,6 +620,7 @@ final class SimpleReporter extends A4Reporter {
                     // number of times; this at least allows the user to keep
                     // going
                     writeXML(null, mod, filename, sol, latestKodkodSRC);
+
                     latestKodkod = sol;
                 }
                 cb("declare", filename);
@@ -655,6 +665,7 @@ final class SimpleReporter extends A4Reporter {
             if (rep.warn > 0 && !bundleWarningNonFatal)
                 return;
             List<String> result = new ArrayList<String>(cmds.size());
+            List<String> code = new ArrayList<String>(cmds.size());//colorful Alloy
             if (bundleIndex == -2) {
                 final String outf = tempdir + File.separatorChar + "m.xml";
                 cb(out, "S2", "Generating the metamodel...\n");
@@ -676,20 +687,61 @@ final class SimpleReporter extends A4Reporter {
                             latestModule = world;
                             latestKodkodSRC = ConstMap.make(map);
                         }
+                        final String tempcode = tempdir + File.separatorChar + i + ".cnf.als"; //colorful Alloy
                         final String tempXML = tempdir + File.separatorChar + i + ".cnf.xml";
                         final String tempCNF = tempdir + File.separatorChar + i + ".cnf";
                         final Command cmd = cmds.get(i);
                         rep.tempfile = tempCNF;
                         cb(out, "bold", "Executing \"" + cmd + "\"\n");
-                        A4Solution ai = TranslateAlloyToKodkod.execute_commandFromBook(rep, world.getAllReachableSigs(), cmd, options);
+                       // A4Solution ai = TranslateAlloyToKodkod.execute_commandFromBook(rep, world.getAllReachableSigs(), cmd, options);
+
+
+
+
+
+                        //colorful Alloy
+                        if(cmd.feats==null|| (cmd!=null && cmd.feats.feats.isEmpty())) {
+                            expressionProject.runfeatures = new HashSet<>();
+                            for (Integer j = 0; j < 10; j++)
+                                expressionProject.runfeatures.add(j);
+                        }
+
+                        else
+                            expressionProject.runfeatures=new HashSet<Integer>(cmd.feats.feats); //colorful Alloy
+
+                        cb(out,"bold","features: "+expressionProject.runfeatures+"\r\n"); //show
+
+
+
+
+                        expressionProject reconstructExpr=new expressionProject();//colorful Allloy
+                        StringBuilder  print =new StringBuilder();
+                        generateModule(out,print,world,reconstructExpr,cmd);
+
+
+                        File Nmodule=new File(tempcode);
+                        String output = Nmodule.getAbsolutePath();
+                        Util.writeAll(output, print.toString());
+                        Module worldNewExecute = CompUtil.parseEverything_fromFile(rep, null, output);
+                        A4Solution ai = TranslateAlloyToKodkod.execute_commandFromBook(rep, worldNewExecute.getAllReachableSigs(), worldNewExecute.getAllCommands().get(0), options);
+
+
+                       // Expr exprout = cmd.formula.accept(reconstructExpr); //colorful Allloy
+                       // cb(out,"bold"," expr: \""+exprout.toString()+"\r\n"); //test
+                       // Command cmdFeature=new Command(cmd.check,cmd.overall,cmd.bitwidth,cmd.maxseq,cmd.formula);//colorful Allloy
+                       // cmdFeature.change(exprout);//colorful Allloy
+                       // A4Solution ai = TranslateAlloyToKodkod.execute_commandFromBook(rep, world.getAllReachableSigs(), cmdFeature, options);//colorful Allloy
+
+
+                       // A4Solution ai = TranslateAlloyToKodkod.execute_commandFromBook(rep, world.getAllReachableSigs(), cmd, options);
                         if (ai == null)
                             result.add(null);
                         else if (ai.satisfiable())
                             result.add(tempXML);
+
                         else if (ai.highLevelCore().a.size() > 0)
                             result.add(tempCNF + ".core");
-                        else
-                            result.add("");
+                        else result.add("");
                     }
             (new File(tempdir)).delete(); // In case it was UNSAT, or
                                          // canceled...
@@ -735,6 +787,324 @@ final class SimpleReporter extends A4Reporter {
                 rep.cb("bold", "Note: There were " + rep.warn + " compilation warnings. Please scroll up to see them.\n");
             if (rep.warn == 1)
                 rep.cb("bold", "Note: There was 1 compilation warning. Please scroll up to see it.\n");
+        }
+
+        private void generateModule(WorkerCallback out,StringBuilder print, Module world, expressionProject reconstructExpr,Command com) {
+
+            CompModule newModule = new CompModule(null, ((CompModule) world).span().filename, "");
+
+            // project sigs------------------------------------------------------------------------------------------
+
+            //get sigs
+            SafeList<Sig> oldsigs = world.getAllSigs();
+            ConstList.TempList<Sig> sigsFinal = new ConstList.TempList<Sig>(oldsigs.size());
+            sigsFinal=projectSigs(reconstructExpr,oldsigs);
+
+            //add sigs to module
+            for(Sig s: sigsFinal.makeConst()){
+                newModule.sigs.put(s.label,s);
+            }
+            //used to print expr
+            ExprPrinterVisitor printExprs =new ExprPrinterVisitor();
+
+            //print opens
+            printOpenLine((CompModule)world,print);
+            //print sigs
+            printSigs(print,sigsFinal.makeConst(),printExprs);
+
+            // add facts
+            SafeList<Pair<String, Expr>> facts = world.getAllFacts();
+            for (Pair<String, Expr> f : facts) {
+                Expr fact=(f.b).accept(reconstructExpr);
+                if(fact==null)
+                    continue;
+                newModule.addFact(f.b.pos, f.a, fact);
+            }
+            // print facts
+            printFacts(newModule, print, printExprs);
+            try {
+                cb(out,"bold"," 2: "+world.toString()+"\r\n"); //test
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            // add func/pred
+            SafeList<Func> funs =world.getAllFunc();
+            for(Func fun: funs) {
+                Expr nbody = (fun.getBody()).accept(reconstructExpr);
+
+                if(nbody==null) continue;
+                //project decls-------------
+                ConstList.TempList<Decl> decls = new ConstList.TempList<Decl>(fun.decls.size());
+                for (Decl d : fun.decls) {
+                    ConstList.TempList<ExprVar> declsnames = new ConstList.TempList<ExprVar>(fun.decls.size());
+                    Expr exp = d.expr.accept(reconstructExpr);
+                    if (exp != null) {
+                        for (ExprHasName v : d.names) {
+                            Expr Exprout = v.accept(reconstructExpr);
+                            declsnames.add((ExprVar) Exprout);
+                        }
+                        if (declsnames.size() != 0) {
+
+                            Decl dd = new Decl(d.isPrivate, d.disjoint, d.disjoint2, declsnames.makeConst(), exp);
+                            decls.add(dd);
+                        }
+                    }
+                }
+
+                newModule.addFunc(fun.pos, fun.isPrivate, fun.label.substring(5), null, decls.makeConst(), fun.returnDecl, nbody);
+
+            }
+//print func/pred
+
+            printFunc(print,newModule,printExprs);
+            printAssert(print, printExprs,reconstructExpr,world);
+
+
+
+//print command ➀
+            printCommand(print,com);
+        }
+
+        private void printCommand(StringBuilder print, Command com) {
+            if(com.check)
+                print.append("\r\ncheck ");
+            else print.append("\r\n run ");
+
+            print.append(com.label);
+
+            if(com.feats!=null && !(com.feats.feats.isEmpty())){
+                print.append(" with ");
+                if(com.feats.isExact)
+                    print.append( " exactly ");
+                if(com.feats.feats.contains(1))
+                    print.append("➀,");
+                if(com.feats.feats.contains(2))
+                    print.append("➁,");
+                if(com.feats.feats.contains(3))
+                    print.append("➂,");
+                if(com.feats.feats.contains(4))
+                    print.append("➃,");
+                if(com.feats.feats.contains(5))
+                    print.append("➄,");
+                if(com.feats.feats.contains(6))
+                    print.append("➅,");
+                if(com.feats.feats.contains(7))
+                    print.append("➆,");
+                if(com.feats.feats.contains(8))
+                    print.append("➇,");
+                if(com.feats.feats.contains(9))
+                    print.append("➈,");
+                if(com.feats.feats.contains(-1))
+                    print.append("➊,");
+                if(com.feats.feats.contains(-2))
+                    print.append("➋,");
+                if(com.feats.feats.contains(-3))
+                    print.append("➌,");
+                if(com.feats.feats.contains(-4))
+                    print.append("➍,");
+                if(com.feats.feats.contains(-5))
+                    print.append("➎,");
+                if(com.feats.feats.contains(-6))
+                    print.append("➏,");
+                if(com.feats.feats.contains(-7))
+                    print.append("➐,");
+                if(com.feats.feats.contains(-8))
+                    print.append("➑,");
+                if(com.feats.feats.contains(9))
+                    print.append("➒,");
+
+                print.deleteCharAt(print.length()-1);
+
+            }
+
+            print.append(" for ");
+            print.append(com.overall>0? com.overall +" ":4+" ");
+            System.out.println("command overall:"+com.overall);
+
+            if(com.scope.size()==1)
+                print.append(" but ");
+            for(CommandScope cs:com.scope){
+                if(cs.isExact)
+                    print.append(" exactly ");
+                print.append(cs.startingScope+" ");
+                print.append(cs.sig.label.substring(5)+",");
+            }
+
+            print.deleteCharAt(print.length()-1);
+        }
+
+        private void printAssert(StringBuilder print, ExprPrinterVisitor printExprs, expressionProject reconstructExpr, Module world) {
+            for(Pair<String,Expr> asser:world.getAllAssertions()){
+                Expr temp=asser.b.accept(reconstructExpr);
+
+                if(temp==null) continue;
+                print.append("\r\n  ");
+
+                print.append("assert  ");
+                if(!asser.a.contains("assert$"))
+                    print.append(asser.a);
+                print.append("{\r\n");
+
+                print.append(temp.accept(printExprs));
+
+                print.append("\r\n}");
+
+            }
+        }
+
+        private ConstList.TempList<Sig> projectSigs(expressionProject reconstructExpr, SafeList<Sig> oldsigs) {
+            ConstList.TempList<Sig> sigsFinal=new ConstList.TempList<>();
+            // check every sig in the Module
+            for (Sig sig : oldsigs) {
+                Sig sigTemp = (Sig) sig.accept(reconstructExpr);
+                if (sigTemp != null) {
+
+                    SafeList<Expr> sigf = sig.getFacts();
+
+                    //project sig facts
+                    for (Expr factExpr : sigf) {
+                        //got sigs and fields are point to old sigs and fields
+                        sigTemp.addFact(factExpr.accept(reconstructExpr));
+                    }
+                    sigsFinal.add(sigTemp);
+                }
+
+            }
+            return sigsFinal;
+
+        }
+        private void printFunc(StringBuilder print, CompModule newModule, ExprPrinterVisitor printExprs) {
+            for(Func f: newModule.getAllFunc()){
+                if (f.label.startsWith("run$"))
+                    continue;
+                if (f.label.startsWith("$$Default"))
+                    continue;;
+               // if(!(f.label.equals("$$Default"))){
+
+                    if(f.returnDecl.equals(ExprConstant.FALSE)){
+                        print.append("pred "+f.label+" ");
+                    }else
+                    { print.append("fun "+f.label+" ");
+
+                    }
+
+                    print.append("[");
+                    for (Decl d : f.decls) {
+
+                        for (ExprHasName v : d.names) {
+                            print.append( v.accept(printExprs)+",");
+                        }
+                        print.deleteCharAt(print.length()-1);
+
+                        print.append(":"+d.expr.accept(printExprs)+" ,");
+
+                    }
+                    print.deleteCharAt(print.length()-1);
+                    if(!f.decls.isEmpty())
+                        print.append("]");
+//return
+                if(!(f.returnDecl.equals(ExprConstant.FALSE))){
+                    print.append(":");
+                    if(f.returnDecl instanceof Expr)
+                        print.append(f.returnDecl.accept(printExprs));
+                }
+
+                     print.append("{ \r\n");
+
+                if(f.getBody() instanceof ExprConstant)
+                    print.append("\r\n}");
+                else
+                    print.append(f.getBody().accept(printExprs)+" \r\n}\r\n");
+
+                //}
+            }
+        }
+
+        private void printFacts(Module newModule, StringBuilder print, ExprPrinterVisitor printExprs) {
+            for (Pair<String, Expr> f: newModule.getAllFacts()){
+
+                print.append("\r\nfact ");
+                if (f.a.startsWith("fact$")){
+                    print.append(" {");
+
+                }else {
+                    print.append("  "+f.a+ " {" );
+                }
+                print.append(f.b.accept(printExprs) +"}\r\n");
+            }
+        }
+
+        private void printSigs(StringBuilder print, ConstList<Sig>sigsFinal, ExprPrinterVisitor printExprs) {
+            for(int i=0; i<sigsFinal.size();i++){
+
+                Sig s =sigsFinal.get(i);
+                if(s.isAbstract!=null){
+                    print.append("abstract ");
+                }
+
+                if(s.isLone !=null){
+                    print.append("lone ");
+                }
+                if (s.isOne!=null){
+                    print.append("one ");
+                }
+                if(s.isSome != null){
+                    print.append("some ");
+                }
+
+                print.append("sig "+ s.label.substring(5));
+
+
+                if(s.isSubsig!=null ){
+                    if(((Sig.PrimSig) s).parent!=UNIV){
+                        print.append(" extends ");
+                        // String temp=((Sig.PrimSig) s).parent.label.substring(5);
+                        print.append( ((Sig.PrimSig) s).parent.label.substring(5));
+                    }
+                }
+
+                if(s.isSubset!=null){
+                    print.append(" in ");
+                    print.append(((Sig.SubsetSig) s).parents.get(0).label.substring(5));
+
+                    if(((Sig.SubsetSig) s).parents.size()>1){
+                        for (int j = 1; j< ((Sig.SubsetSig) s).parents.size()-1; j ++){
+                            print.append(" + "+((Sig.SubsetSig) s).parents.get(j).label.substring(5));
+                        }
+                    }
+                }
+                //print fields
+                print.append(" { ");
+                if(s.getFields().size()>0){
+                    for (Sig.Field f:s.getFields()){
+                        print.append("\r\n   "+f.label +" : ");
+                        print.append( f.decl().expr.accept(printExprs)+",");
+                    }
+                }
+                print.deleteCharAt(print.length()-1);
+                print.append("}\r\n");
+            }
+        }
+
+        private void printOpenLine( CompModule root,StringBuilder print) {
+
+            for (CompModule.Open open:root.getOpens()){
+
+
+                if(!open.filename.equals("util/integer")){
+
+                    print.append("open "+open.filename+" ");
+                    if(open.args.size()!=0){
+                        print.append("[");
+                        for(String s:open.args) {
+                            print.append(s+",");
+                        }
+                        print.deleteCharAt(print.length()-1);
+                        print.append("] \r\n");
+                    }
+                }
+
+            }
         }
     }
 }

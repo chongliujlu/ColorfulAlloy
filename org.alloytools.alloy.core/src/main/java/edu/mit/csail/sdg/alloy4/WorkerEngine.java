@@ -283,9 +283,11 @@ public final class WorkerEngine {
 
                 @Override
                 public void run() {
+
                     ObjectInputStream sub2main = null;
                     ObjectOutputStream main2sub = null;
                     try {
+
                         main2sub = new ObjectOutputStream(wrap(sub.getOutputStream()));
                         main2sub.writeObject(task);
                         main2sub.close();

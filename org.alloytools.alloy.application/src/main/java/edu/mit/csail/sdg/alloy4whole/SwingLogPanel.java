@@ -246,6 +246,7 @@ final class SwingLogPanel {
 
     /** Write a clickable link into the log window. */
     public void logLink(final String link, final String linkDestination) {
+        System.out.println(" SwingLog Pane link file:" +linkDestination);//colorful Alloy
         if (log == null || link.length() == 0)
             return;
         if (linkDestination == null || linkDestination.length() == 0) {

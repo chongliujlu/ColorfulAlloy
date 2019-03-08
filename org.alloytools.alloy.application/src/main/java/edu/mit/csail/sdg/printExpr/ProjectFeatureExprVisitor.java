@@ -5,23 +5,24 @@ import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.ast.*;
 
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
-public  class FeatureProjectCodeGenerateVisiter extends VisitReturn<Expr> {
+public  class ProjectFeatureExprVisitor extends VisitReturn<Expr> {
     Set<Integer> NFeatures=new HashSet<>();
     Set<Integer> PFeatures=new HashSet<>();
 
-
+    /**
+     * computer the Negative Features and positive Features respectively
+     * @param x
+     */
     public void computeFeatures(Expr x){
-    NFeatures.clear();
-    PFeatures.clear();
-    for(Integer i: x.color){
-        if(i<0)
-            NFeatures.add(-i);
-        else PFeatures.add(i);
-    }
+        NFeatures.clear();
+        PFeatures.clear();
+        for(Integer i: x.color){
+            if(i<0)
+                NFeatures.add(-i);
+             else PFeatures.add(i);
+        }
 }
 
     @Override
@@ -51,6 +52,10 @@ public  class FeatureProjectCodeGenerateVisiter extends VisitReturn<Expr> {
 
     }
 
+    /**
+     * check if the Expr's negetive features is in selected features(for example, Expr :e is marked with NF1, selected : F1 and F2 )
+     * @return
+     */
     private boolean markedWithNFeature() {
         if(!NFeatures.isEmpty()){
             for(Integer i: NFeatures){
@@ -284,7 +289,7 @@ public  class FeatureProjectCodeGenerateVisiter extends VisitReturn<Expr> {
                 signew=new Sig.SubsetSig(x.label,((Sig.SubsetSig) x).parents,attributes);
 
             signew.attributes=x.attributes;
-            ConstList.TempList<Sig.Field> tempList=new ConstList.TempList<>();
+            //ConstList.TempList<Sig.Field> tempList=new ConstList.TempList<>();
 
             for (Sig.Field f: x.getFields()){
                 f.sig=signew;
@@ -305,11 +310,7 @@ public  class FeatureProjectCodeGenerateVisiter extends VisitReturn<Expr> {
                     // field2newField.put(f,list.get(0));
                 }
             }
-
-
-
         }
-
         return signew;
     }
     @Override
@@ -321,8 +322,6 @@ public  class FeatureProjectCodeGenerateVisiter extends VisitReturn<Expr> {
         if(PFeatures.isEmpty()){
 
             tempExpr=  visitThis(x.decl().expr);
-
-
         }else if(MultiComboBox.selectedFeatures.containsAll(PFeatures)){
             return x.decl().expr;
         }

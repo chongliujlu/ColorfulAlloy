@@ -6,7 +6,7 @@ import edu.mit.csail.sdg.ast.*;
 import java.util.HashSet;
 import java.util.Set;
 
-public class UExprPrinterVisitor extends VisitReturn<String> {
+public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
     @Override
     public String visit(ExprBinary x) throws Err {
@@ -22,56 +22,59 @@ public class UExprPrinterVisitor extends VisitReturn<String> {
 
         StringBuilder str=new StringBuilder();
 
-        int arity= x.type().arity();
-        if(! x.color.isEmpty()){
-            str.append("(");
-            if(!NFeatures.isEmpty())
-                addFeatureprefix(PFeatures,str, "not in","and");
-            if (!PFeatures.isEmpty())  //Fi in Product implies
+        str.append("(");
 
-                addFeatureprefix(PFeatures,str, "in","and");
+
+        if(!NFeatures.isEmpty()){
+            if(x.color.size()>1)
+                str.append("(");
+            addFeatureprefix(NFeatures,str, "not in","and");
+            if(PFeatures.isEmpty()) {
+                str.deleteCharAt(str.length()-1);
+                str.deleteCharAt(str.length()-1);
+                str.deleteCharAt(str.length()-1);
+
+                if(x.color.size()>1)
+                    str.append(")");
+                str.append(" implies ");
+            }
 
         }
-
-        //check left
-
-        // ---print x.left --------------------------------------------------------
-        str.append("(");
-        //x.left marked
+        if(!PFeatures.isEmpty()){
+            if(x.color.size()>1&& NFeatures.isEmpty())
+                str.append("(");
+            addFeatureprefix(PFeatures,str, "in","and");
+            str.deleteCharAt(str.length()-1);
+            str.deleteCharAt(str.length()-1);
+            str.deleteCharAt(str.length()-1);
+            if(x.color.size()>1)
+                str.append(")");
+            str.append(" implies ");
+        }
+        //left
+        if(!x.left.color.isEmpty())
+            str.append("(");
+        str.append( visitThis(x.left));
         if(!x.left.color.isEmpty()){
-            // "F in product implies"
-
-            Set<Integer> NFeaturesleft=new HashSet<>();
-            Set<Integer> PFeaturesleft=new HashSet<>();
-            for(Integer i: x.left.color){
-                if(i<0)
-                    NFeaturesleft.add(-i);
-                else PFeaturesleft.add(i);
-            }
-            // str.append("(");
-            str.append( visitThis(x.left));
-            //  str.append(" else ");
-            // and : " none-> none-> none->......" (&:   "univ->univ->univ..." )
-            // printElse(str, arityLeft, x);
-            // str.append(")");
-        }else str.append( visitThis(x.left));
-
-
-        // ---print x.op  ---------
-        str.append(x.op.getLabel()+" ");
-        //-----print x.right ------
-        str.append( visitThis(x.right));
-
-        str.append(")");
-        if(! x.color.isEmpty()){
             str.append(" else ");
-            // and : " none-> none-> none->......" (&:   "univ->univ->univ..." )
-            printElse(str, arity, x);
+            printElse(str, x.type().arity(), x);
             str.append(")");
         }
 
+        str.append(x.op.getLabel()+" ");
+        //-----print x.right ------
+        if (!(x.right instanceof ExprUnary)||!(x.right.color.isEmpty()))
+            str.append("(");
+        str.append( visitThis(x.right));
+        if(!x.right.color.isEmpty()){
+            str.append(" else ");
+            printElse(str, x.type().arity(), x);
+        }
+        if (!(x.right instanceof ExprUnary)||!(x.right.color.isEmpty()))
+            str.append(")");
 
 
+        str.append(")");
         return str.toString();
     }
 
@@ -94,7 +97,7 @@ public class UExprPrinterVisitor extends VisitReturn<String> {
             //Marked with NFeature
             if(!NFeatures.isEmpty()){
                 str.append("(");
-                addFeatureprefix(PFeatures,str, "not in","and");
+                addFeatureprefix(NFeatures,str, "not in","and");
 
                 for(Expr arg: x.args){
                     str.append(" "+visitThis(arg));
@@ -164,16 +167,15 @@ public class UExprPrinterVisitor extends VisitReturn<String> {
 
         StringBuilder tempExpr =new StringBuilder();
         tempExpr.append(x.fun.label.substring(x.fun.label.indexOf("/")+1));
-        if(x.args.size()>0)
+        if(x.args.size()>0) {
             tempExpr.append("[");
-        for(Expr arg :x.args){
-            tempExpr.append(visitThis(arg)+",");
-        }
-        tempExpr.deleteCharAt(tempExpr.length()-1);
+            for (Expr arg : x.args) {
+                tempExpr.append(visitThis(arg) + ",");
+            }
 
-        if(x.args.size()>0)
+            tempExpr.deleteCharAt(tempExpr.length() - 1);
             tempExpr.append("]");
-
+        }
 
         Set<Integer> NFeatures=new HashSet<>();
         Set<Integer> PFeatures=new HashSet<>();
@@ -182,23 +184,35 @@ public class UExprPrinterVisitor extends VisitReturn<String> {
                 NFeatures.add(-i);
             else PFeatures.add(i);
         }
+        if(!NFeatures.isEmpty()){
+            if(x.color.size()>1)
+                str.append("(");
+            addFeatureprefix(NFeatures,str, "not in","and");
+            if(PFeatures.isEmpty()) {
+                str.deleteCharAt(str.length()-1);
+                str.deleteCharAt(str.length()-1);
+                str.deleteCharAt(str.length()-1);
 
-
-        if(!x.color.isEmpty()){
-
-            if(!NFeatures.isEmpty()){
-                addFeatureprefix(PFeatures,str, "not in","and");
-                str.append(tempExpr);
-
+                if(x.color.size()>1)
+                    str.append(")");
+                str.append(" implies ");
             }
-            if(!PFeatures.isEmpty()){
-                addFeatureprefix(NFeatures,str, "in","and");
-                str.append(tempExpr);
-            }
-        }else {
+
+        }
+        if(!PFeatures.isEmpty()){
+            if(x.color.size()>1&& NFeatures.isEmpty())
+                str.append("(");
+            addFeatureprefix(PFeatures,str, "in","and");
+            str.deleteCharAt(str.length()-1);
+            str.deleteCharAt(str.length()-1);
+            str.deleteCharAt(str.length()-1);
+            if(x.color.size()>1)
+                str.append(")");
+            str.append(" implies ");
+        }
 
             str.append(tempExpr);
-        }
+
         return str.toString();
 
     }
@@ -230,28 +244,41 @@ public class UExprPrinterVisitor extends VisitReturn<String> {
             tempExpr.append( " " + x.num+" ");
 
 
-        if(!x.color.isEmpty()){
-            Set<Integer> NFeatures=new HashSet<>();
-            Set<Integer> PFeatures=new HashSet<>();
-            for(Integer i: x.color){
-                if(i<0)
-                    NFeatures.add(-i);
-                else PFeatures.add(i);
+        Set<Integer> NFeatures=new HashSet<>();
+        Set<Integer> PFeatures=new HashSet<>();
+        for(Integer i: x.color){
+            if(i<0)
+                NFeatures.add(-i);
+            else PFeatures.add(i);
+        }
+        if(!NFeatures.isEmpty()){
+            if(x.color.size()>1)
+                str.append("(");
+            addFeatureprefix(NFeatures,str, "not in","and");
+            if(PFeatures.isEmpty()) {
+                str.deleteCharAt(str.length()-1);
+                str.deleteCharAt(str.length()-1);
+                str.deleteCharAt(str.length()-1);
+
+                if(x.color.size()>1)
+                    str.append(")");
+                str.append(" implies ");
             }
 
+        }
+        if(!PFeatures.isEmpty()){
+            if(x.color.size()>1&& NFeatures.isEmpty())
+                str.append("(");
+            addFeatureprefix(PFeatures,str, "in","and");
+            str.deleteCharAt(str.length()-1);
+            str.deleteCharAt(str.length()-1);
+            str.deleteCharAt(str.length()-1);
+            if(x.color.size()>1)
+                str.append(")");
+            str.append(" implies ");
+        }
 
-            if(!NFeatures.isEmpty()){
-                addFeatureprefix(PFeatures,str, "not in","and");
-                str.append(tempExpr);
-
-            }
-            if(!PFeatures.isEmpty()){
-                addFeatureprefix(NFeatures,str, "in","and");
-                str.append(tempExpr);
-            }
-
-
-        } else str.append(tempExpr);
+        str.append(tempExpr);
 
         return str.toString();
     }
@@ -260,50 +287,46 @@ public class UExprPrinterVisitor extends VisitReturn<String> {
     public String visit(ExprITE x) throws Err {
         StringBuilder str=new StringBuilder();
 
+        Set<Integer> NFeatures=new HashSet<>();
+        Set<Integer> PFeatures=new HashSet<>();
+        for(Integer i: x.color){
+            if(i<0)
+                NFeatures.add(-i);
+            else PFeatures.add(i);
+        }
+        if(!NFeatures.isEmpty()){
+            if(x.color.size()>1)
+                str.append("(");
+            addFeatureprefix(NFeatures,str, "not in","and");
+            if(PFeatures.isEmpty()) {
+                str.deleteCharAt(str.length()-1);
+                str.deleteCharAt(str.length()-1);
+                str.deleteCharAt(str.length()-1);
 
-
-        if(!x.color.isEmpty()){
-            Set<Integer> NFeatures=new HashSet<>();
-            Set<Integer> PFeatures=new HashSet<>();
-            for(Integer i: x.color){
-                if(i<0)
-                    NFeatures.add(-i);
-                else PFeatures.add(i);
-            }
-
-
-            if(!NFeatures.isEmpty()){
-                addFeatureprefix(PFeatures,str, "not in","and");
-
-                str.append(visitThis(x.cond));
+                if(x.color.size()>1)
+                    str.append(")");
                 str.append(" implies ");
-
-                str.append(visitThis(x.left));
-                str.append(" else ");
-                str.append(visitThis(x.right));
-
-
-            }
-            if(!PFeatures.isEmpty()){
-                addFeatureprefix(NFeatures,str, "in","and");
-                str.append(visitThis(x.cond));
-                str.append(" implies ");
-
-                str.append(visitThis(x.left));
-                str.append(" else ");
-                str.append(visitThis(x.right));
             }
 
-
-        } else
-        {str.append(visitThis(x.cond));
+        }
+        if(!PFeatures.isEmpty()){
+            if(x.color.size()>1&& NFeatures.isEmpty())
+                str.append("(");
+            addFeatureprefix(PFeatures,str, "in","and");
+            str.deleteCharAt(str.length()-1);
+            str.deleteCharAt(str.length()-1);
+            str.deleteCharAt(str.length()-1);
+            if(x.color.size()>1)
+                str.append(")");
             str.append(" implies ");
+        }
 
-            str.append(visitThis(x.left));
-            str.append(" else ");
-            str.append(visitThis(x.right));}
+        str.append(visitThis(x.cond));
+        str.append(" implies ");
 
-
+        str.append(visitThis(x.left));
+        str.append(" else ");
+        str.append(visitThis(x.right));
 
         return str.toString();
     }
@@ -311,6 +334,42 @@ public class UExprPrinterVisitor extends VisitReturn<String> {
     @Override
     public String visit(ExprLet x) throws Err {
         StringBuilder str=new StringBuilder();
+
+        Set<Integer> NFeatures=new HashSet<>();
+        Set<Integer> PFeatures=new HashSet<>();
+        for(Integer i: x.color){
+            if(i<0)
+                NFeatures.add(-i);
+            else PFeatures.add(i);
+        }
+        if(!NFeatures.isEmpty()){
+            if(x.color.size()>1)
+                str.append("(");
+            addFeatureprefix(NFeatures,str, "not in","and");
+            if(PFeatures.isEmpty()) {
+                str.deleteCharAt(str.length()-1);
+                str.deleteCharAt(str.length()-1);
+                str.deleteCharAt(str.length()-1);
+
+                if(x.color.size()>1)
+                    str.append(")");
+                str.append(" implies ");
+            }
+
+        }
+        if(!PFeatures.isEmpty()){
+            if(x.color.size()>1&& NFeatures.isEmpty())
+                str.append("(");
+            addFeatureprefix(PFeatures,str, "in","and");
+            str.deleteCharAt(str.length()-1);
+            str.deleteCharAt(str.length()-1);
+            str.deleteCharAt(str.length()-1);
+            if(x.color.size()>1)
+                str.append(")");
+            str.append(" implies ");
+        }
+
+
         str.append(visitThis(x.var));
         str.append("=");
 
@@ -329,6 +388,8 @@ public class UExprPrinterVisitor extends VisitReturn<String> {
             //all
             tempExpr.append(x.op.getLabel() +" ");
 
+
+
         for (Decl decl :x.decls){
             for (Expr e: decl.names){
                 tempExpr.append(visitThis(e)+" ,");
@@ -344,28 +405,39 @@ public class UExprPrinterVisitor extends VisitReturn<String> {
         tempExpr.append(visitThis(x.sub));
 
 
+        Set<Integer> NFeatures=new HashSet<>();
+        Set<Integer> PFeatures=new HashSet<>();
+        for(Integer i: x.color){
+            if(i<0)
+                NFeatures.add(-i);
+            else PFeatures.add(i);
+        }
+        if(!NFeatures.isEmpty()){
+            if(x.color.size()>1)
+                str.append("(");
+            addFeatureprefix(NFeatures,str, "not in","and");
+            if(PFeatures.isEmpty()) {
+                str.deleteCharAt(str.length()-1);
+                str.deleteCharAt(str.length()-1);
+                str.deleteCharAt(str.length()-1);
 
-        if(!x.color.isEmpty()) {
-            Set<Integer> NFeatures = new HashSet<>();
-            Set<Integer> PFeatures = new HashSet<>();
-            for (Integer i : x.color) {
-                if (i < 0)
-                    NFeatures.add(-i);
-                else PFeatures.add(i);
+                if(x.color.size()>1)
+                    str.append(")");
+                str.append(" implies ");
             }
 
-            if(!NFeatures.isEmpty()) {
-                addFeatureprefix(NFeatures,str,"not in","and");
-                str.append(tempExpr);
-            }
-            if(!PFeatures.isEmpty()){
-                addFeatureprefix(PFeatures,str, "in","and");
-                str.append(tempExpr);
-            }
-
-
-
-        }else
+        }
+        if(!PFeatures.isEmpty()){
+            if(x.color.size()>1&& NFeatures.isEmpty())
+                str.append("(");
+            addFeatureprefix(PFeatures,str, "in","and");
+            str.deleteCharAt(str.length()-1);
+            str.deleteCharAt(str.length()-1);
+            str.deleteCharAt(str.length()-1);
+            if(x.color.size()>1)
+                str.append(")");
+            str.append(" implies ");
+        }
             str.append(tempExpr);
 
         return str.toString();
@@ -403,23 +475,34 @@ public class UExprPrinterVisitor extends VisitReturn<String> {
         tempExpr.append(visitThis(x.sub));
 
 
-        if(!x.color.isEmpty()) {
-            str.append("(");
-            //negative Feature
-            if(!NFeatures.isEmpty())
-                addFeatureprefix(NFeatures,str,"not in","and");
+        if(!NFeatures.isEmpty()){
+            if(x.color.size()>1)
+                str.append("(");
+            addFeatureprefix(NFeatures,str, "not in","and");
+            if(PFeatures.isEmpty()) {
+                str.deleteCharAt(str.length()-1);
+                str.deleteCharAt(str.length()-1);
+                str.deleteCharAt(str.length()-1);
 
-            if(!PFeatures.isEmpty())
-                addFeatureprefix(PFeatures, str, "in","and");
+                if(x.color.size()>1)
+                    str.append(")");
+                str.append(" implies ");
+            }
+
+        }
+        if(!PFeatures.isEmpty()){
+            if(x.color.size()>1 && NFeatures.isEmpty())
+                str.append("(");
+            addFeatureprefix(PFeatures,str, "in","and");
+            str.deleteCharAt(str.length()-1);
+            str.deleteCharAt(str.length()-1);
+            str.deleteCharAt(str.length()-1);
+            if(x.color.size()>1)
+                str.append(")");
+            str.append(" implies ");
         }
 
         str.append(tempExpr);
-        if(!x.color.isEmpty()){
-            str.append(" else ");
-            printElseString(str,x.type().arity()," none ");
-            str.append(")");
-
-        }
         return str.toString();
     }
 
@@ -462,10 +545,10 @@ public class UExprPrinterVisitor extends VisitReturn<String> {
     }
 
 
-    private void printElseString(StringBuilder str, int arity, String s) {
+    private void printElseString(StringBuilder str, int arity, String string) {
         StringBuilder elseString=new StringBuilder();
         for (int i=0; i< arity;i++){
-            elseString.append( " none " +"->");
+            elseString.append( " "+string+" " +"->");
         }
         elseString.deleteCharAt(elseString.length()-1);
         elseString.deleteCharAt(elseString.length()-1);
@@ -483,25 +566,10 @@ public class UExprPrinterVisitor extends VisitReturn<String> {
 
     private void addFeatureprefix(Set<Integer> PFeature,StringBuilder str, String inOrNot,String operator) {
 
-        if(PFeature.size()>1)
-            str.append("    (");
-
         for (Integer i: PFeature){
 
             str.append(" F"+i + " "+inOrNot+" Product "+operator);
         }
-        if(str.length()>=2){
-
-            str.deleteCharAt(str.length()-1);
-            str.deleteCharAt(str.length()-1);
-            if(operator.equals("and"))
-                str.deleteCharAt(str.length()-1);
-
-        }
-
-        if(PFeature.size()>1)
-            str.append(")");
-        str.append(" implies ");
     }
 
 }

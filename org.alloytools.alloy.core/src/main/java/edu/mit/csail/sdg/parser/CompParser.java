@@ -4182,7 +4182,7 @@ class CUP$CompParser$actions {
 		CUP$CompParser$stack.peek();
 		CUP$CompParser$stack.peek();
 		Expr b = (Expr)((java_cup.runtime.Symbol) CUP$CompParser$stack.peek()).value;
-		 RESULT=ExprUnary.Op.TRANSPOSE.make(o,b); 
+		 RESULT=ExprUnary.Op.TRANSPOSE.make(o,b);
               CUP$CompParser$result = parser.getSymbolFactory().newSymbol("UnopExprB",82, ((java_cup.runtime.Symbol)CUP$CompParser$stack.elementAt(CUP$CompParser$top-1)), ((java_cup.runtime.Symbol)CUP$CompParser$stack.peek()), RESULT);
             }
           return CUP$CompParser$result;
@@ -4572,7 +4572,7 @@ class CUP$CompParser$actions {
 		CUP$CompParser$stack.peek();
 		CUP$CompParser$stack.peek();
 		Expr b = (Expr)((java_cup.runtime.Symbol) CUP$CompParser$stack.peek()).value;
-		 RESULT=ExprBinary.Op.RANGE.make(o, null, a, b); 
+		 RESULT=ExprBinary.Op.RANGE.make(o, null, a, b);
               CUP$CompParser$result = parser.getSymbolFactory().newSymbol("RangeExprA",54, ((java_cup.runtime.Symbol)CUP$CompParser$stack.elementAt(CUP$CompParser$top-2)), ((java_cup.runtime.Symbol)CUP$CompParser$stack.peek()), RESULT);
             }
           return CUP$CompParser$result;
@@ -4812,7 +4812,7 @@ class CUP$CompParser$actions {
 		CUP$CompParser$stack.peek();
 		CUP$CompParser$stack.peek();
 		Pos o = (Pos)((java_cup.runtime.Symbol) CUP$CompParser$stack.peek()).value;
-		 RESULT=new Pair<>(o, ExprBinary.Op.SOME_ARROW_LONE); 
+		 RESULT=new Pair<>(o, ExprBinary.Op.SOME_ARROW_LONE);
               CUP$CompParser$result = parser.getSymbolFactory().newSymbol("RelOp",56, ((java_cup.runtime.Symbol)CUP$CompParser$stack.peek()), ((java_cup.runtime.Symbol)CUP$CompParser$stack.peek()), RESULT);
             }
           return CUP$CompParser$result;
@@ -5061,7 +5061,7 @@ class CUP$CompParser$actions {
 		CUP$CompParser$stack.peek();
 		CUP$CompParser$stack.peek();
 		Expr b = (Expr)((java_cup.runtime.Symbol) CUP$CompParser$stack.peek()).value;
-		 RESULT=ExprUnary.Op.CARDINALITY.make(o, b); 
+		 RESULT=ExprUnary.Op.CARDINALITY.make(o, b);
               CUP$CompParser$result = parser.getSymbolFactory().newSymbol("NumUnopExprB",48, ((java_cup.runtime.Symbol)CUP$CompParser$stack.elementAt(CUP$CompParser$top-1)), ((java_cup.runtime.Symbol)CUP$CompParser$stack.peek()), RESULT);
             }
           return CUP$CompParser$result;
@@ -5595,7 +5595,7 @@ class CUP$CompParser$actions {
 		CUP$CompParser$stack.peek();
 		CUP$CompParser$stack.peek();
 		Expr b = (Expr)((java_cup.runtime.Symbol) CUP$CompParser$stack.peek()).value;
-		 RESULT=ExprBinary.Op.SHL.make(o, null, a, b); 
+		 RESULT=ExprBinary.Op.SHL.make(o, null, a, b);
               CUP$CompParser$result = parser.getSymbolFactory().newSymbol("ShiftExprA",75, ((java_cup.runtime.Symbol)CUP$CompParser$stack.elementAt(CUP$CompParser$top-2)), ((java_cup.runtime.Symbol)CUP$CompParser$stack.peek()), RESULT);
             }
           return CUP$CompParser$result;
@@ -6177,7 +6177,7 @@ class CUP$CompParser$actions {
 		CUP$CompParser$stack.peek();
 		CUP$CompParser$stack.peek();
 		Expr b = (Expr)((java_cup.runtime.Symbol) CUP$CompParser$stack.peek()).value;
-		 RESULT=ExprBinary.Op.GTE       .make(o, null, a, b);       
+		 RESULT=ExprBinary.Op.GTE       .make(o, null, a, b);
               CUP$CompParser$result = parser.getSymbolFactory().newSymbol("CompareExprA",6, ((java_cup.runtime.Symbol)CUP$CompParser$stack.elementAt(CUP$CompParser$top-2)), ((java_cup.runtime.Symbol)CUP$CompParser$stack.peek()), RESULT);
             }
           return CUP$CompParser$result;
@@ -6414,7 +6414,7 @@ class CUP$CompParser$actions {
 		CUP$CompParser$stack.peek();
 		CUP$CompParser$stack.peek();
 		Expr b = (Expr)((java_cup.runtime.Symbol) CUP$CompParser$stack.peek()).value;
-		 RESULT = ExprBinary.Op.IMPLIES.make(o, null, a, b); 
+		 RESULT = ExprBinary.Op.IMPLIES.make(o, null, a, b);
               CUP$CompParser$result = parser.getSymbolFactory().newSymbol("ImpliesExprOpenB",35, ((java_cup.runtime.Symbol)CUP$CompParser$stack.elementAt(CUP$CompParser$top-2)), ((java_cup.runtime.Symbol)CUP$CompParser$stack.peek()), RESULT);
             }
           return CUP$CompParser$result;

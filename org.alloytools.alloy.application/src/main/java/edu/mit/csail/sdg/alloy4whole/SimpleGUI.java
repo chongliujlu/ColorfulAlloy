@@ -677,7 +677,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
      * print Module with all features
      * @return
      */
-    private ActionListener doModule() {
+    private ActionListener doAmalgamatedModule() {
         if (wrap)
             return wrapMe();
 
@@ -685,7 +685,9 @@ public final class SimpleGUI implements ComponentListener, Listener {
             return null;
         String print;
 
-        print=printUinonModule();
+        print= printAmalgamatedModule();
+        if(print==null)
+            return null;
         text.newtab(null);
         notifyChange();
         doShow();
@@ -697,8 +699,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
      * @return
      */
     //colorful Alloy
-    private String printUinonModule() {
-        UExprPrinterVisitor printUnionModule=new UExprPrinterVisitor();
+    private String printAmalgamatedModule() {
+        AmalgamatedExprPrinterVisitor printAmalgamatedExpr=new AmalgamatedExprPrinterVisitor();
         ExprPrinterVisitor printExprs=new ExprPrinterVisitor();
 
 
@@ -721,6 +723,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
             log.logRed(er.toString() + "\n\n");
             return null;
         }
+
 
         // print sig ------------------------------------------------------
         for(int i=0; i<root.sigs.size();i++){
@@ -820,15 +823,16 @@ public final class SimpleGUI implements ComponentListener, Listener {
             }else {
                 print.append("  "+f.a+ " {\r\n" );
             }
-            print.append("    "+f.b.accept(printUnionModule));
+            print.append("    "+f.b.accept(printAmalgamatedExpr));
             print.append(" }\r\n ");
         }
 
         //  print funs------------------------------------------------------
 
-        for(
-                Func func: root.getAllFunc()){
+        for(Func func: root.getAllFunc()){
 
+            if(func.label.startsWith("this/run$"))
+                continue;
             if(!(func.label.equals("this/$$Default"))){
 
                 print.append("\r\n");
@@ -843,11 +847,11 @@ public final class SimpleGUI implements ComponentListener, Listener {
                     for (Decl decl :func.decls){
 
                         for (Expr expr: decl.names){
-                            print.append(expr.accept(printUnionModule)+" ,");
+                            print.append(expr.accept(printAmalgamatedExpr)+" ,");
                         }
                         print.deleteCharAt(print.length() - 1);
                         print.append(": ");
-                        print.append(decl.expr.accept(printUnionModule)+",");
+                        print.append(decl.expr.accept(printAmalgamatedExpr)+",");
                     }
                     print.deleteCharAt(print.length()-1);
                     print.append("]");
@@ -857,11 +861,11 @@ public final class SimpleGUI implements ComponentListener, Listener {
                 if(!func.isPred && !func.returnDecl.equals(ExprConstant.Op.FALSE))
                 {
                     print.append(":");
-                    print.append(func.returnDecl.accept(printUnionModule));
+                    print.append(func.returnDecl.accept(printAmalgamatedExpr));
                 }
 
                 print.append("{\r\n  ");
-                print.append(func.getBody().accept(printUnionModule));
+                print.append(func.getBody().accept(printAmalgamatedExpr));
                 print.append("\r\n}");
             }
         }
@@ -875,7 +879,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                 print.append(asser.a);
             print.append("{\r\n");
 
-            print.append(asser.b.accept(printUnionModule));
+            print.append(asser.b.accept(printAmalgamatedExpr));
 
             print.append("\r\n}");
 
@@ -891,7 +895,25 @@ public final class SimpleGUI implements ComponentListener, Listener {
                     print.append("\r\n check ");
                 else print.append("\r\n run ");
 
-                print.append(command.label +" " + " for "+command.overall);
+                if(command.label.startsWith("run$")){
+                    print.append("{" );
+                   for( Func func: root.getAllFunc()){
+                        if(command.label.equals(func.label.substring(5))){
+                            print.append(func.getBody().accept(printAmalgamatedExpr));
+                        }
+
+                    }
+
+                    print.append("}");
+
+                }
+
+                else
+                    print.append(command.label );
+
+                print.append(" for ");
+                print.append(command.overall>0? command.overall +" ":4+" ");
+                System.out.println("command overall:"+command.overall);
 
                 if(command.scope.size()==1)
                     print.append(" but ");
@@ -965,7 +987,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
     }
     //colorful Alloy
     private void addFeatureFact(Field f, StringBuilder print){
-        UExprPrinterVisitor printUnionModule=new UExprPrinterVisitor();
+        AmalgamatedExprPrinterVisitor printUnionModule=new AmalgamatedExprPrinterVisitor();
         Set<Integer> NFeatures=new HashSet<>();
         Set<Integer> PFeatures=new HashSet<>();
         for(Integer i: f.color){
@@ -1959,6 +1981,12 @@ public final class SimpleGUI implements ComponentListener, Listener {
         if (arg.startsWith("XML: ")) { // XML: filename
             viz.loadXML(Util.canon(arg.substring(5)), false);
         }
+
+        if(arg.startsWith("als: ")){//colorful Alloy
+            System.out.println(" open file");
+            doOpenFile(arg.substring(5));
+
+        }
         return null;
     }
 
@@ -2384,9 +2412,9 @@ public final class SimpleGUI implements ComponentListener, Listener {
             toolbar.add(stopbutton = OurUtil.button("Stop", "Stops the current analysis", "images/24_execute_abort2.gif", doStop(2)));
             stopbutton.setVisible(false);
             toolbar.add(showbutton = OurUtil.button("Show", "Shows the latest instance", "images/24_graph.gif", doShowLatest()));
-            //colorfull Alloy
-            toolbar.add(OurUtil.button("Module","Generate one Modue with all features","images/24_execute.gif",doModule()));
-          JPanel panel=new JPanel();
+            toolbar.add(OurUtil.button("Amalgamate","Generate amalgmate Module code","", doAmalgamatedModule()));//colorfull Alloy
+
+/*          JPanel panel=new JPanel();
           JLabel label=new JLabel("Please Select Features");
 
 
@@ -2427,7 +2455,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                         log.logRed(er.toString() + "\n\n");
                     }
 
-                    if(e.getActionCommand().equals(MultiPopup.Executed_EVENT)) {
+                     if(e.getActionCommand().equals(MultiPopup.Executed_EVENT)) {
 
                         // get selected  features
                         Object[] defaultValues = mulit.popup.getSelectedValues();
@@ -2437,7 +2465,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                         }
                         MultiComboBox.selectedFeatures = Feature;
 
-                        FeatureProjectCodeGenerateVisiter reconstructExpr=new FeatureProjectCodeGenerateVisiter();
+                        ProjectFeatureExprVisitor reconstructExpr=new ProjectFeatureExprVisitor();
 
 
                         VizGUI viz = null;
@@ -2507,7 +2535,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
                         // project sigs--------------------------------------------------------------------------------------------------------
                       //  reconstructSig reconstructsigs = new reconstructSig();
-                        FeatureProjectCodeGenerateVisiter reconstructExpr=new FeatureProjectCodeGenerateVisiter();
+                        ProjectFeatureExprVisitor reconstructExpr=new ProjectFeatureExprVisitor();
                         //get sigs
                         SafeList<Sig> oldsigs = root.getAllSigs();
 
@@ -2515,17 +2543,19 @@ public final class SimpleGUI implements ComponentListener, Listener {
 // check every sig in the Module
                         for (Sig sig : oldsigs) {
                             Sig sigTemp = (Sig) sig.accept(reconstructExpr);
-                            SafeList<Expr> sigf = sig.getFacts();
+                            if (sigTemp != null) {
 
-                            //project sig facts
-                            for (Expr factExpr : sigf) {
-                                //got sigs and fields are point to old sigs and fields
-                                sigTemp.addFact(factExpr.accept(reconstructExpr));
+                                SafeList<Expr> sigf = sig.getFacts();
+
+                                //project sig facts
+                                for (Expr factExpr : sigf) {
+                                    //got sigs and fields are point to old sigs and fields
+                                    sigTemp.addFact(factExpr.accept(reconstructExpr));
+                                }
+                                sigsFinal.add(sigTemp);
                             }
-                            sigsFinal.add(sigTemp);
+
                         }
-
-
 
                         //add sigs to module
                         for(Sig s: sigsFinal.makeConst()){
@@ -2710,8 +2740,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
 toolbar.add(panel);
 
-         //   toolbar.add(mulit);//colorfull Alloy
-
+         //   toolbar.add(mulit);//colorfull Alloy*/
 
             toolbar.add(Box.createHorizontalGlue());
             toolbar.setBorder(new OurBorder(false, false, false, false));

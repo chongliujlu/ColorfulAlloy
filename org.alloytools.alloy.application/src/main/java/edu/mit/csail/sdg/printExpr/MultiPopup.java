@@ -27,7 +27,7 @@ public class MultiPopup extends JPopupMenu {
 
     public static final String CANCEL_EVENT = "cancel";
     public static final String Executed_EVENT = "execute";
-    public static  final String UnionModule_Event ="enumerative";
+    public static  final String UnionModule_Event ="unionmodule";
 
     public MultiPopup(Object[] value , Object[] defaultValue) {
         super();

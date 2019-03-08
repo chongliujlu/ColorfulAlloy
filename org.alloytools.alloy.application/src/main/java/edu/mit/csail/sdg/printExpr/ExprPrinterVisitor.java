@@ -9,11 +9,11 @@ import edu.mit.csail.sdg.ast.*;
 public  class ExprPrinterVisitor extends VisitReturn<String> {
     @Override
     public String visit(ExprBinary x) throws Err {
-        if(x.right instanceof ExprBinary){
-            return" "+ visitThis(x.left) +" " +x.op.getLabel() +" "+visitThis(x.right)+" ";
-        }
+       // if(x.right instanceof ExprBinary){
+        //    return" "+ visitThis(x.left) +" " +x.op.getLabel() +" "+visitThis(x.right)+" ";
+      //  }
 
-        return " "+visitThis(x.left) +" " +x.op.getLabel()+" "+visitThis(x.right)+" ";
+        return "("+visitThis(x.left) +" " +x.op.getLabel()+" "+visitThis(x.right)+")";
 
     }
 
@@ -98,6 +98,7 @@ public  class ExprPrinterVisitor extends VisitReturn<String> {
     @Override
     public String visit(ExprQt x) throws Err {
         StringBuilder s= new StringBuilder();
+        s.append("(");
         if(!x.op.equals(ExprQt.Op.COMPREHENSION)){
             s.append(x.op.getLabel() +" ");
         }else {
@@ -119,7 +120,7 @@ public  class ExprPrinterVisitor extends VisitReturn<String> {
 
         s.append("|");
         s.append(visitThis(x.sub));
-
+        s.append(")");
         return s.toString();
 
     }

@@ -15,50 +15,27 @@
 
 package edu.mit.csail.sdg.ast;
 
-import static edu.mit.csail.sdg.ast.Sig.UNIV;
-
 import java.awt.BorderLayout;
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import javax.swing.BoxLayout;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JTextArea;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.border.EmptyBorder;
 
-import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.ConstList;
-import edu.mit.csail.sdg.alloy4.Err;
-import edu.mit.csail.sdg.alloy4.ErrorWarning;
 import edu.mit.csail.sdg.alloy4.Listener;
 import edu.mit.csail.sdg.alloy4.OurTree;
-import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Pos;
-import edu.mit.csail.sdg.alloy4.SafeList;
 import edu.mit.csail.sdg.alloy4.Util;
-import edu.mit.csail.sdg.ast.Sig.Field;
-import edu.mit.csail.sdg.ast.Sig.PrimSig;
-import edu.mit.csail.sdg.ast.Sig.SubsetSig;
-import edu.mit.csail.sdg.parser.CompModule;
-import edu.mit.csail.sdg.translator.A4Options;
-import edu.mit.csail.sdg.translator.A4Solution;
-import edu.mit.csail.sdg.translator.TranslateAlloyToKodkod;
+
 
 /**
  * This abstract class represents a node that can be browsed in the graphical
@@ -78,16 +55,6 @@ public abstract class Browsable {
     public void paint(Collection<Integer> c) {
         color.addAll(c);
     }
-
-    Set<Integer> selectedFeature = new HashSet<>();
-    // store new sigs
-    Map<Sig,Sig> sigOld2new      = new HashMap<>();
-    // Map <Field,Field> field2newField =new HashMap<>();
-
-    JTextArea    textLabel       = new JTextArea();
-    JFrame       x;
-
-
 
     /**
      * Returns a Pos object representing the position of this Expr.

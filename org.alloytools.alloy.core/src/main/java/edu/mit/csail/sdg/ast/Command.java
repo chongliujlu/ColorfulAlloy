@@ -120,6 +120,10 @@ public final class Command extends Browsable {
         }
         boolean first = true;
         StringBuilder sb = new StringBuilder(check ? "Check " : "Run ").append(label);
+        if(feats!=null)
+            if(!feats.feats.isEmpty()) //colorful Alloy
+                sb.append(feats.isExact?" with exactly "+feats.feats : " with "+feats.feats); //colorful Alloy
+
         if (overall >= 0 && (bitwidth >= 0 || maxseq >= 0 || scope.size() > 0))
             sb.append(" for ").append(overall).append(" but");
         else if (overall >= 0)
