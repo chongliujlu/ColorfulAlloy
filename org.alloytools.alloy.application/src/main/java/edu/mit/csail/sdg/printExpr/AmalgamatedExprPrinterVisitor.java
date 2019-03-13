@@ -49,29 +49,48 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
             str.deleteCharAt(str.length()-1);
             if(x.color.size()>1)
                 str.append(")");
-            str.append(" implies ");
+            str.append(" implies (");
         }
         //left
         if(!x.left.color.isEmpty())
             str.append("(");
         str.append( visitThis(x.left));
+
         if(!x.left.color.isEmpty()){
-            str.append(" else ");
-            printElse(str, x.type().arity(), x);
+            if(!(x.left instanceof ExprBinary)) {
+                str.append(" else ");
+                printElse(str, x.type().arity(), x);
+            }
             str.append(")");
         }
 
+
         str.append(x.op.getLabel()+" ");
         //-----print x.right ------
-        if (!(x.right instanceof ExprUnary)||!(x.right.color.isEmpty()))
+        if (!(x.right.color.isEmpty()))
             str.append("(");
+
         str.append( visitThis(x.right));
+
         if(!x.right.color.isEmpty()){
+            if(!(x.right instanceof ExprBinary)) {
+                str.append(" else ");
+                printElse(str, x.type().arity(), x);
+            }
+            str.append(")");
+        }
+
+
+        // implies (
+        if(!x.color.isEmpty()){
+            str.append(")");
             str.append(" else ");
             printElse(str, x.type().arity(), x);
+           // str.append(")");
         }
-        if (!(x.right instanceof ExprUnary)||!(x.right.color.isEmpty()))
-            str.append(")");
+
+
+
 
 
         str.append(")");
@@ -369,11 +388,13 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
             str.append(" implies ");
         }
 
-
+        str.append(" let ");
         str.append(visitThis(x.var));
         str.append("=");
 
         str.append(visitThis(x.expr));
+        str.append(" | ");
+        str.append(visitThis(x.sub));
         return str.toString();
 
     }
@@ -381,11 +402,12 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
     @Override
     public String visit(ExprQt x) throws Err {
         StringBuilder str=new StringBuilder();
+        str.append("{");
 
         StringBuilder tempExpr=new StringBuilder();
 
         if(!x.op.equals(ExprQt.Op.COMPREHENSION))
-            //all
+            //all，no
             tempExpr.append(x.op.getLabel() +" ");
 
 
@@ -394,11 +416,11 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
             for (Expr e: decl.names){
                 tempExpr.append(visitThis(e)+" ,");
             }
-            tempExpr.deleteCharAt(str.length() - 1);
+            tempExpr.deleteCharAt(tempExpr.length() - 1);
             tempExpr.append(": ");
             tempExpr.append(visitThis(decl.expr)+",");
         }
-        tempExpr.deleteCharAt(str.length()-1);
+        tempExpr.deleteCharAt(tempExpr.length()-1);
 
         tempExpr.append("|");
 
@@ -439,6 +461,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
             str.append(" implies ");
         }
             str.append(tempExpr);
+            str.append("}");
 
         return str.toString();
     }
@@ -520,7 +543,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
     @Override
     public String visit(Sig x) throws Err {
-        return x.label.substring(5)+" ";
+        return x.label.startsWith("this/")? x.label.substring(5):x.label;
     }
 
     @Override

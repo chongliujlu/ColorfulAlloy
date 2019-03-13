@@ -95,12 +95,9 @@ public  class expressionProject extends VisitReturn<Expr> {
 
     @Override
     public Expr visit(ExprCall x) throws Err {
-
-        //need to change
         computeFeatures(x);
         if(markedWithNFeature())
             return null;
-
         if(runfeatures.containsAll(PFeatures)){
             return x;
         }
@@ -143,35 +140,12 @@ public  class expressionProject extends VisitReturn<Expr> {
 
     @Override
     public Expr visit(ExprLet x) throws Err {
-        /*
-            //change the type of expr,used in  Execute
-            Type t=x.type;
-            ConstList.TempList<Type.ProductType> entries =new ConstList.TempList<>();
-//ConstList<ProductType> entries // PrimSig[]          types;
-            //for each ProductType
-           Iterator<Type.ProductType> iterator= t.iterator();
-          while( iterator.hasNext()){
-              Sig.PrimSig newPrimsigs[]=new Sig.PrimSig[iterator.next().arity()];
-
-              for (int j=0; j<iterator.next().arity();j++){
-                  if(sigOld2new.containsKey(iterator.next())&& sigOld2new.get(iterator.next())!=null){
-                      newPrimsigs[j]=(Sig.PrimSig) sigOld2new.get(iterator.next());
-
-                  }
-                  else
-                      newPrimsigs[j]=productTypes.get(j);
-              }
-          }
-
-            Type newType=new Type(t.is_bool,entries.makeConst(),t.arities);
-
-            x.type=newType;
-
-*/
         computeFeatures(x);
         if(markedWithNFeature())
             return null;
-
+        // no positive feature marked
+        if(PFeatures.isEmpty())
+            return ExprLet.make(x.pos,x.var,visitThis(x.expr),visitThis(x.sub));
         if(runfeatures.containsAll(PFeatures)){
             return x;
         }
@@ -241,37 +215,9 @@ public  class expressionProject extends VisitReturn<Expr> {
 
     @Override
     public Expr visit(ExprVar x) throws Err {
-/*
-            //change Expr type
-            Type t=x.type;
-            ConstList.TempList<Type.ProductType> entries =new ConstList.TempList<>();
-//ConstList<ProductType> entries // PrimSig[]          types;
-            //每一个 ProductType
-            for(Type.ProductType productTypes :t.getEntities()){
-                Sig.PrimSig newPrimsigs[]=new Sig.PrimSig[productTypes.getTypes().length];
-                for (int j=0; j< productTypes.getTypes().length;j++){
-                    if(sigOld2new.containsKey(productTypes.get(j))&& sigOld2new.get(productTypes.get(j))!=null){
-                        newPrimsigs[j]=(Sig.PrimSig) sigOld2new.get(productTypes.get(j));
-
-                    }
-                    else
-                        newPrimsigs[j]=productTypes.get(j);
-                }
-
-
-                Type.ProductType p=new Type.ProductType(newPrimsigs);
-                entries.add(p);
-
-            }
-            Type newType=new Type(t.is_bool,entries.makeConst(),t.arities);
-
-            x.type=newType;
-
-*/
         computeFeatures(x);
         if(markedWithNFeature())
             return null;
-
         if(runfeatures.containsAll(PFeatures)){
             return x;
         }
@@ -291,14 +237,12 @@ public  class expressionProject extends VisitReturn<Expr> {
                 attributes[i]=x.attributes.get(i);
             }
 
-
             if(x instanceof Sig.PrimSig)
                 signew=new Sig.PrimSig(x.label,((Sig.PrimSig) x).parent,attributes);
             else if (x instanceof Sig.SubsetSig)
                 signew=new Sig.SubsetSig(x.label,((Sig.SubsetSig) x).parents,attributes);
 
             signew.attributes=x.attributes;
-            //ConstList.TempList<Sig.Field> tempList=new ConstList.TempList<>();
 
             for (Sig.Field f: x.getFields()){
                 f.sig=signew;
@@ -306,17 +250,7 @@ public  class expressionProject extends VisitReturn<Expr> {
                 Expr exprout = visitThis(f);
                 if (exprout!=null){
 
-                    //修改指针
-                    //   changePoint(exprout,x,xnew);
-
-                    //help to find the old Field
-                    //  List<Sig.Field> listold= signew.getFields().makeCopy();
-
                     signew.addField(f.label, exprout);
-                    //  List<Sig.Field> list=signew.getFields().makeCopy();
-
-                    // list.removeAll(listold);
-                    // field2newField.put(f,list.get(0));
                 }
             }
         }

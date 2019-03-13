@@ -694,6 +694,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
         text.get().setText(print);
         return null;
     }
+
     /**
      *
      * @return
@@ -706,7 +707,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
         StringBuilder  print =new StringBuilder();
         print.append("abstract sig Feature{}\r\n");
-        print.append("sig F1,F2,F3,F4,F5,F6,F7,F8,F9,F0 extends Feature{}\r\n");
+        print.append("one sig F1,F2,F3,F4,F5,F6,F7,F8,F9 extends Feature{}\r\n");
         print.append("sig Product in Feature{}\r\n\r\n");
 
         CompModule root=null;
@@ -813,8 +814,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
         //print facts
         //----------------------------------------------------------------
-        for (
-                Pair<String, Expr> f: root.getAllFacts()){
+        for (Pair<String, Expr> f: root.getAllFacts()){
 
             print.append("\r\nfact ");
             if (f.a.startsWith("fact$")){
@@ -824,7 +824,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                 print.append("  "+f.a+ " {\r\n" );
             }
             print.append("    "+f.b.accept(printAmalgamatedExpr));
-            print.append(" }\r\n ");
+            print.append(" \r\n}\r\n ");
         }
 
         //  print funs------------------------------------------------------
@@ -872,7 +872,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
         // print assert-----------------------------------------------------------------
         for(Pair<String,Expr> asser:root.getAllAssertions()){
-            print.append("\r\n  ");
+            print.append("\r\n\r\n");
 
             print.append("assert  ");
             if(!asser.a.contains("assert$"))
@@ -910,6 +910,52 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
                 else
                     print.append(command.label );
+
+
+                if(command.feats!=null && !(command.feats.feats.isEmpty())){
+                    print.append(" with ");
+                    if(command.feats.isExact)
+                        print.append( " exactly ");
+                    if(command.feats.feats.contains(1))
+                        print.append("➀,");
+                    if(command.feats.feats.contains(2))
+                        print.append("➁,");
+                    if(command.feats.feats.contains(3))
+                        print.append("➂,");
+                    if(command.feats.feats.contains(4))
+                        print.append("➃,");
+                    if(command.feats.feats.contains(5))
+                        print.append("➄,");
+                    if(command.feats.feats.contains(6))
+                        print.append("➅,");
+                    if(command.feats.feats.contains(7))
+                        print.append("➆,");
+                    if(command.feats.feats.contains(8))
+                        print.append("➇,");
+                    if(command.feats.feats.contains(9))
+                        print.append("➈,");
+                    if(command.feats.feats.contains(-1))
+                        print.append("➊,");
+                    if(command.feats.feats.contains(-2))
+                        print.append("➋,");
+                    if(command.feats.feats.contains(-3))
+                        print.append("➌,");
+                    if(command.feats.feats.contains(-4))
+                        print.append("➍,");
+                    if(command.feats.feats.contains(-5))
+                        print.append("➎,");
+                    if(command.feats.feats.contains(-6))
+                        print.append("➏,");
+                    if(command.feats.feats.contains(-7))
+                        print.append("➐,");
+                    if(command.feats.feats.contains(-8))
+                        print.append("➑,");
+                    if(command.feats.feats.contains(9))
+                        print.append("➒,");
+
+                    print.deleteCharAt(print.length()-1);
+
+                }
 
                 print.append(" for ");
                 print.append(command.overall>0? command.overall +" ":4+" ");
@@ -1983,9 +2029,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
         }
 
         if(arg.startsWith("als: ")){//colorful Alloy
-            System.out.println(" open file");
-            doOpenFile(arg.substring(5));
-
+            doOpenFile(arg.substring(5)); //colorful Alloy
         }
         return null;
     }
@@ -2412,335 +2456,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
             toolbar.add(stopbutton = OurUtil.button("Stop", "Stops the current analysis", "images/24_execute_abort2.gif", doStop(2)));
             stopbutton.setVisible(false);
             toolbar.add(showbutton = OurUtil.button("Show", "Shows the latest instance", "images/24_graph.gif", doShowLatest()));
-            toolbar.add(OurUtil.button("Amalgamate","Generate amalgmate Module code","", doAmalgamatedModule()));//colorfull Alloy
-
-/*          JPanel panel=new JPanel();
-          JLabel label=new JLabel("Please Select Features");
-
-
-
-            Object[] value = new Integer[]{1,2,3,4,5,6,7,8,9,0};//colorfull Alloy
-            Object[] defaultValue = new Integer[]{1,2,3,4,5,6,7,8,9,0};//colorfull Alloy
-            MultiComboBox mulit = new MultiComboBox(value, defaultValue);//colorfull Alloy
-            //colorfull Alloy
-
-            panel.add(label);
-            label.setFont(label.getFont().deriveFont(11.5f));
-
-            panel.add(mulit);
-
-            mulit.addActionListener(new ActionListener() {
-
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-
-                    if(text.get().getText().isEmpty())
-                        return;
-
-
-
-
-
-                    CompModule root=null;
-                    try {
-                        int resolutionMode = (Version.experimental && ImplicitThis.get()) ? 2 : 1;
-                        A4Options opt = new A4Options();
-                        opt.tempDirectory = alloyHome() + fs + "tmp";
-                        opt.solverDirectory = alloyHome() + fs + "binary";
-                        opt.originalFilename = Util.canon(text.get().getFilename());
-                        root = CompUtil.parseEverything_fromFile(A4Reporter.NOP, text.takeSnapshot(), opt.originalFilename, resolutionMode);
-                    } catch (Err er) {
-                        text.shade(er.pos);
-                        log.logRed(er.toString() + "\n\n");
-                    }
-
-                     if(e.getActionCommand().equals(MultiPopup.Executed_EVENT)) {
-
-                        // get selected  features
-                        Object[] defaultValues = mulit.popup.getSelectedValues();
-                        Set<Integer> Feature = new HashSet();
-                        for (Object s : defaultValues) {
-                            Feature.add(Integer.valueOf(s.toString()));
-                        }
-                        MultiComboBox.selectedFeatures = Feature;
-
-                        ProjectFeatureExprVisitor reconstructExpr=new ProjectFeatureExprVisitor();
-
-
-                        VizGUI viz = null;
-
-                        A4Reporter rep = new A4Reporter() {
-
-                            // For example, here we choose to display each "warning" by printing
-                            // it to System.out
-                            @Override
-                            public void warning(ErrorWarning msg) {
-                                System.out.print("Relevance Warning:\n" + (msg.toString().trim()) + "\n\n");
-                                System.out.flush();
-                            }
-                        };
-                        A4Options options = new A4Options();
-
-                        options.solver = A4Options.SatSolver.SAT4J;
-
-// use old sigs and all expr point to original sigs, if I change to new sigs, need change the type of every Field(all sigs in ProductType),
-// type of every ExprVar,ExprLet, Type in Declations, command socpe, every sig in the bottom of every Expr must point to the new sig (consistency ,can not generate a new sig)
-                        for (Command commandn : root.getAllCommands()) {
-                            //  Pos pos, Expr e, String label, boolean check, int overall, int bitwidth, int maxseq, int expects, Iterable<CommandScope> scope, Iterable<Sig> additionalExactSig, Expr formula, Command parent)
-                            Command command=new Command(commandn.check,commandn.overall,commandn.bitwidth,commandn.maxseq,commandn.formula);
-                            // Execute the command
-                            System.out.println("============ Command " + ": ============");
-                            Expr fom = command.formula;
-
-                            // project run formular
-                            Expr exprout = fom.accept(reconstructExpr);
-                            exprout.errors.clear();
-                            System.out.println(exprout);
-
-
-
-                            //change formular
-                            Command commandNew = command.change(exprout);
-
-
-                            A4Solution ans = TranslateAlloyToKodkod.execute_command(rep,root.getAllSigs(), commandNew, options);
-                            // Print the outcome
-                            System.out.println(ans);
-                            // If satisfiable...
-                            if (ans.satisfiable()) {
-
-                                ans.writeXML("alloy_example_output.xml");
-                                //
-                                // You can then visualize the XML file by calling this:
-                                if (viz == null) {
-                                    viz = new VizGUI(false, "alloy_example_output.xml", null);
-                                } else {
-                                    viz.loadXML("alloy_example_output.xml", true);
-                                }
-                            }
-                        }
-                    } else if (e.getActionCommand().equals(MultiPopup.PROJECT_FEATURE_EVENT)) {
-
-                        // get selected  features
-                        Object[] defaultValues = mulit.popup.getSelectedValues();
-                        Set<Integer> Feature = new HashSet();
-                        for (Object s : defaultValues) {
-                            Feature.add(Integer.valueOf(s.toString()));
-                        }
-                        MultiComboBox.selectedFeatures = Feature;
-
-                        //construct  new AST tree
-                        CompModule newModule = new CompModule(null, root.span().filename, "");
-
-                        // project sigs--------------------------------------------------------------------------------------------------------
-                      //  reconstructSig reconstructsigs = new reconstructSig();
-                        ProjectFeatureExprVisitor reconstructExpr=new ProjectFeatureExprVisitor();
-                        //get sigs
-                        SafeList<Sig> oldsigs = root.getAllSigs();
-
-                        ConstList.TempList<Sig> sigsFinal = new ConstList.TempList<Sig>(oldsigs.size());
-// check every sig in the Module
-                        for (Sig sig : oldsigs) {
-                            Sig sigTemp = (Sig) sig.accept(reconstructExpr);
-                            if (sigTemp != null) {
-
-                                SafeList<Expr> sigf = sig.getFacts();
-
-                                //project sig facts
-                                for (Expr factExpr : sigf) {
-                                    //got sigs and fields are point to old sigs and fields
-                                    sigTemp.addFact(factExpr.accept(reconstructExpr));
-                                }
-                                sigsFinal.add(sigTemp);
-                            }
-
-                        }
-
-                        //add sigs to module
-                        for(Sig s: sigsFinal.makeConst()){
-                            newModule.sigs.put(s.label,s);
-                        }
-                        //used to print expr
-                        ExprPrinterVisitor printExprs =new ExprPrinterVisitor();
-
-                        StringBuilder  print =new StringBuilder();
-
-                        //print opens
-                        printOpenLine(root,print);
-                        //print sigs
-                        printSigs(print,sigsFinal.makeConst(),printExprs);
-
-                        // add facts
-                        SafeList<Pair<String, Expr>> facts = root.getAllFacts();
-                        for (Pair<String, Expr> f : facts) {
-                            newModule.addFact(f.b.pos, f.a, (f.b).accept(reconstructExpr));
-                        }
-                        // print facts
-                        printFacts(newModule, print, printExprs);
-
-                        // add func/pred
-                        SafeList<Func> funs =root.getAllFunc();
-
-                        for(Func fun: funs) {
-                            Expr nbody = (fun.getBody()).accept(reconstructExpr);
-                            //project decls-------------
-
-                            ConstList.TempList<Decl> decls = new ConstList.TempList<Decl>(fun.decls.size());
-                            for (Decl d : fun.decls) {
-                                ConstList.TempList<ExprVar> declsnames = new ConstList.TempList<ExprVar>(fun.decls.size());
-                                Expr exp = d.expr.accept(reconstructExpr);
-                                if (exp != null) {
-                                    for (ExprHasName v : d.names) {
-                                        Expr Exprout = v.accept(reconstructExpr);
-                                        declsnames.add((ExprVar) Exprout);
-                                    }
-                                    if (declsnames.size() != 0) {
-
-                                        Decl dd = new Decl(d.isPrivate, d.disjoint, d.disjoint2, declsnames.makeConst(), exp);
-                                        decls.add(dd);
-                                    }
-                                }
-                            }
-
-                            newModule.addFunc(fun.pos, fun.isPrivate, fun.label.substring(5), null, decls.makeConst(), fun.returnDecl, nbody);
-
-                        }
-//print func/pred
-                        printFunc(print,newModule,printExprs);
-
-                        System.out.println(print);
-
-                        text.newtab(null);
-                        notifyChange();
-                        doShow();
-                        text.get().setText(print.toString());
-
-                    }
-                }
-
-                private void printFunc(StringBuilder print, CompModule newModule, ExprPrinterVisitor printExprs) {
-                    for(Func f: newModule.getAllFunc()){
-                        if(!(f.label.equals("$$Default"))){
-
-                            if(f.returnDecl.equals(ExprConstant.FALSE)){
-                                print.append("pred "+f.label+" ");
-                            }else
-                            { print.append("fun "+f.label+" ");
-
-                            }
-
-                            print.append("[");
-                            for (Decl d : f.decls) {
-
-                                for (ExprHasName v : d.names) {
-                                    print.append( v.accept(printExprs)+",");
-                                }
-                                print.deleteCharAt(print.length()-1);
-
-                                print.append(":"+d.expr.accept(printExprs)+" ,");
-
-                            }
-                            print.deleteCharAt(print.length()-1);
-                            print.append("]{ \r\n");
-                            print.append(f.getBody().accept(printExprs)+" \r\n}\r\n");
-
-                        }
-                    }
-                }
-
-                private void printFacts(Module newModule, StringBuilder print, ExprPrinterVisitor printExprs) {
-                    for (Pair<String, Expr> f: newModule.getAllFacts()){
-
-                        print.append("\r\nfact ");
-                        if (f.a.startsWith("fact$")){
-                            print.append(" {");
-
-                        }else {
-                            print.append("  "+f.a+ " {" );
-                        }
-                        print.append(f.b.accept(printExprs) +"}\r\n");
-                    }
-                }
-
-                private void printSigs(StringBuilder print, ConstList<Sig>sigsFinal, ExprPrinterVisitor printExprs) {
-                    for(int i=0; i<sigsFinal.size();i++){
-
-                        Sig s =sigsFinal.get(i);
-                        if(s.isAbstract!=null){
-                            print.append("abstract ");
-                        }
-
-                        if(s.isLone !=null){
-                            print.append("lone ");
-                        }
-                        if (s.isOne!=null){
-                            print.append("one ");
-                        }
-                        if(s.isSome != null){
-                            print.append("some ");
-                        }
-
-                        print.append("sig "+ s.label.substring(5));
-
-
-                        if(s.isSubsig!=null ){
-                            if(((Sig.PrimSig) s).parent!=UNIV){
-                                print.append(" extends ");
-                                // String temp=((Sig.PrimSig) s).parent.label.substring(5);
-                                print.append( ((Sig.PrimSig) s).parent.label.substring(5));
-                            }
-                        }
-
-                        if(s.isSubset!=null){
-                            print.append(" in ");
-                            print.append(((Sig.SubsetSig) s).parents.get(0).label.substring(5));
-
-                            if(((Sig.SubsetSig) s).parents.size()>1){
-                                for (int j = 1; j< ((Sig.SubsetSig) s).parents.size()-1; j ++){
-                                    print.append(" + "+((Sig.SubsetSig) s).parents.get(j).label.substring(5));
-                                }
-                            }
-                        }
-                        //print fields
-                        print.append(" { ");
-                        if(s.getFields().size()>0){
-                            for (Field f:s.getFields()){
-                                print.append("\r\n   "+f.label +" : ");
-                                print.append( f.decl().expr.accept(printExprs)+",");
-                            }
-                        }
-                        print.deleteCharAt(print.length()-1);
-                        print.append("}\r\n");
-                    }
-                }
-
-
-                private void printOpenLine( CompModule root,StringBuilder print) {
-
-                    for (CompModule.Open open:root.getOpens()){
-
-
-                        if(!open.filename.equals("util/integer")){
-
-                            print.append("open "+open.filename+" ");
-                            if(open.args.size()!=0){
-                                print.append("[");
-                                for(String s:open.args) {
-                                    print.append(s+",");
-                                }
-                                print.deleteCharAt(print.length()-1);
-                                print.append("] \r\n");
-                            }
-                        }
-
-                    }
-                }
-            });
-
-toolbar.add(panel);
-
-         //   toolbar.add(mulit);//colorfull Alloy*/
+           // toolbar.add(OurUtil.button("Amalgamate","Generate amalgmate Module code","", doAmalgamatedModule()));//colorfull Alloy
 
             toolbar.add(Box.createHorizontalGlue());
             toolbar.setBorder(new OurBorder(false, false, false, false));

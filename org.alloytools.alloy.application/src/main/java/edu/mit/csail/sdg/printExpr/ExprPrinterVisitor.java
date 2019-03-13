@@ -87,12 +87,22 @@ public  class ExprPrinterVisitor extends VisitReturn<String> {
 
     @Override
     public String visit(ExprITE x) throws Err {
-        return null;
+        StringBuilder s=new StringBuilder();
+        s.append(visitThis(x.cond)+" implies ");
+        if(x.right!=null) {
+            s.append(visitThis(x.left) + " else ");
+            s.append(visitThis(x.right));
+        }
+        return s.toString();
     }
 
     @Override
     public String visit(ExprLet x) throws Err {
-        return null;
+        StringBuilder s=new StringBuilder();
+        s.append(" let "+ x.var.label+"=");
+        s.append(visitThis(x.expr)+ " | ");
+        s.append(visitThis(x.sub));
+        return s.toString();
     }
 
     @Override
