@@ -520,6 +520,11 @@ public final class CompModule extends Browsable implements Module {
             //Expr right = visitThis(x.right);
 
             //---------------- colorful Alloy----------
+            if(!x.op.equals(ExprBinary.Op.PLUS)&& !x.op.equals(ExprBinary.Op.INTERSECT))
+                if(!(x.left.color.containsAll(x.right.color)&&x.right.color.containsAll(x.left.color)))
+                    throw new ErrorColor(x.pos,"Can not paint part of Binary operator  except \" +\" and \"&\" ");
+            //sub must makred with all the positive features in parent
+
             Expr left,right;
             if(x.color.isEmpty()){ //colorful Alloy
                  left = visitThis(x.left);
@@ -1874,6 +1879,8 @@ public final class CompModule extends Browsable implements Module {
                 errors = errors.make(expr.errors);
         }
         for (Sig s : sigs.values()) {
+            Context.contextFeats.clear();//colorful Alloy
+            Context.contextFeats.addAll(s.color);//colorful Alloy
             Expr f = res.old2appendedfacts.get(res.new2old.get(s));
             if (f == null)
                 continue;
@@ -1884,7 +1891,6 @@ public final class CompModule extends Browsable implements Module {
             if (s.isOne == null) {
                 cx.put("this", s.decl.get());
 
-                Context.contextFeats.clear();//colorful Alloy
                 Context.contextFeats.addAll(f.color);//colorful Alloy
                 formula = cx.check(f).resolve_as_formula(warns);
             } else {
@@ -1897,6 +1903,8 @@ public final class CompModule extends Browsable implements Module {
             if (formula.errors.size() > 0)
                 errors = errors.make(formula.errors);
             else {
+                if(!s.color.isEmpty()) //colorful Alloy
+                    formula.paint(s.color); //colorful Alloy
                 s.addFact(formula);
                 rep.typecheck("Fact " + s + "$fact: " + formula.type() + "\n");
             }

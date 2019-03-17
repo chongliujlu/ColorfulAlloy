@@ -34,7 +34,7 @@ public  class expressionProject extends VisitReturn<Expr> {
         Expr rightExpr=null;
         //not marked with neg feature
         computeFeatures(x);
-        if(markedWithNFeature())
+        if(markedWithNFeature(x.color))
             return null;
 
         if(PFeatures.isEmpty()){
@@ -59,10 +59,10 @@ public  class expressionProject extends VisitReturn<Expr> {
      * check if the Expr's negetive features is in selected features(for example, Expr :e is marked with NF1, selected : F1 and F2 )
      * @return
      */
-    private boolean markedWithNFeature() {
-        if(!NFeatures.isEmpty()){
-            for(Integer i: NFeatures){
-                if(runfeatures.contains(i)){
+    private boolean markedWithNFeature(Set<Integer> color) {
+        if(!color.isEmpty()){
+            for(Integer i: color){
+                if(runfeatures.contains(-i)){
                     return true;
                 }
 
@@ -76,7 +76,7 @@ public  class expressionProject extends VisitReturn<Expr> {
         ConstList.TempList<Expr> temp = new ConstList.TempList<>(x.args.size());
 
         computeFeatures(x);
-        if(markedWithNFeature())
+        if(markedWithNFeature(x.color))
             return null;
 
         if(PFeatures.isEmpty()){
@@ -96,23 +96,25 @@ public  class expressionProject extends VisitReturn<Expr> {
     @Override
     public Expr visit(ExprCall x) throws Err {
         computeFeatures(x);
-        if(markedWithNFeature())
+        if(markedWithNFeature(x.color))
             return null;
         if(runfeatures.containsAll(PFeatures)){
             return x;
-        }
+        }else if(runfeatCointainNoPFeature(runfeatures))
+            return x;
         return null;
     }
 
     @Override
     public Expr visit(ExprConstant x) throws Err {
         computeFeatures(x);
-        if(markedWithNFeature())
+        if(markedWithNFeature(x.color))
             return null;
 
         if(runfeatures.containsAll(PFeatures)){
             return x;
-        }
+        }else if(runfeatCointainNoPFeature(runfeatures))
+            return x;
         return null;
     }
 
@@ -121,7 +123,7 @@ public  class expressionProject extends VisitReturn<Expr> {
         Expr cond=null; Expr leftExpr=null; Expr rightExpr=null;
 
         computeFeatures(x);
-        if(markedWithNFeature())
+        if(markedWithNFeature(x.color))
             return null;
 
         if(PFeatures.isEmpty()){
@@ -133,7 +135,8 @@ public  class expressionProject extends VisitReturn<Expr> {
 
         }else if(runfeatures.containsAll(PFeatures)){
             return x;
-        }
+        }else if(runfeatCointainNoPFeature(runfeatures))
+            return x;
 
         return null;
     }
@@ -141,7 +144,7 @@ public  class expressionProject extends VisitReturn<Expr> {
     @Override
     public Expr visit(ExprLet x) throws Err {
         computeFeatures(x);
-        if(markedWithNFeature())
+        if(markedWithNFeature(x.color))
             return null;
         // no positive feature marked
         if(PFeatures.isEmpty())
@@ -155,39 +158,40 @@ public  class expressionProject extends VisitReturn<Expr> {
     @Override
     public Expr visit(ExprQt x) throws Err {
         computeFeatures(x);
-        if(markedWithNFeature())
-            return null;
-        if(!runfeatures.containsAll(PFeatures))
+        if(markedWithNFeature(x.color))
             return null;
 
-        //project decls-------------
-        ConstList.TempList<Decl> decls = new ConstList.TempList<Decl>(x.decls.size());
-        for (Decl d : x.decls) {
-            ConstList.TempList<ExprVar> declsnames = new ConstList.TempList<ExprVar>(x.decls.size());
-            Expr exp = visitThis(d.expr);
 
-            if(exp!=null){
-                for(ExprHasName v:d.names){
-                    Expr Exprout=visitThis(v);
-                    declsnames.add((ExprVar) Exprout);
-                }
+        if(PFeatures.isEmpty()||runfeatures.containsAll(PFeatures)||runfeatCointainNoPFeature(runfeatures) ) {
+
+            //project decls-------------
+            ConstList.TempList<Decl> decls = new ConstList.TempList<Decl>(x.decls.size());
+            for (Decl d : x.decls) {
+                ConstList.TempList<ExprVar> declsnames = new ConstList.TempList<ExprVar>(x.decls.size());
+                Expr exp = visitThis(d.expr);
+
+                if (exp != null) {
+                    for (ExprHasName v : d.names) {
+                        Expr Exprout = visitThis(v);
+                        declsnames.add((ExprVar) Exprout);
+                    }
 
 
-                if(declsnames.size()!=0) {
+                    if (declsnames.size() != 0) {
 
-                    Decl dd = new Decl(d.isPrivate, d.disjoint, d.disjoint2, declsnames.makeConst(), exp);
-                    decls.add(dd);
+                        Decl dd = new Decl(d.isPrivate, d.disjoint, d.disjoint2, declsnames.makeConst(), exp);
+                        decls.add(dd);
+                    }
                 }
             }
-        }
 //project body
-        Expr sub = visitThis(x.sub);
+            Expr sub = visitThis(x.sub);
 
 
-        if(sub!=null&& decls.size()!=0){
-            return x.op.make(x.pos, x.closingBracket, decls.makeConst(), sub);
+            if (sub != null && decls.size() != 0) {
+                return x.op.make(x.pos, x.closingBracket, decls.makeConst(), sub);
+            }
         }
-
         return null;
     }
 
@@ -195,7 +199,7 @@ public  class expressionProject extends VisitReturn<Expr> {
     public Expr visit(ExprUnary x) throws Err {
         Expr tempExpr=null;
         computeFeatures(x);
-        if(markedWithNFeature())
+        if(markedWithNFeature(x.color))
             return null;
         if(PFeatures.isEmpty()){
             if(x.sub instanceof Sig || x.sub instanceof Sig.Field){
@@ -208,7 +212,8 @@ public  class expressionProject extends VisitReturn<Expr> {
 
         }else if(runfeatures.containsAll(PFeatures)){
             return x;
-        }
+        }else if(runfeatCointainNoPFeature(runfeatures))
+            return x;
         return  tempExpr;
 
     }
@@ -216,9 +221,9 @@ public  class expressionProject extends VisitReturn<Expr> {
     @Override
     public Expr visit(ExprVar x) throws Err {
         computeFeatures(x);
-        if(markedWithNFeature())
+        if(markedWithNFeature(x.color))
             return null;
-        if(runfeatures.containsAll(PFeatures)){
+        else if(runfeatures.containsAll(PFeatures)||runfeatCointainNoPFeature(runfeatures)){
             return x;
         }
         return null;
@@ -228,9 +233,9 @@ public  class expressionProject extends VisitReturn<Expr> {
     public Expr visit(Sig x) throws Err {
         Sig signew=null;
         computeFeatures(x);
-        if(markedWithNFeature())
+        if(markedWithNFeature(x.color))
             return null;
-        if(PFeatures.isEmpty()||runfeatures.containsAll(PFeatures)){
+        if(PFeatures.isEmpty()||runfeatures.containsAll(PFeatures) ||runfeatCointainNoPFeature(runfeatures)){
             //used to generate new Sig
             Attr []attributes = new Attr[x.attributes.size()];
             for( int i=0; i<x.attributes.size();i++){
@@ -254,22 +259,44 @@ public  class expressionProject extends VisitReturn<Expr> {
                 }
             }
         }
+
         return signew;
     }
     @Override
     public Expr visit(Sig.Field x) throws Err {
         Expr tempExpr=null;
         computeFeatures(x);
-        if(markedWithNFeature())
+        if(markedWithNFeature(x.color))
             return null;
         if(PFeatures.isEmpty()){
 
             tempExpr=  visitThis(x.decl().expr);
-        }else if(runfeatures.containsAll(PFeatures)){
+        }else if(runfeatures.containsAll(PFeatures)||runfeatCointainNoPFeature(runfeatures)){
             return x.decl().expr;
         }
 
         return tempExpr;
     }
 
+    /**
+     * used when selected ➊  feature but marked with  ➁  ,return Expr
+     *                    ➊ ➂                         ➁ , return null
+     * @param runfeatures
+     * @return
+     */
+    private boolean runfeatCointainNoPFeature(Set<Integer> runfeatures) {
+        boolean notContains=true;
+        if(!runfeatures.isEmpty())
+            for(Integer i: runfeatures){
+                if(i<0)
+                continue;
+                else
+                {
+                    notContains=false;
+                    break;
+                }
+
+            }
+        return notContains;
+    }
 }

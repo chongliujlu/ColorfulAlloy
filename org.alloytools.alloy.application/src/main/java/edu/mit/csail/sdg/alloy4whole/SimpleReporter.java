@@ -232,7 +232,6 @@ final class SimpleReporter extends A4Reporter {
                 span.log("\n\n");
             }
             if (array[0].equals("sat")) {
-                System.out.println("sat "+array[1] +" ,"+array[2]+","+array[3]+","+array[4] +expressionProject.runfeatures); //colorful Alloy
                 boolean chk = Boolean.TRUE.equals(array[1]);
                 int expects = (Integer) (array[2]);
                 String filename = (String) (array[3]), formula = (String) (array[4]);
@@ -715,7 +714,7 @@ final class SimpleReporter extends A4Reporter {
 
                             //amalgatmate
                                 }else{
-                                    printAmalgamatedModule(print,world,cmd);
+                                    printAmalgamatedModule(out,print,world,cmd);
                                 }
                         }
 
@@ -786,8 +785,15 @@ final class SimpleReporter extends A4Reporter {
             if (rep.warn == 1)
                 rep.cb("bold", "Note: There was 1 compilation warning. Please scroll up to see it.\n");
         }
+
         //colorful Alloy
-        private StringBuilder printAmalgamatedModule(StringBuilder print,Module world,Command cmd) {
+        /**
+         * generate code for amalgamated method
+         * @param print used to store the generated code
+         * @param world original module(before print)
+         * @param cmd executed Command
+         */
+        private void printAmalgamatedModule(WorkerCallback out,StringBuilder print,Module world,Command cmd) throws Exception {
             AmalgamatedExprPrinterVisitor printAmalgamatedExpr=new AmalgamatedExprPrinterVisitor();
             ExprPrinterVisitor printExprs=new ExprPrinterVisitor();
 
@@ -796,93 +802,35 @@ final class SimpleReporter extends A4Reporter {
             print.append("one sig F1,F2,F3,F4,F5,F6,F7,F8,F9 extends Feature{}\r\n");
             print.append("sig Product in Feature{}\r\n\r\n");
 
-            printAmalgamatedSigs(print,world,printExprs);
+            printAmalgamatedSigs(print,world,printExprs,printAmalgamatedExpr);
 
-            // print sig ------------------------------------------------------
-
-
+            printAmalgamatedfact(out,print,world,printAmalgamatedExpr);
 
 
-            //print facts
-            //----------------------------------------------------------------
-            for (Pair<String, Expr> f: world.getAllFacts()){
+            printAmalgamatedfuns(out,print,world,printAmalgamatedExpr);
 
-                print.append("\r\nfact ");
-                if (f.a.startsWith("fact$")){
-                    print.append(" {\r\n");
+            printAmalgamatedAssert(print,world,printAmalgamatedExpr);
 
-                }else {
-                    print.append("  "+f.a+ " {\r\n" );
-                }
-                print.append("    "+f.b.accept(printAmalgamatedExpr));
-                print.append(" \r\n}\r\n ");
-            }
+            if(cmd!=null)
+                printAmalgamatedCommand(print,world,cmd,printAmalgamatedExpr);
+        }
 
-            //  print funs------------------------------------------------------
+        //colorful Alloy
+        /**
+         * convinent method, help to print the amalgamated executed command and feature selected facts.
+         *
+         * @param print used to store the generated code
+         * @param world original module(before print)
+         * @param cmd   executed Command
+         * @param printAmalgamatedExpr  Visitor, used to print the amalgamated expression
+         */
+        private void printAmalgamatedCommand(StringBuilder print, Module world,Command cmd, AmalgamatedExprPrinterVisitor printAmalgamatedExpr) {
 
-            for(Func func: world.getAllFunc()){
-
-                if(func.label.startsWith("this/run$"))
-                    continue;
-                if(!(func.label.equals("this/$$Default"))){
-
-                    print.append("\r\n");
-                    if (func.isPred )
-                        print.append("pred " +func.label.substring(5)+" ");
-                    else
-                        print.append("fun "+func.label.substring(5)+" ");
-
-                    if(func.decls.size()>0)
-                    {
-                        print.append("[");
-                        for (Decl decl :func.decls){
-
-                            for (Expr expr: decl.names){
-                                print.append(expr.accept(printAmalgamatedExpr)+" ,");
-                            }
-                            print.deleteCharAt(print.length() - 1);
-                            print.append(": ");
-                            print.append(decl.expr.accept(printAmalgamatedExpr)+",");
-                        }
-                        print.deleteCharAt(print.length()-1);
-                        print.append("]");
-                    }
-
-
-                    if(!func.isPred && !func.returnDecl.equals(ExprConstant.Op.FALSE))
-                    {
-                        print.append(":");
-                        print.append(func.returnDecl.accept(printAmalgamatedExpr));
-                    }
-
-                    print.append("{\r\n  ");
-                    print.append(func.getBody().accept(printAmalgamatedExpr));
-                    print.append("\r\n}");
-                }
-            }
-
-            // print assert-----------------------------------------------------------------
-            for(Pair<String,Expr> asser:world.getAllAssertions()){
-                print.append("\r\n\r\n");
-
-                print.append("assert  ");
-                if(!asser.a.contains("assert$"))
-                    print.append(asser.a);
-                print.append("{\r\n");
-
-                print.append(asser.b.accept(printAmalgamatedExpr));
-
-                print.append("\r\n}");
-
-            }
-
-
-            if(cmd!=null){
                 if(!cmd.label.equals("Default")){
 
                     if (cmd.check)
-                        print.append("\r\n check ");
-                    else print.append("\r\n run ");
+                        print.append("\r\n\r\ncheck ");
+                    else print.append("\r\n\r\nrun ");
 
                     if(cmd.label.startsWith("run$")){
                         print.append("{" );
@@ -890,13 +838,9 @@ final class SimpleReporter extends A4Reporter {
                             if(cmd.label.equals(func.label.substring(5))){
                                 print.append(func.getBody().accept(printAmalgamatedExpr));
                             }
-
                         }
-
                         print.append("}");
-
                     }
-
                     else
                         print.append(cmd.label );
 
@@ -916,10 +860,8 @@ final class SimpleReporter extends A4Reporter {
                     print.deleteCharAt(print.length()-1);
 
 
-
-
                     if(cmd.feats!=null && !(cmd.feats.feats.isEmpty())){
-                        print.append(" \r\n\r\n fact {\r\n    ");
+                        print.append(" \r\n\r\nfact selectedFeatures {\r\n        ");
 
                         Set<Integer> NFeatures=new HashSet<>();
                         Set<Integer> PFeatures=new HashSet<>();
@@ -973,29 +915,153 @@ final class SimpleReporter extends A4Reporter {
                             if(cmd.feats.feats.contains(9))
                                 print.append("F9 not in Product &&");
                         }
-
                         print.deleteCharAt(print.length()-1);
                         print.deleteCharAt(print.length()-1);
-                        print.append("\r\n}");
+                        print.append("\r\n        }");
+                    }
+                }
+        }
 
+        //colorful Alloy
+        /**
+         * convenient method,help to print amalgamated assert
+         * @param print used to store the generated code
+         * @param world  original module (before print)
+         * @param printAmalgamatedExpr Visitor, used to print the amalgamated expression
+         */
+        private void printAmalgamatedAssert(StringBuilder print, Module world, AmalgamatedExprPrinterVisitor printAmalgamatedExpr) {
+            for(Pair<String,Expr> asser:world.getAllAssertions()){
+                print.append("\r\n\r\n");
+
+                print.append("assert  ");
+                if(!asser.a.contains("assert$"))
+                    print.append(asser.a);
+
+                print.append("{\r\n");
+
+                print.append("        "+asser.b.accept(printAmalgamatedExpr));
+
+                print.append("\r\n        }");
+            }
+        }
+
+        //colorful Alloy
+        /**
+         * convenient method, help to print amalgamated fun and pred
+         * @param print used to store the generated code
+         * @param world original module(before print)
+         * @param printAmalgamatedExpr visitor, used to print the amalgamated expression
+         */
+        private void printAmalgamatedfuns(WorkerCallback out,StringBuilder print, Module world, AmalgamatedExprPrinterVisitor printAmalgamatedExpr) throws Exception{
+
+            for(Func func: world.getAllFunc()){
+
+                if(func.label.startsWith("this/run$"))
+                    continue;
+                if(!(func.label.equals("this/$$Default"))){
+
+                    print.append("\r\n");
+                    if (func.isPred )
+                        print.append("pred " +func.label.substring(5)+" ");
+                    else
+                        print.append("fun "+func.label.substring(5)+" ");
+
+                    if(func.decls.size()>0)
+                    {
+                        print.append("[");
+                        for (Decl decl :func.decls){
+
+                            for (Expr expr: decl.names){
+                                print.append(expr.accept(printAmalgamatedExpr)+" ,");
+                            }
+                            print.deleteCharAt(print.length() - 1);
+                            print.append(": ");
+                            print.append(decl.expr.accept(printAmalgamatedExpr)+",");
+                        }
+                        print.deleteCharAt(print.length()-1);
+                        print.append("]");
                     }
 
 
+                    if(!func.isPred && !func.returnDecl.equals(ExprConstant.Op.FALSE))
+                    {
+                        print.append(":");
+                        print.append(func.returnDecl.accept(printAmalgamatedExpr));
+                    }
+
+                    print.append("{\r\n  ");
+
+
+
+
+                    //filter cases such as pred show{}: pred show{true }
+                    if(!(func.getBody() instanceof ExprConstant))
+                        print.append("        "+func.getBody().accept(printAmalgamatedExpr));
+                    print.append("\r\n        }\r\n");
                 }
-
             }
-
-
-            return print;
         }
+
         //colorful Alloy
         /**
-         * convenient method for print amalgamated execute,print sigs
-         * @param print
-         * @param world
-         * @param printExprs
+         * convenient method, help to print amalgamated fact
+         * @param print used to store the generated code
+         * @param world original module(before print)
+         * @param printAmalgamatedExpr visitor, used to print the amalgamated expression
          */
-        private void printAmalgamatedSigs(StringBuilder print, Module world, ExprPrinterVisitor printExprs) {
+        private void printAmalgamatedfact(WorkerCallback out,StringBuilder print, Module world, AmalgamatedExprPrinterVisitor printAmalgamatedExpr)throws Exception {
+
+
+            for (Pair<String, Expr> f: world.getAllFacts()){
+
+                print.append("\r\nfact ");
+
+                if (f.a.startsWith("fact$"))
+                    print.append("{\r\n");
+                else
+                    print.append(" "+f.a+ "{\r\n" );
+
+               // cb(out, "bold", "4 \""+"\"\n");
+
+               // cb(out, "bold", "4 \""+f.b.toString()+"\"\n");
+                print.append("        "+f.b.accept(printAmalgamatedExpr));
+              //  cb(out, "bold", "5 \""+"\"\n");
+                print.append(" \r\n        }\r\n ");
+            }
+        }
+
+        //colorful Alloy
+
+        /**
+         * convenient method, help to print amalgamated  sig fact
+         * @param print
+         * @param s sig these facts belongs to
+         * @param facts
+         * @param printAmalgamatedExpr
+         */
+        private void printAmalgamatedfact(StringBuilder print,Sig s, SafeList<Expr> facts, AmalgamatedExprPrinterVisitor printAmalgamatedExpr) {
+            for (Expr f: facts){
+
+                print.append("{\r\n");
+                String temp =f.accept(printAmalgamatedExpr);
+                if(s.label.startsWith("this/"))
+                    temp=temp.replace(s.label.substring(5)+" .","");
+
+                temp=temp.replace("this  .","");
+                print.append("        "+temp);
+                print.append(" \r\n        } ");
+
+            }
+        }
+
+        //colorful Alloy
+        /**
+         * convenient method, help to print amalgamated sigs
+         * @param print used to store the generated code
+         * @param world original module(before print)
+         * @param printExprs visitor, used to print expression
+         */
+        private void printAmalgamatedSigs(StringBuilder print, Module world, ExprPrinterVisitor printExprs,AmalgamatedExprPrinterVisitor printAmalgamatedExpr) {
             for(int i=0; i<world.getAllSigs().size();i++){
                 Sig s =world.getAllSigs().get(i);
 
@@ -1035,11 +1101,11 @@ final class SimpleReporter extends A4Reporter {
 
 
                 //print fields
-                print.append(" { ");
+                print.append("{ ");
                 if(s.getFields().size()>0){
 
                     for (Sig.Field f:s.getFields()){
-                        print.append("\r\n   "+f.label +" : ");
+                        print.append("\r\n        "+f.label +": ");
 
                         if(f.decl().expr instanceof ExprUnary)
                         {
@@ -1065,7 +1131,15 @@ final class SimpleReporter extends A4Reporter {
                 print.deleteCharAt(print.length()-1);
 
                 //} of Sig
-                print.append("\r\n }\r\n");
+                print.append("\r\n        }");
+                // sig facts
+
+                printAmalgamatedfact(print,s,s.getFacts(), printAmalgamatedExpr);
+
+               // print.append("\r\n");
+
+
+
                 // add feature facts to sig and field  ------------------------------
                 addFeatureFact(s, print);
                 // facts for Field
@@ -1076,10 +1150,17 @@ final class SimpleReporter extends A4Reporter {
                         addFeatureFact(f,print);
                     }
                 }
-                print.append("\r\n\r\n");
+                print.append("\r\n");
             }
         }
 
+
+        //colorful Alloy
+        /**
+         * convenient method, help to print feature facts for painted Sigs
+         * @param s Sig that painted with feature
+         * @param print used to store the generated code
+         */
         private void addFeatureFact(Sig s, StringBuilder print) {
 
             String label=s.label.substring(5);
@@ -1092,50 +1173,33 @@ final class SimpleReporter extends A4Reporter {
             }
 //marked with NF
             if(!NFeatures.isEmpty()){
-                print.append("\r\n fact { \r\n ");
+                print.append("\r\nfact {\r\n        ");
 
                 // implies none
                 addFeatureprefix(NFeatures,print,"in","or");
 
                 print.append(" no "+ label);
 
-                print.append( " else (some " +label +" or no "+label+") \r\n}" );
+                print.append( " else (some " +label +" or no "+label+") \r\n        }" );
             }
 
             if(!PFeatures.isEmpty()){
 
-                print.append("  \r\n fact { \r\n ");
+                print.append("  \r\n fact { \r\n        ");
 
                 //F in P implies
                 addFeatureprefix(PFeatures,print,"in","and");
 
-                print.append(" (some  "+label +"  or no "+label+ ") else no "+label+"\r\n}");
+                print.append(" (some  "+label +"  or no "+label+ ") else no "+label+"\r\n        }");
             }
         }
+
         //colorful Alloy
-        private void addFeatureprefix(Set<Integer> PFeature,StringBuilder str, String inOrNot,String operator) {
-
-            if(PFeature.size()>1)
-                str.append("    (");
-
-            for (Integer i: PFeature){
-
-                str.append(" F"+i + " "+inOrNot+" Product "+operator);
-            }
-            if(str.length()>=2){
-
-                str.deleteCharAt(str.length()-1);
-                str.deleteCharAt(str.length()-1);
-                if(operator.equals("and"))
-                    str.deleteCharAt(str.length()-1);
-
-            }
-
-            if(PFeature.size()>1)
-                str.append(")");
-            str.append(" implies ");
-        }
-        //colorful Alloy
+        /**
+         * convenient method, help to print feature facts fot painted Fields
+         * @param f Field that painted with features
+         * @param print used to store the generated code
+         */
         private void addFeatureFact(Sig.Field f, StringBuilder print){
             AmalgamatedExprPrinterVisitor printUnionModule=new AmalgamatedExprPrinterVisitor();
             Set<Integer> NFeatures=new HashSet<>();
@@ -1147,8 +1211,8 @@ final class SimpleReporter extends A4Reporter {
             }
 
             if(NFeatures.size()>0){
-                print.append("\r\nfact { \r\n ");
-                print.append("  ");
+                print.append("\r\nfact{ \r\n");
+                print.append("        ");
 
                 // F in P implies
                 addFeatureprefix(NFeatures,print,"in","or");
@@ -1158,7 +1222,7 @@ final class SimpleReporter extends A4Reporter {
                 print.append(f.label+" in " +f.sig.label.substring(5) +" ->");
                 print.append(f.decl().expr.accept(printUnionModule));
 
-                print.append("\r\n }");
+                print.append("\r\n\r\n        }");
             }
 
             if(PFeatures.size()>0){
@@ -1177,8 +1241,41 @@ final class SimpleReporter extends A4Reporter {
             }
         }
 
+        //colorful Alloy
+        /**
+         * convenient method, help to print the prefix for feature facts (e.g.  "F1 in product implies ..." )
+         * @param PFeature set of positive features
+         * @param str  used to store the generated code
+         * @param inOrNot  "in" for positive features, while "not in " for negative features
+         * @param operator "and","or" operator
+         */
+        private void addFeatureprefix(Set<Integer> PFeature,StringBuilder str, String inOrNot,String operator) {
+            if(PFeature.size()>1)
+                str.append("    (");
+            for (Integer i: PFeature){
+                str.append(" F"+i + " "+inOrNot+" Product "+operator);
+            }
+            if(str.length()>=2){
+                str.deleteCharAt(str.length()-1);
+                str.deleteCharAt(str.length()-1);
+                if(operator.equals("and"))
+                    str.deleteCharAt(str.length()-1);
+            }
 
-        private void generateModule(StringBuilder print, Module world, expressionProject reconstructExpr,Command com) {
+            if(PFeature.size()>1)
+                str.append(")");
+            str.append(" implies ");
+        }
+
+        //colorful Alloy
+        /**
+         * generate code for exactly method
+         * @param print used to store the generated code
+         * @param world original module(before print)
+         * @param reconstructExpr visitor, used to project feature code
+         * @param cmd executed Command
+         */
+        private void generateModule(StringBuilder print, Module world, expressionProject reconstructExpr,Command cmd) {
 
             CompModule newModule = new CompModule(null, ((CompModule) world).span().filename, "");
 
@@ -1210,7 +1307,7 @@ final class SimpleReporter extends A4Reporter {
                 newModule.addFact(f.b.pos, f.a, fact);
             }
             // print facts
-            printFacts(newModule, print, printExprs);
+            printFacts(print,newModule,printExprs);
 
             // add func/pred
             SafeList<Func> funs =world.getAllFunc();
@@ -1244,16 +1341,14 @@ final class SimpleReporter extends A4Reporter {
             printFunc(print,newModule,printExprs);
             printAssert(print, printExprs,reconstructExpr,world);
 
-
-
 //print command ➀
-            printCommand(print,com);
+            printCommand(print,cmd);
         }
 
         private void printCommand(StringBuilder print, Command com) {
             if(com.check)
                 print.append("\r\ncheck ");
-            else print.append("\r\n run ");
+            else print.append("\r\nrun ");
 
             print.append(com.label);
 
@@ -1318,25 +1413,38 @@ final class SimpleReporter extends A4Reporter {
             print.deleteCharAt(print.length()-1);
         }
 
+        //colorful Alloy
+        /**
+         *
+         * @param print
+         * @param printExprs
+         * @param reconstructExpr
+         * @param world
+         */
         private void printAssert(StringBuilder print, ExprPrinterVisitor printExprs, expressionProject reconstructExpr, Module world) {
             for(Pair<String,Expr> asser:world.getAllAssertions()){
                 Expr temp=asser.b.accept(reconstructExpr);
 
-                if(temp==null) continue;
-                print.append("\r\n  ");
+                if(temp==null)
+                    continue;
+                print.append("\r\n");
 
                 print.append("assert  ");
                 if(!asser.a.contains("assert$"))
                     print.append(asser.a);
+
                 print.append("{\r\n");
-
-                print.append(temp.accept(printExprs));
-
-                print.append("\r\n}");
-
+                print.append("        "+temp.accept(printExprs));
+                print.append("\r\n        }");
             }
         }
 
+        /**
+         * convenient method, project Sigs according the select features
+         * @param reconstructExpr ,visitor, used to
+         * @param oldsigs  sigs before feature project
+         * @return new sigs after feature project
+         */
         private ConstList.TempList<Sig> projectSigs(expressionProject reconstructExpr, SafeList<Sig> oldsigs) {
             ConstList.TempList<Sig> sigsFinal=new ConstList.TempList<>();
             // check every sig in the Module
@@ -1358,35 +1466,40 @@ final class SimpleReporter extends A4Reporter {
             return sigsFinal;
 
         }
+
+        //colorful Alloy
+        /**
+         * convinent method,used to print fun and pred for exactly method
+         * @param print used to store the generated code
+         * @param newModule new module store new facts
+         * @param printExprs visitor, used to print Expr
+         */
         private void printFunc(StringBuilder print, CompModule newModule, ExprPrinterVisitor printExprs) {
             for(Func f: newModule.getAllFunc()){
                 if (f.label.startsWith("run$"))
                     continue;
                 if (f.label.startsWith("$$Default"))
-                    continue;;
-               // if(!(f.label.equals("$$Default"))){
+                    continue;
 
-                    if(f.returnDecl.equals(ExprConstant.FALSE)){
-                        print.append("pred "+f.label+" ");
-                    }else
-                    { print.append("fun "+f.label+" ");
+                if(f.returnDecl.equals(ExprConstant.FALSE))
+                    print.append("pred "+f.label+" ");
+                else
+                     print.append("fun "+f.label+" ");
 
+
+                print.append("[");
+                for (Decl d : f.decls) {
+
+                    for (ExprHasName v : d.names) {
+                        print.append( v.accept(printExprs)+",");
                     }
 
-                    print.append("[");
-                    for (Decl d : f.decls) {
-
-                        for (ExprHasName v : d.names) {
-                            print.append( v.accept(printExprs)+",");
-                        }
-                        print.deleteCharAt(print.length()-1);
-
-                        print.append(":"+d.expr.accept(printExprs)+" ,");
-
-                    }
                     print.deleteCharAt(print.length()-1);
-                    if(!f.decls.isEmpty())
-                        print.append("]");
+                    print.append(":"+d.expr.accept(printExprs)+" ,");
+                }
+                print.deleteCharAt(print.length()-1);
+                if(!f.decls.isEmpty())
+                    print.append("]");
 //return
                 if(!(f.returnDecl.equals(ExprConstant.FALSE))){
                     print.append(":");
@@ -1394,31 +1507,42 @@ final class SimpleReporter extends A4Reporter {
                         print.append(f.returnDecl.accept(printExprs));
                 }
 
-                     print.append("{ \r\n");
+                print.append("{ \r\n");
 
                 if(f.getBody() instanceof ExprConstant)
                     print.append("\r\n}");
                 else
-                    print.append("    "+f.getBody().accept(printExprs)+" \r\n}\r\n");
-
-                //}
+                    print.append("        "+f.getBody().accept(printExprs)+" \r\n        }\r\n");
             }
         }
 
-        private void printFacts(Module newModule, StringBuilder print, ExprPrinterVisitor printExprs) {
+        //colorful Alloy
+        /**
+         * convinent method,used to print fact for exactly method
+         * @param print used to store the generated code
+         * @param newModule new module store new facts
+         * @param printExprs visitor, used to print Expr
+         */
+        private void printFacts(StringBuilder print,Module newModule, ExprPrinterVisitor printExprs) {
             for (Pair<String, Expr> f: newModule.getAllFacts()){
 
                 print.append("\r\nfact ");
-                if (f.a.startsWith("fact$")){
-                    print.append(" {\r\n");
+                if (f.a.startsWith("fact$"))
+                    print.append("{\r\n");
+                else
+                    print.append(" "+f.a+ "{\r\n" );
 
-                }else {
-                    print.append("  "+f.a+ " {\r\n" );
-                }
-                print.append("    "+f.b.accept(printExprs) +"\r\n}\r\n");
+                print.append("        "+f.b.accept(printExprs) +"\r\n        }\r\n");
             }
         }
 
+        //colorful Alloy
+        /**
+         * convinent method,used to print sigs for exactly method
+         * @param print used to store the generated code
+         * @param sigsFinal used to store project sigs
+         * @param printExprs visitor, used to print Field Expr
+         */
         private void printSigs(StringBuilder print, ConstList<Sig>sigsFinal, ExprPrinterVisitor printExprs) {
             for(int i=0; i<sigsFinal.size();i++){
 
@@ -1426,7 +1550,6 @@ final class SimpleReporter extends A4Reporter {
                 if(s.isAbstract!=null){
                     print.append("abstract ");
                 }
-
                 if(s.isLone !=null){
                     print.append("lone ");
                 }
@@ -1443,7 +1566,6 @@ final class SimpleReporter extends A4Reporter {
                 if(s.isSubsig!=null ){
                     if(((Sig.PrimSig) s).parent!=UNIV){
                         print.append(" extends ");
-                        // String temp=((Sig.PrimSig) s).parent.label.substring(5);
                         print.append( ((Sig.PrimSig) s).parent.label.substring(5));
                     }
                 }
@@ -1459,16 +1581,31 @@ final class SimpleReporter extends A4Reporter {
                     }
                 }
                 //print fields
-                print.append(" { ");
+                print.append("{ ");
                 if(s.getFields().size()>0){
                     for (Sig.Field f:s.getFields()){
-                        print.append("\r\n   "+f.label +" : ");
+                        print.append("\r\n        "+f.label +": ");
                         print.append( f.decl().expr.accept(printExprs)+",");
                     }
                 }
                 print.deleteCharAt(print.length()-1);
-                print.append("}\r\n");
+                print.append("\r\n        }");
+
+                //fact for sig
+                if(!s.getFacts().isEmpty()){
+                    print.append("{");
+                    for(Expr fact:s.getFacts()){
+                        String temp=fact.accept(printExprs);
+                        //replace "s.fileld" to field
+                        temp=temp.replace(s.label.substring(5)+" .","");
+                        print.append("\r\n        "+temp);
+                    }
+                    print.append("\r\n        }\r\n");
+                }
+                print.append("\r\n");
             }
+
+
         }
 
         private void printOpenLine( CompModule root,StringBuilder print) {

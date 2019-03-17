@@ -36,7 +36,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
                 if(x.color.size()>1)
                     str.append(")");
-                str.append(" implies ");
+                str.append(" implies (");
             }
 
         }
@@ -65,7 +65,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
         }
 
 
-        str.append(x.op.getLabel()+" ");
+        str.append(" "+x.op.getLabel()+" ");
         //-----print x.right ------
         if (!(x.right.color.isEmpty()))
             str.append("(");
@@ -75,7 +75,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
         if(!x.right.color.isEmpty()){
             if(!(x.right instanceof ExprBinary)) {
                 str.append(" else ");
-                printElse(str, x.type().arity(), x);
+                printElse(str, x.right.type().arity(), x);
             }
             str.append(")");
         }
@@ -84,8 +84,10 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
         // implies (
         if(!x.color.isEmpty()){
             str.append(")");
-            str.append(" else ");
-            printElse(str, x.type().arity(), x);
+            if(x.type().arity()>0){
+                str.append(" else ");
+                printElse(str, x.type().arity(), x);
+            }
            // str.append(")");
         }
 
@@ -96,8 +98,6 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
         str.append(")");
         return str.toString();
     }
-
-
 
     @Override
     public String visit(ExprList x) throws Err {
@@ -129,44 +129,46 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
                 //F in Product implies
                 str.append("(");
                 addFeatureprefix(PFeatures,str, "in","and");
-
-                for(Expr arg: x.args){
-                    str.append(" "+visitThis(arg));
-                    str.append(" "+x.op.name());
-                }
-            }
-
-            str.deleteCharAt(str.length()-1);
-            str.deleteCharAt(str.length()-1);
-            if(x.op.equals(ExprList.Op.AND))
                 str.deleteCharAt(str.length()-1);
-            str.append(")");
+                str.deleteCharAt(str.length()-1);
+                if(x.op.equals(ExprList.Op.AND))
+                    str.deleteCharAt(str.length()-1);
+                str.append(")");
+                str.append(" implies ");
+
+//                for(Expr arg: x.args){
+//                    str.append(" "+visitThis(arg));
+//                    str.append(" "+x.op.name());
+//                }
+            }
         }
 
 
 //--------------------x.argi (i=0,1,2,3)----------------
+        if(!x.args.isEmpty())
+            str.append("(");
         for(Expr arg: x.args){
-            str.append("\r\n    ");
-            if(arg.color.isEmpty()){
+            str.append("\r\n        ");
+          //  if(arg.color.isEmpty()){
                 str.append(visitThis(arg));
-            }else{
+           // }else{
                 // x not marked but arg i marked
-                Set<Integer> NFeaturessub=new HashSet<>();
-                Set<Integer> PFeaturessub=new HashSet<>();
-                for(Integer i: x.color){
-                    if(i<0)
-                        NFeaturessub.add(-i);
-                    else PFeaturessub.add(i);
-                }
-                str.append("(");
-                str.append(visitThis(arg));
+           //     Set<Integer> NFeaturessub=new HashSet<>();
+            //    Set<Integer> PFeaturessub=new HashSet<>();
+           //     for(Integer i: arg.color){
+            //        if(i<0)
+           //             NFeaturessub.add(-i);
+           //         else PFeaturessub.add(i);
+           //     }
+           //     str.append("(");
+           //     str.append(visitThis(arg));
                 // str.append(" else ");
                 //printElse(str,x);
-                str.append(")");
-            }
+             //   str.append(")");
+          //  }
             String name=x.op.name();
-            if(name.equals("AND")) name="and";
-            if(name.equals("OR")) name="or";
+            if(name.equals("AND")) name=" and";
+            if(name.equals("OR")) name=" or";
             str.append(name);
         }
 
@@ -176,6 +178,9 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
         if(x.op.equals(ExprList.Op.AND))
             str.deleteCharAt(str.length()-1);
+
+        if(!x.args.isEmpty())
+            str.append(")");
         return str.toString();
     }
 
@@ -388,13 +393,18 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
             str.append(" implies ");
         }
 
-        str.append(" let ");
+        str.append("(");
+        str.append("let ");
         str.append(visitThis(x.var));
         str.append("=");
 
         str.append(visitThis(x.expr));
         str.append(" | ");
         str.append(visitThis(x.sub));
+        str.append(")");
+
+        if(!x.color.isEmpty())
+            str.append(" else none ");
         return str.toString();
 
     }
@@ -563,8 +573,12 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
         if(x.op.equals(ExprBinary.Op.PLUS))
             printElseString(str,arity," none ");
         //   & operator
-        if(x.op.equals(ExprBinary.Op.INTERSECT))
+        else if(x.op.equals(ExprBinary.Op.INTERSECT))
             printElseString(str,arity," univ ");
+        else
+            //for example  .
+            printElseString(str,arity," none ");
+
     }
 
 
@@ -573,8 +587,10 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
         for (int i=0; i< arity;i++){
             elseString.append( " "+string+" " +"->");
         }
-        elseString.deleteCharAt(elseString.length()-1);
-        elseString.deleteCharAt(elseString.length()-1);
+        if(elseString.length()>1){
+            elseString.deleteCharAt(elseString.length()-1);
+            elseString.deleteCharAt(elseString.length()-1);
+        }
         str.append(elseString);
     }
 

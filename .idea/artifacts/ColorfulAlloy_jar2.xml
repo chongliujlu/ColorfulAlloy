@@ -1,0 +1,19 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="ColorfulAlloy:jar2">
+    <output-path>$PROJECT_DIR$/out/artifacts/ColorfulAlloy_jar2</output-path>
+    <root id="archive" name="ColorfulAlloy.jar">
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/org.alloytools.alloy.core/src/main/resources/META-INF/MANIFEST.MF/META-INF/MANIFEST.MF" />
+      </element>
+      <element id="module-output" name="org.alloytools.alloy.extra" />
+      <element id="module-output" name="org.alloytools.alloy.application" />
+      <element id="module-output" name="org.alloytools.alloy.core" />
+      <element id="module-output" name="org.alloytools.kodkod.core" />
+      <element id="module-output" name="org.alloytools.kodkod.nativesat" />
+      <element id="module-output" name="org.alloytools.alloy.dist" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/org.alloytools.alloy.application/lib/apple-osx-ui.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/eclipse/jdt/org.eclipse.jdt.annotation/2.1.100/org.eclipse.jdt.annotation-2.1.100.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/sat4j/org.sat4j.core/2.3.1/org.sat4j.core-2.3.1.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
