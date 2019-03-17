@@ -33,6 +33,7 @@ import edu.mit.csail.sdg.alloy4.*;
 import edu.mit.csail.sdg.ast.*;
 import edu.mit.csail.sdg.parser.CompModule;
 import edu.mit.csail.sdg.printExpr.*;
+import kodkod.engine.bool.Int;
 import org.alloytools.alloy.core.AlloyCore;
 
 import edu.mit.csail.sdg.alloy4.WorkerEngine.WorkerCallback;
@@ -799,7 +800,20 @@ final class SimpleReporter extends A4Reporter {
 
 
             print.append("abstract sig Feature{}\r\n");
-            print.append("one sig F1,F2,F3,F4,F5,F6,F7,F8,F9 extends Feature{}\r\n");
+            if(!CompModule.feats.isEmpty()) {
+                print.append("one sig ");
+                for (Integer i : CompModule.feats) {
+                    if(i>0)
+                        print.append("F"+i+",");
+                    else if(i<0) {
+                        if(! CompModule.feats.contains(-i))
+                            print.append("F"+ -i+ ",");
+                    }
+                }
+                print.deleteCharAt(print.length()-1);
+                print.append(" extends Feature{}\r\n");
+            }
+            //print.append("one sig F1,F2,F3,F4,F5,F6,F7,F8,F9 extends Feature{}\r\n");
             print.append("sig Product in Feature{}\r\n\r\n");
 
             printAmalgamatedSigs(print,world,printExprs,printAmalgamatedExpr);
@@ -836,7 +850,9 @@ final class SimpleReporter extends A4Reporter {
                         print.append("{" );
                         for( Func func: world.getAllFunc()){
                             if(cmd.label.equals(func.label.substring(5))){
+                                if(!(func.getBody() instanceof ExprConstant))
                                 print.append(func.getBody().accept(printAmalgamatedExpr));
+
                             }
                         }
                         print.append("}");
@@ -903,7 +919,7 @@ final class SimpleReporter extends A4Reporter {
                             if(cmd.feats.feats.contains(-3))
                                 print.append("F3 not in Product &&");
                             if(cmd.feats.feats.contains(-4))
-                                print.append("F4 not in Procuct &&");
+                                print.append("F4 not in Product &&");
                             if(cmd.feats.feats.contains(-5))
                                 print.append("F5 not in Product &&");
                             if(cmd.feats.feats.contains(-6))
@@ -911,7 +927,7 @@ final class SimpleReporter extends A4Reporter {
                             if(cmd.feats.feats.contains(-7))
                                 print.append("F7 not in Product &&");
                             if(cmd.feats.feats.contains(-8))
-                                print.append("F8not in Product &&");
+                                print.append("F8 not in Product &&");
                             if(cmd.feats.feats.contains(9))
                                 print.append("F9 not in Product &&");
                         }
@@ -1279,6 +1295,26 @@ final class SimpleReporter extends A4Reporter {
 
             CompModule newModule = new CompModule(null, ((CompModule) world).span().filename, "");
 
+
+            print.append("abstract sig Feature{}\r\n");
+            if(!CompModule.feats.isEmpty()) {
+                print.append("one sig ");
+                for (Integer i : CompModule.feats) {
+                    if(i>0)
+                        print.append("F"+i+",");
+                    else if(i<0) {
+                        if(! CompModule.feats.contains(-i))
+                            print.append("F"+ -i+ ",");
+                    }
+                }
+                print.deleteCharAt(print.length()-1);
+                print.append(" extends Feature{}\r\n");
+            }
+            //print.append("one sig F1,F2,F3,F4,F5,F6,F7,F8,F9 extends Feature{}\r\n");
+            print.append("sig Product in Feature{}\r\n\r\n");
+
+
+
             // project sigs------------------------------------------------------------------------------------------
 
             //get sigs
@@ -1295,6 +1331,10 @@ final class SimpleReporter extends A4Reporter {
 
             //print opens
             printOpenLine((CompModule)world,print);
+
+
+
+
             //print sigs
             printSigs(print,sigsFinal.makeConst(),printExprs);
 
@@ -1342,68 +1382,80 @@ final class SimpleReporter extends A4Reporter {
             printAssert(print, printExprs,reconstructExpr,world);
 
 //print command ➀
-            printCommand(print,cmd);
+            printCommand(print,world,printExprs,cmd);
         }
 
-        private void printCommand(StringBuilder print, Command com) {
-            if(com.check)
-                print.append("\r\ncheck ");
+        private void printCommand(StringBuilder print, Module world, ExprPrinterVisitor printExprs,Command cmd ) {
+            if(cmd.check)
+                print.append("\r\n\r\ncheck ");
             else print.append("\r\nrun ");
 
-            print.append(com.label);
+            if(cmd.label.startsWith("run$")){
+                print.append("{" );
+                for(Func runFunc:world.getAllFunc()){
+                    if(cmd.label.equals(runFunc.label.substring(5)))
+                    if(!(runFunc.getBody() instanceof ExprConstant)){
+                        print.append(runFunc.getBody().accept(printExprs));
+                    }
 
-            if(com.feats!=null && !(com.feats.feats.isEmpty())){
-                print.append(" with ");
-                if(com.feats.isExact)
-                    print.append( " exactly ");
-                if(com.feats.feats.contains(1))
-                    print.append("➀,");
-                if(com.feats.feats.contains(2))
-                    print.append("➁,");
-                if(com.feats.feats.contains(3))
-                    print.append("➂,");
-                if(com.feats.feats.contains(4))
-                    print.append("➃,");
-                if(com.feats.feats.contains(5))
-                    print.append("➄,");
-                if(com.feats.feats.contains(6))
-                    print.append("➅,");
-                if(com.feats.feats.contains(7))
-                    print.append("➆,");
-                if(com.feats.feats.contains(8))
-                    print.append("➇,");
-                if(com.feats.feats.contains(9))
-                    print.append("➈,");
-                if(com.feats.feats.contains(-1))
-                    print.append("➊,");
-                if(com.feats.feats.contains(-2))
-                    print.append("➋,");
-                if(com.feats.feats.contains(-3))
-                    print.append("➌,");
-                if(com.feats.feats.contains(-4))
-                    print.append("➍,");
-                if(com.feats.feats.contains(-5))
-                    print.append("➎,");
-                if(com.feats.feats.contains(-6))
-                    print.append("➏,");
-                if(com.feats.feats.contains(-7))
-                    print.append("➐,");
-                if(com.feats.feats.contains(-8))
-                    print.append("➑,");
-                if(com.feats.feats.contains(9))
-                    print.append("➒,");
-
-                print.deleteCharAt(print.length()-1);
-
+                }
+                print.append("}");
             }
+            else
+                print.append(cmd.label);
+
+//            if(cmd.feats!=null && !(cmd.feats.feats.isEmpty())){
+//                print.append(" with ");
+//                if(cmd.feats.isExact)
+//                    print.append( " exactly ");
+//                if(cmd.feats.feats.contains(1))
+//                    print.append("➀,");
+//                if(cmd.feats.feats.contains(2))
+//                    print.append("➁,");
+//                if(cmd.feats.feats.contains(3))
+//                    print.append("➂,");
+//                if(cmd.feats.feats.contains(4))
+//                    print.append("➃,");
+//                if(cmd.feats.feats.contains(5))
+//                    print.append("➄,");
+//                if(cmd.feats.feats.contains(6))
+//                    print.append("➅,");
+//                if(cmd.feats.feats.contains(7))
+//                    print.append("➆,");
+//                if(cmd.feats.feats.contains(8))
+//                    print.append("➇,");
+//                if(cmd.feats.feats.contains(9))
+//                    print.append("➈,");
+//                if(cmd.feats.feats.contains(-1))
+//                    print.append("➊,");
+//                if(cmd.feats.feats.contains(-2))
+//                    print.append("➋,");
+//                if(cmd.feats.feats.contains(-3))
+//                    print.append("➌,");
+//                if(cmd.feats.feats.contains(-4))
+//                    print.append("➍,");
+//                if(cmd.feats.feats.contains(-5))
+//                    print.append("➎,");
+//                if(cmd.feats.feats.contains(-6))
+//                    print.append("➏,");
+//                if(cmd.feats.feats.contains(-7))
+//                    print.append("➐,");
+//                if(cmd.feats.feats.contains(-8))
+//                    print.append("➑,");
+//                if(cmd.feats.feats.contains(9))
+//                    print.append("➒,");
+//
+//                print.deleteCharAt(print.length()-1);
+//
+//            }
 
             print.append(" for ");
-            print.append(com.overall>0? com.overall +" ":4+" ");
-            System.out.println("command overall:"+com.overall);
+            print.append(cmd.overall>0? cmd.overall +" ":4+" ");
+            System.out.println("command overall:"+cmd.overall);
 
-            if(com.scope.size()==1)
+            if(cmd.scope.size()==1)
                 print.append(" but ");
-            for(CommandScope cs:com.scope){
+            for(CommandScope cs:cmd.scope){
                 if(cs.isExact)
                     print.append(" exactly ");
                 print.append(cs.startingScope+" ");
@@ -1411,6 +1463,59 @@ final class SimpleReporter extends A4Reporter {
             }
 
             print.deleteCharAt(print.length()-1);
+
+
+            if(cmd.feats!=null && !(cmd.feats.feats.isEmpty())){
+                print.append(" \r\n\r\nfact selectedFeatures {\r\n        ");
+
+                Set<Integer> NFeatures=new HashSet<>();
+                Set<Integer> PFeatures=new HashSet<>();
+                for(Integer i: cmd.feats.feats){
+                    if(i<0)
+                        NFeatures.add(-i);
+                    else PFeatures.add(i);
+                }
+                print.append("Product=");
+                if(!PFeatures.isEmpty()){
+
+                    if(cmd.feats.feats.contains(1))
+                        print.append("F1+");
+                    if(cmd.feats.feats.contains(2))
+                        print.append("F2+");
+                    if(cmd.feats.feats.contains(3))
+                        print.append("F3+");
+                    if(cmd.feats.feats.contains(4))
+                        print.append("F4+");
+                    if(cmd.feats.feats.contains(5))
+                        print.append("F5+");
+                    if(cmd.feats.feats.contains(6))
+                        print.append("F6+");
+                    if(cmd.feats.feats.contains(7))
+                        print.append("F7+");
+                    if(cmd.feats.feats.contains(8))
+                        print.append("F8+");
+                    if(cmd.feats.feats.contains(9))
+                        print.append("F9+");
+
+
+                }
+
+                if(!NFeatures.isEmpty()){
+                    Set<Integer> retain=new HashSet<>();
+                    for(Integer i: CompModule.feats){
+                        retain.add(i>0? i: -1);
+                    }
+
+                    retain.retainAll(NFeatures);
+
+                    for(Integer i: retain){
+                        print.append("F"+i+"+");
+                    }
+                }
+
+                print.deleteCharAt(print.length()-1);
+                print.append("\r\n        }");
+            }
         }
 
         //colorful Alloy

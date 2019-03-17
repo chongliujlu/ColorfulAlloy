@@ -83,6 +83,8 @@ import edu.mit.csail.sdg.ast.VisitReturn;
 
 public final class CompModule extends Browsable implements Module {
 
+    public static Set<Integer> feats =new HashSet<>(); //colorful Alloy
+
     // These fields are shared by all Modules that point to each other
 
     /**
@@ -438,6 +440,8 @@ public final class CompModule extends Browsable implements Module {
             TempList<Expr> temp = new TempList<Expr>(x.args.size());
             for (int i = 0; i < x.args.size(); i++)
                 temp.add(visitThis(x.args.get(i)));
+
+            CompModule.feats.addAll(x.color); //colorful Alloy
             return ExprList.make(x.pos, x.closingBracket, x.op, temp.makeConst(), x.color); // [HASLab] colorful Alloy
         }
 
@@ -471,7 +475,7 @@ public final class CompModule extends Browsable implements Module {
                 b = visitThis(x.right);
             }
         //---------------- colorful Alloy----------
-
+            CompModule.feats.addAll(x.color); //colorful Alloy
             return ExprITE.make(x.pos, f, a, b, x.color); // [HASLab] colorful Alloy
         }
 
@@ -557,6 +561,7 @@ public final class CompModule extends Browsable implements Module {
                     return x.op.make(x.pos, x.closingBracket, left, right);
                 return process(x.pos, x.closingBracket, right.pos, ((ExprChoice) right).choices, ((ExprChoice) right).reasons, left);
             }
+            CompModule.feats.addAll(x.color); //colorful Alloy
             return x.op.make(x.pos, x.closingBracket, left, right, x.color); // [HASLab] colorful Alloy
         }
 
@@ -571,6 +576,7 @@ public final class CompModule extends Browsable implements Module {
             put(left.label, left);
             Expr sub = visitThis(x.sub);
             remove(left.label);
+            CompModule.feats.addAll(x.color); //colorful Alloy
             return ExprLet.make(x.pos, left, right, sub, x.color); // [HASLab] colorful Alloy
         }
 
@@ -666,6 +672,8 @@ public final class CompModule extends Browsable implements Module {
             for (Decl d : decls.makeConst())
                 for (ExprHasName v : d.names)
                     remove(v.label);
+
+            CompModule.feats.addAll(x.color); //colorful Alloy
             return x.op.make(x.pos, x.closingBracket, decls.makeConst(), sub, x.color); // [HASLab] colorful Alloy
         }
 
@@ -674,6 +682,7 @@ public final class CompModule extends Browsable implements Module {
         public Expr visit(ExprVar x) throws Err {
             Expr obj = resolve(x.pos, x.label);
             obj.paint(x.color); // [HASLab] colorful Alloy
+            CompModule.feats.addAll(x.color); //colorful Alloy
 
             contextFeats.addAll(x.color);//colorful Alloy
             if(obj instanceof ExprUnary)
@@ -716,30 +725,35 @@ public final class CompModule extends Browsable implements Module {
         @Override
         public Expr visit(ExprUnary x) throws Err {
              contextFeats.addAll(x.color);//colorful Alloy
+            CompModule.feats.addAll(x.color); //colorful Alloy
             return x.op.make(x.pos, visitThis(x.sub), x.color);
         }
 
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprCall x) {
+            CompModule.feats.addAll(x.color); //colorful Alloy
             return x;
         }
 
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprConstant x) {
+            CompModule.feats.addAll(x.color); //colorful Alloy
             return x;
         }
 
         /** {@inheritDoc} */
         @Override
         public Expr visit(Sig x) {
+            CompModule.feats.addAll(x.color); //colorful Alloy
             return x;
         }
 
         /** {@inheritDoc} */
         @Override
         public Expr visit(Field x) {
+            CompModule.feats.addAll(x.color); //colorful Alloy
             return x;
         }
 
@@ -2110,7 +2124,9 @@ public final class CompModule extends Browsable implements Module {
             if(!s.color.isEmpty()) d.paint(s.color); // colorful Alloy
             Context.contextFeats.clear(); // colorful Alloy
             Context.contextFeats.addAll(d.color);// colorful Alloy
+            CompModule.feats.addAll(d.color); //colorful Alloy
             Expr bound = cx.check(d.expr).resolve_as_set(warns);
+
             cx.remove("this");
             String[] names = new String[d.names.size()];
             for (int i = 0; i < names.length; i++)
@@ -2228,6 +2244,7 @@ public final class CompModule extends Browsable implements Module {
      * may leave the world in an inconsistent state!
      */
     static CompModule resolveAll(final A4Reporter rep, final CompModule root) throws Err {
+        feats.clear(); //colorful Alloy
         final List<ErrorWarning> warns = new ArrayList<ErrorWarning>();
         for (CompModule m : root.getAllReachableModules())
             root.allModules.add(m);
