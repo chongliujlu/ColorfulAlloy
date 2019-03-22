@@ -145,20 +145,23 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
 
 //--------------------x.argi (i=0,1,2,3)----------------
+        String name=x.op.name();
+        if(name.equals("AND")) name=" and";
+        if(name.equals("OR")) name=" or";
+
         if(!x.args.isEmpty())
             str.append("(");
         for(Expr arg: x.args){
-            str.append("\r\n        ");
-                str.append(visitThis(arg));
-            String name=x.op.name();
-            if(name.equals("AND")) name=" and";
-            if(name.equals("OR")) name=" or";
+
+            str.append(visitThis(arg));
+
             str.append(name);
+            str.append("\r\n        ");
+
         }
 
         // delete the last "or" or "and" string
-        str.deleteCharAt(str.length()-1);
-        str.deleteCharAt(str.length()-1);
+        str.delete(str.length()-14,str.length()-1);
 
         if(x.op.equals(ExprList.Op.AND))
             str.deleteCharAt(str.length()-1);
@@ -396,7 +399,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
     @Override
     public String visit(ExprQt x) throws Err {
         StringBuilder str=new StringBuilder();
-        str.append("(");
+
 
         StringBuilder tempExpr=new StringBuilder();
         tempExpr.append("{");
@@ -431,9 +434,14 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
                 NFeatures.add(-i);
             else PFeatures.add(i);
         }
+        if(!x.color.isEmpty())
+            str.append("(");
+
         if(!NFeatures.isEmpty()){
+
             if(x.color.size()>1)
                 str.append("(");
+
             addFeatureprefix(NFeatures,str, "not in","and");
             if(PFeatures.isEmpty()) {
                 str.deleteCharAt(str.length()-1);
@@ -458,7 +466,9 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
             str.append(" implies ");
         }
             str.append(tempExpr);
-            str.append(")");
+
+            if(!x.color.isEmpty())
+                str.append(")");
 
         return str.toString();
     }

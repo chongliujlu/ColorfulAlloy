@@ -1304,9 +1304,8 @@ final class SimpleReporter extends A4Reporter {
 
             CompModule newModule = new CompModule(null, ((CompModule) world).span().filename, "");
 
-
-            print.append("abstract sig Feature{}\r\n");
             if(!CompModule.feats.isEmpty()) {
+                print.append("abstract sig Feature{}\r\n");
                 print.append("one sig ");
                 for (Integer i : CompModule.feats) {
                     if(i>0)
@@ -1318,9 +1317,10 @@ final class SimpleReporter extends A4Reporter {
                 }
                 print.deleteCharAt(print.length()-1);
                 print.append(" extends Feature{}\r\n");
+                //print.append("one sig F1,F2,F3,F4,F5,F6,F7,F8,F9 extends Feature{}\r\n");
+                print.append("sig Product in Feature{}\r\n\r\n");
             }
-            //print.append("one sig F1,F2,F3,F4,F5,F6,F7,F8,F9 extends Feature{}\r\n");
-            print.append("sig Product in Feature{}\r\n\r\n");
+
 
 
 
