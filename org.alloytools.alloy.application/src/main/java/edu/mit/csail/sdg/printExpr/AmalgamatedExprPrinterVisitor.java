@@ -52,32 +52,36 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
             str.append(" implies (");
         }
         //left
-        if(!x.left.color.isEmpty())
-            str.append("(");
+        //if(!x.left.color.isEmpty())
+         //   str.append("(");
         str.append( visitThis(x.left));
 
         if(!x.left.color.isEmpty()){
             if(!(x.left instanceof ExprBinary)) {
+                str.deleteCharAt(str.length()-1);
                 str.append(" else ");
                 printElse(str, x.type().arity(), x);
+                str.append(")");
             }
-            str.append(")");
+
         }
 
 
         str.append(" "+x.op.getLabel()+" ");
         //-----print x.right ------
-        if (!(x.right.color.isEmpty()))
-            str.append("(");
+      //  if (!(x.right.color.isEmpty()))
+         //   str.append("(");
 
         str.append( visitThis(x.right));
 
         if(!x.right.color.isEmpty()){
             if(!(x.right instanceof ExprBinary)) {
+                str.deleteCharAt(str.length()-1);
                 str.append(" else ");
                 printElse(str, x.right.type().arity(), x);
+                str.append(")");
             }
-            str.append(")");
+
         }
 
 
@@ -136,10 +140,6 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
                 str.append(")");
                 str.append(" implies ");
 
-//                for(Expr arg: x.args){
-//                    str.append(" "+visitThis(arg));
-//                    str.append(" "+x.op.name());
-//                }
             }
         }
 
@@ -149,23 +149,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
             str.append("(");
         for(Expr arg: x.args){
             str.append("\r\n        ");
-          //  if(arg.color.isEmpty()){
                 str.append(visitThis(arg));
-           // }else{
-                // x not marked but arg i marked
-           //     Set<Integer> NFeaturessub=new HashSet<>();
-            //    Set<Integer> PFeaturessub=new HashSet<>();
-           //     for(Integer i: arg.color){
-            //        if(i<0)
-           //             NFeaturessub.add(-i);
-           //         else PFeaturessub.add(i);
-           //     }
-           //     str.append("(");
-           //     str.append(visitThis(arg));
-                // str.append(" else ");
-                //printElse(str,x);
-             //   str.append(")");
-          //  }
             String name=x.op.name();
             if(name.equals("AND")) name=" and";
             if(name.equals("OR")) name=" or";
@@ -423,6 +407,8 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
 
         for (Decl decl :x.decls){
+            if(decl.disjoint!=null)
+                tempExpr.append( " disj "); //"disj" key word
             for (Expr e: decl.names){
                 tempExpr.append(visitThis(e)+" ,");
             }
@@ -507,6 +493,8 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
             tempExpr.append(" "+x.op.getOpLabel()+" ");
         tempExpr.append(visitThis(x.sub));
 
+        if(!x.color.isEmpty())
+             str.append("(");
 
         if(!NFeatures.isEmpty()){
             if(x.color.size()>1)
@@ -536,16 +524,13 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
         }
 
         str.append(tempExpr);
+       if (!(x.color.isEmpty()))
+           str.append(")");
         return str.toString();
     }
 
     @Override
     public String visit(ExprVar x) throws Err {
-
-        // StringBuilder str=new StringBuilder();
-        // if(!x.color.isEmpty())
-        // addFeatureprefix(str, x);
-        // str.append(x.label);
 
         return " "+x.label+ " ";
 

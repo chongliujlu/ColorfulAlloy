@@ -236,7 +236,8 @@ final class SimpleReporter extends A4Reporter {
                 boolean chk = Boolean.TRUE.equals(array[1]);
                 int expects = (Integer) (array[2]);
                 String filename = (String) (array[3]), formula = (String) (array[4]);
-                String codefile=filename.substring(0, filename.length()-3)+"als"; //colorful Alloy
+
+                String codefilename= array[6]+".als"; //colorful Alloy
                 results.add(filename);
                 (new File(filename)).deleteOnExit();
                 gui.doSetLatest(filename);
@@ -251,7 +252,7 @@ final class SimpleReporter extends A4Reporter {
                 else if (expects == 1)
                     span.log(", as expected");
                 span.log(". " + array[5] + "ms.\n");
-                span.logLink("  Please check the executed code here. ","als: "+codefile);//colorfull Alloy
+                span.logLink("  Please check the executed code here. ","als: "+codefilename);//colorfull Alloy
                 span.log("\r\n\r\n"); //colorful Alloy
             }
             if (array[0].equals("metamodel")) {
@@ -280,8 +281,8 @@ final class SimpleReporter extends A4Reporter {
                 span.log(". " + array[4] + "ms.\n");
                 span.logBold("   Minimizing the unsat core of " + array[3] + " entries...\n");
 
-                String filename = (String) (array[5]); //colorfull Alloy
-                span.logLink("  Please check the executed code here. \n","als: "+filename);//colorfull Alloy
+                String codefilename = (String) (array[5]); //colorfull Alloy
+                span.logLink("  Please check the executed code here. \n","als: "+codefilename);//colorfull Alloy
                 span.log("\r\n\r\n"); //colorful Alloy
             }
             if (array[0].equals("unsat")) {
@@ -299,8 +300,8 @@ final class SimpleReporter extends A4Reporter {
                 //if (array.length == 5) {
                 if (array.length == 6) {  //colorfull Alloy
                     span.log(". " + array[3] + "ms.\n");
-                    String filename = (String) (array[5]); //colorfull Alloy
-                    span.logLink("  Please check the executed code here. \n\n","als: "+filename);//colorfull Alloy
+                    String codefilename = (String) (array[5]); //colorfull Alloy
+                    span.logLink("  Please check the executed code here. \n\n","als: "+codefilename);//colorfull Alloy
                     span.log("\r\n\r\n"); //colorful Alloy
                     span.flush();
                     return;
@@ -311,8 +312,8 @@ final class SimpleReporter extends A4Reporter {
                 if (core.length() == 0) {
                     results.add("");
                     span.log("   No unsat core is available in this case. " + array[8] + "ms.\n\n");
-                    String filename=(String)(array[9]);//colorfull Alloy
-                    span.logLink(" Please check the executed code here. ","als: "+filename);//colorfull Alloy
+                    String codefilename=(String)(array[9]);//colorfull Alloy
+                    span.logLink(" Please check the executed code here. ","als: "+codefilename);//colorfull Alloy
                     span.flush();
                     return;
                 }
@@ -388,6 +389,7 @@ final class SimpleReporter extends A4Reporter {
         Command cmd = (Command) command;
         String formula = recordKodkod ? sol.debugExtractKInput() : "";
         String filename = tempfile + ".xml";
+        String codefilename=tempfile.substring(0,tempfile.length()-4); //colorful Alloy
         synchronized (SimpleReporter.class) {
             try {
                 cb("R3", "   Writing the XML file...");
@@ -412,7 +414,8 @@ final class SimpleReporter extends A4Reporter {
                 formulafilename = "";
             }
         }
-        cb("sat", cmd.check, cmd.expects, filename, formulafilename, System.currentTimeMillis() - lastTime);
+        //cb("sat", cmd.check, cmd.expects, filename, formulafilename, System.currentTimeMillis() - lastTime);
+        cb("sat", cmd.check, cmd.expects, filename, formulafilename, System.currentTimeMillis() - lastTime,codefilename); //colorful Alloy
     }
 
     /** {@inheritDoc} */
@@ -472,12 +475,12 @@ final class SimpleReporter extends A4Reporter {
             }
         }
 
-        String filename = tempfile + ".als"; //colorful Alloy
+        String codefilename = tempfile.substring(0,tempfile.length()-4) + ".als"; //colorful Alloy
         if (minimized == 0)
-            cb("unsat", cmd.check, cmd.expects, (System.currentTimeMillis() - lastTime), formulafilename,filename);//colorful Alloy
+            cb("unsat", cmd.check, cmd.expects, (System.currentTimeMillis() - lastTime), formulafilename,codefilename);//colorful Alloy
            // cb("unsat", cmd.check, cmd.expects, (System.currentTimeMillis() - lastTime), formulafilename);
         else
-            cb("unsat", cmd.check, cmd.expects, minimized - lastTime, formulafilename, corefilename, minimizedBefore, minimizedAfter, (System.currentTimeMillis() - minimized),filename);//colorful Alloy
+            cb("unsat", cmd.check, cmd.expects, minimized - lastTime, formulafilename, corefilename, minimizedBefore, minimizedAfter, (System.currentTimeMillis() - minimized),codefilename);//colorful Alloy
         //cb("unsat", cmd.check, cmd.expects, minimized - lastTime, formulafilename, corefilename, minimizedBefore, minimizedAfter, (System.currentTimeMillis() - minimized));
     }
 
@@ -670,7 +673,6 @@ final class SimpleReporter extends A4Reporter {
             if (rep.warn > 0 && !bundleWarningNonFatal)
                 return;
             List<String> result = new ArrayList<String>(cmds.size());
-            List<String> code = new ArrayList<String>(cmds.size());//colorful Alloy
             if (bundleIndex == -2) {
                 final String outf = tempdir + File.separatorChar + "m.xml";
                 cb(out, "S2", "Generating the metamodel...\n");
@@ -692,7 +694,7 @@ final class SimpleReporter extends A4Reporter {
                             latestModule = world;
                             latestKodkodSRC = ConstMap.make(map);
                         }
-                        final String tempcode = tempdir + File.separatorChar + i + ".cnf.als"; //colorful Alloy
+                        final String tempcode = tempdir + File.separatorChar + i + ".als"; //colorful Alloy
                         final String tempXML = tempdir + File.separatorChar + i + ".cnf.xml";
                         final String tempCNF = tempdir + File.separatorChar + i + ".cnf";
                         final Command cmd = cmds.get(i);
@@ -986,6 +988,8 @@ final class SimpleReporter extends A4Reporter {
                     {
                         print.append("[");
                         for (Decl decl :func.decls){
+                            if(decl.disjoint!=null)
+                                print.append( " disj "); //"disj" key word
 
                             for (Expr expr: decl.names){
                                 print.append(expr.accept(printAmalgamatedExpr)+" ,");
@@ -1594,6 +1598,8 @@ final class SimpleReporter extends A4Reporter {
 
                 print.append("[");
                 for (Decl d : f.decls) {
+                    if(d.disjoint!=null)
+                        print.append( " disj "); //"disj" key word
 
                     for (ExprHasName v : d.names) {
                         print.append( v.accept(printExprs)+",");
