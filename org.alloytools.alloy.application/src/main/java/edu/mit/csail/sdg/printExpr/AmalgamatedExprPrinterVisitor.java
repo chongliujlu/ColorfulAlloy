@@ -396,10 +396,10 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
     @Override
     public String visit(ExprQt x) throws Err {
         StringBuilder str=new StringBuilder();
-        str.append("{");
+        str.append("(");
 
         StringBuilder tempExpr=new StringBuilder();
-
+        tempExpr.append("{");
         if(!x.op.equals(ExprQt.Op.COMPREHENSION))
             //all，no
             tempExpr.append(x.op.getLabel() +" ");
@@ -418,9 +418,10 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
         }
         tempExpr.deleteCharAt(tempExpr.length()-1);
 
-        tempExpr.append("|");
+        tempExpr.append(" | ");
 
         tempExpr.append(visitThis(x.sub));
+        tempExpr.append("}");
 
 
         Set<Integer> NFeatures=new HashSet<>();
@@ -457,7 +458,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
             str.append(" implies ");
         }
             str.append(tempExpr);
-            str.append("}");
+            str.append(")");
 
         return str.toString();
     }

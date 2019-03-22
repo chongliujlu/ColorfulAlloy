@@ -801,8 +801,9 @@ final class SimpleReporter extends A4Reporter {
             ExprPrinterVisitor printExprs=new ExprPrinterVisitor();
 
 
-            print.append("abstract sig Feature{}\r\n");
+
             if(!CompModule.feats.isEmpty()) {
+                print.append("abstract sig Feature{}\r\n");
                 print.append("one sig ");
                 for (Integer i : CompModule.feats) {
                     if(i>0)
@@ -814,9 +815,11 @@ final class SimpleReporter extends A4Reporter {
                 }
                 print.deleteCharAt(print.length()-1);
                 print.append(" extends Feature{}\r\n");
+
+                //print.append("one sig F1,F2,F3,F4,F5,F6,F7,F8,F9 extends Feature{}\r\n");
+                print.append("sig Product in Feature{}\r\n\r\n");
             }
-            //print.append("one sig F1,F2,F3,F4,F5,F6,F7,F8,F9 extends Feature{}\r\n");
-            print.append("sig Product in Feature{}\r\n\r\n");
+
 
             printAmalgamatedSigs(print,world,printExprs,printAmalgamatedExpr);
 
@@ -848,7 +851,7 @@ final class SimpleReporter extends A4Reporter {
                         print.append("\r\n\r\ncheck ");
                     else print.append("\r\n\r\nrun ");
 
-                    if(cmd.label.startsWith("run$")){
+                    if(cmd.label.startsWith("run$") || cmd.label.startsWith("check$")){
                         print.append("{" );
                         for( Func func: world.getAllFunc()){
                             if(cmd.label.equals(func.label.substring(5))){
@@ -949,11 +952,12 @@ final class SimpleReporter extends A4Reporter {
          */
         private void printAmalgamatedAssert(StringBuilder print, Module world, AmalgamatedExprPrinterVisitor printAmalgamatedExpr) {
             for(Pair<String,Expr> asser:world.getAllAssertions()){
-                print.append("\r\n\r\n");
+                if(asser.a.startsWith("check$"))
+                    continue;
 
+                print.append("\r\n\r\n");
                 print.append("assert  ");
-                if(!asser.a.contains("assert$"))
-                    print.append(asser.a);
+                print.append(asser.a);
 
                 print.append("{\r\n");
 
@@ -1121,8 +1125,8 @@ final class SimpleReporter extends A4Reporter {
 
 
                 //print fields
-                print.append("{ ");
-                if(s.getFields().size()>0){
+                print.append("{");
+
 
                     for (Sig.Field f:s.getFields()){
                         print.append("\r\n        "+f.label +": ");
@@ -1146,17 +1150,19 @@ final class SimpleReporter extends A4Reporter {
                         }else
                             print.append( f.decl().expr.accept(printExprs)+",");
                     }
-                }
 
-                print.deleteCharAt(print.length()-1);
 
+                if(!s.getFields().isEmpty()){
+                    print.deleteCharAt(print.length()-1);
+                    //} of Sig
+                    print.append("\r\n        }");
+                }else
                 //} of Sig
-                print.append("\r\n        }");
+                print.append("}");
+
+
                 // sig facts
-
                 printAmalgamatedfact(print,s,s.getFacts(), printAmalgamatedExpr);
-
-               // print.append("\r\n");
 
 
 
@@ -1205,7 +1211,7 @@ final class SimpleReporter extends A4Reporter {
 
             if(!PFeatures.isEmpty()){
 
-                print.append("  \r\n fact { \r\n        ");
+                print.append("\r\nfact{ \r\n        ");
 
                 //F in P implies
                 addFeatureprefix(PFeatures,print,"in","and");
@@ -1231,8 +1237,7 @@ final class SimpleReporter extends A4Reporter {
             }
 
             if(NFeatures.size()>0){
-                print.append("\r\nfact{ \r\n");
-                print.append("        ");
+                print.append("\r\nfact {\r\n        ");
 
                 // F in P implies
                 addFeatureprefix(NFeatures,print,"in","or");
@@ -1247,18 +1252,18 @@ final class SimpleReporter extends A4Reporter {
 
             if(PFeatures.size()>0){
 
-                print.append("\r\n fact { \r\n ");
+                print.append("\r\nfact {\r\n        ");
 
                 //F in P implies
-                print.append("  ");
                 addFeatureprefix(PFeatures,print,"in","and");
 
                 print.append( f.label +" in "+ f.sig.label.substring(5)+" ->" );
                 print.append(f.decl().expr.accept(printUnionModule));
 
                 print.append( " else no " + f.label);
-                print.append("\r\n }");
+                print.append("\r\n        }");
             }
+
         }
 
         //colorful Alloy
@@ -1271,9 +1276,9 @@ final class SimpleReporter extends A4Reporter {
          */
         private void addFeatureprefix(Set<Integer> PFeature,StringBuilder str, String inOrNot,String operator) {
             if(PFeature.size()>1)
-                str.append("    (");
+                str.append("        (");
             for (Integer i: PFeature){
-                str.append(" F"+i + " "+inOrNot+" Product "+operator);
+                str.append("F"+i + " "+inOrNot+" Product "+operator);
             }
             if(str.length()>=2){
                 str.deleteCharAt(str.length()-1);
@@ -1394,7 +1399,7 @@ final class SimpleReporter extends A4Reporter {
                 print.append("\r\n\r\ncheck ");
             else print.append("\r\nrun ");
 
-            if(cmd.label.startsWith("run$")){
+            if(cmd.label.startsWith("run$") || cmd.label.startsWith("check$")){
                 print.append("{" );
                 for(Func runFunc:world.getAllFunc()){
                     if(cmd.label.equals(runFunc.label.substring(5)))
@@ -1536,11 +1541,13 @@ final class SimpleReporter extends A4Reporter {
 
                 if(temp==null)
                     continue;
+                if(asser.a.startsWith("check$"))
+                    continue;
                 print.append("\r\n");
 
                 print.append("assert  ");
-                if(!asser.a.contains("assert$"))
-                    print.append(asser.a);
+
+                print.append(asser.a);
 
                 print.append("{\r\n");
                 print.append("        "+temp.accept(printExprs));
