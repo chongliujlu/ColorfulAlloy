@@ -120,6 +120,9 @@ public  class ExprPrinterVisitor extends VisitReturn<String> {
         }
 
         for (Decl decl :x.decls){
+            if (decl.disjoint!=null)
+                s.append(" disj ");
+
             for (Expr e: decl.names){
                 s.append(visitThis(e)+" ,");
             }

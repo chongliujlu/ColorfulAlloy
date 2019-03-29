@@ -535,8 +535,11 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
         }
 
         str.append(tempExpr);
-       if (!(x.color.isEmpty()))
+       if (!(x.color.isEmpty())){
            str.append(")");
+
+       }
+
         return str.toString();
     }
 

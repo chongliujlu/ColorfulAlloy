@@ -869,7 +869,7 @@ final class SimpleReporter extends A4Reporter {
                     print.append(cmd.overall>0? cmd.overall +" ":4+" ");
                     System.out.println("command overall:"+cmd.overall);
 
-                    if(cmd.scope.size()==1)
+                    if(cmd.scope.size()>=1)
                         print.append(" but ");
                     for(CommandScope cs:cmd.scope){
                         if(cs.isExact)
@@ -1276,9 +1276,9 @@ final class SimpleReporter extends A4Reporter {
          */
         private void addFeatureprefix(Set<Integer> PFeature,StringBuilder str, String inOrNot,String operator) {
             if(PFeature.size()>1)
-                str.append("        (");
+                str.append("(");
             for (Integer i: PFeature){
-                str.append("F"+i + " "+inOrNot+" Product "+operator);
+                str.append(" F"+i + " "+inOrNot+" Product "+operator);
             }
             if(str.length()>=2){
                 str.deleteCharAt(str.length()-1);
@@ -1355,6 +1355,7 @@ final class SimpleReporter extends A4Reporter {
                     continue;
                 newModule.addFact(f.b.pos, f.a, fact);
             }
+
             // print facts
             printFacts(print,newModule,printExprs);
 
@@ -1362,8 +1363,50 @@ final class SimpleReporter extends A4Reporter {
             SafeList<Func> funs =world.getAllFunc();
             for(Func fun: funs) {
                 Expr nbody = (fun.getBody()).accept(reconstructExpr);
+                if(nbody==null)
+                    continue;
 
-                if(nbody==null) continue;
+//                if(nbody==null) {
+//
+//                    if (fun.label.startsWith("run$"))
+//                        continue;
+//                    if (fun.label.startsWith("$$Default"))
+//                        continue;
+//
+//                    if(fun.returnDecl.equals(ExprConstant.FALSE))
+//                        print.append("pred "+fun.label+" ");
+//                    else
+//                        print.append("fun "+fun.label+" ");
+//
+//
+//                    print.append("[");
+//                    for (Decl d : fun.decls) {
+//                        if(d.disjoint!=null)
+//                            print.append( " disj "); //"disj" key word
+//
+//                        for (ExprHasName v : d.names) {
+//                            print.append( v.accept(printExprs)+",");
+//                        }
+//
+//                        print.deleteCharAt(print.length()-1);
+//                        print.append(":"+d.expr.accept(printExprs)+" ,");
+//                    }
+//                    print.deleteCharAt(print.length()-1);
+//                    if(!fun.decls.isEmpty())
+//                        print.append("]");
+////return
+//                    if(!(fun.returnDecl.equals(ExprConstant.FALSE))){
+//                        print.append(":");
+//                        if(fun.returnDecl instanceof Expr)
+//                            print.append(fun.returnDecl.accept(printExprs));
+//                    }
+//
+//                    print.append("{ }\r\n");
+//
+//                    continue;
+//                }
+
+
                 //project decls-------------
                 ConstList.TempList<Decl> decls = new ConstList.TempList<Decl>(fun.decls.size());
                 for (Decl d : fun.decls) {
@@ -1460,9 +1503,8 @@ final class SimpleReporter extends A4Reporter {
 
             print.append(" for ");
             print.append(cmd.overall>0? cmd.overall +" ":4+" ");
-            System.out.println("command overall:"+cmd.overall);
 
-            if(cmd.scope.size()==1)
+            if(cmd.scope.size()>=1)
                 print.append(" but ");
             for(CommandScope cs:cmd.scope){
                 if(cs.isExact)
@@ -1539,8 +1581,11 @@ final class SimpleReporter extends A4Reporter {
             for(Pair<String,Expr> asser:world.getAllAssertions()){
                 Expr temp=asser.b.accept(reconstructExpr);
 
-                if(temp==null)
+                if(temp==null){
+                    print.append("\r\nassert "+(asser.a.startsWith("check$")? "":asser.a )+"{ }");
                     continue;
+                }
+
                 if(asser.a.startsWith("check$"))
                     continue;
                 print.append("\r\n");
@@ -1550,7 +1595,8 @@ final class SimpleReporter extends A4Reporter {
                 print.append(asser.a);
 
                 print.append("{\r\n");
-                print.append("        "+temp.accept(printExprs));
+                if((temp instanceof ExprUnary) && !(((ExprUnary) temp).sub instanceof ExprConstant))
+                    print.append("        "+temp.accept(printExprs));
                 print.append("\r\n        }");
             }
         }
