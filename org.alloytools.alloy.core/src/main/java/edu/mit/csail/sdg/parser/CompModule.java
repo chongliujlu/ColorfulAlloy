@@ -2286,8 +2286,11 @@ public final class CompModule extends Browsable implements Module {
         root.new2old.put(NONE, NONE);
         HashSet<Object> topo = new HashSet<Object>();
         for (CompModule m : root.allModules)
-            for (Sig s : m.sigs.values())
+            for (Sig s : m.sigs.values()){
+                    if(!s.color.isEmpty())                 //colorful Alloy
+                        CompModule.feats.addAll(s.color);  //colorful Alloy
                 resolveSig(root, topo, s);
+            }
         // Add the non-defined fields to the sigs in topologically sorted order
         // (since fields in subsigs are allowed to refer to parent's fields)
         for (Sig oldS : root.new2old.keySet())

@@ -376,7 +376,8 @@ final class SimpleReporter extends A4Reporter {
     @Override
     public void solve(final int primaryVars, final int totalVars, final int clauses) {
         minimized = 0;
-        cb("solve", "" + totalVars + " vars. " + primaryVars + " primary vars. " + clauses + " clauses. " + (System.currentTimeMillis() - lastTime) + "ms.\n");
+        //cb("solve", "" + totalVars + " vars. " + primaryVars + " primary vars. " + clauses + " clauses. " + (System.currentTimeMillis() - lastTime) + "ms.\n");
+         cb("solve", "" + totalVars + " vars. " + primaryVars + " primary vars. " + clauses + " clauses. " + (lastTime) + "ms.\n");
         lastTime = System.currentTimeMillis();
     }
 
@@ -416,6 +417,7 @@ final class SimpleReporter extends A4Reporter {
         }
         //cb("sat", cmd.check, cmd.expects, filename, formulafilename, System.currentTimeMillis() - lastTime);
         cb("sat", cmd.check, cmd.expects, filename, formulafilename, System.currentTimeMillis() - lastTime,codefilename); //colorful Alloy
+
     }
 
     /** {@inheritDoc} */
@@ -704,7 +706,9 @@ final class SimpleReporter extends A4Reporter {
 
 
 //----------------------------------------------colorful Alloy---------------------------------------------------------------
+                       // cb(out, "bold", "Time0  \"" + System.currentTimeMillis() + "\"\n");
                         A4Solution ai;
+                        long          startTime  = System.currentTimeMillis();
                         StringBuilder  print =new StringBuilder();
                         if(cmd!=null && cmd.feats!=null){
 
@@ -720,14 +724,18 @@ final class SimpleReporter extends A4Reporter {
                                 }
                         }
 
+                        //cb(out, "bold", "Time1  \"" + System.currentTimeMillis() + "\"\n");
                         File Nmodule=new File(tempcode);
                         String output = Nmodule.getAbsolutePath();
 
                         if(print!=null)
                             Util.writeAll(output, print.toString());
+                        //cb(out, "bold", "Time2  \"" + System.currentTimeMillis() + "\"\n");
                         Module worldNewExecute = CompUtil.parseEverything_fromFile(rep, null, output);
+                        cb(out, "bold", "translate to kodokod start time  \"" + System.currentTimeMillis() + "\"\n");
+                        cb(out, "bold", "feature project and parser time:  \"" + (System.currentTimeMillis()-startTime) + " ms.\"\n");
                         ai = TranslateAlloyToKodkod.execute_commandFromBook(rep, worldNewExecute.getAllReachableSigs(), worldNewExecute.getAllCommands().get(0), options);
-
+                        //cb(out, "bold", "Time4  \"" + System.currentTimeMillis() + "\"\n");
 
 //----------------------------------------------colorful Alloy---------------------------------------------------------------
 
@@ -1210,7 +1218,7 @@ final class SimpleReporter extends A4Reporter {
 
                 print.append(" no "+ label);
 
-                print.append( " else (some " +label +" or no "+label+") \r\n        }" );
+                print.append( " else (some " +label +") \r\n        }" );
             }
 
             if(!PFeatures.isEmpty()){
@@ -1220,7 +1228,7 @@ final class SimpleReporter extends A4Reporter {
                 //F in P implies
                 addFeatureprefix(PFeatures,print,"in","and");
 
-                print.append(" (some  "+label +"  or no "+label+ ") else no "+label+"\r\n        }");
+                print.append(" (some  "+label + ") else no "+label+"\r\n        }");
             }
         }
 
