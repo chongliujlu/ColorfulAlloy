@@ -133,8 +133,10 @@ public final class ExprList extends Expr {
             return;
         }
         if (x instanceof ExprList && ((ExprList) x).op == ExprList.Op.AND) {
-            for (Expr y : ((ExprList) x).args)
+            for (Expr y : ((ExprList) x).args){
+                y.color.addAll(x.color);  //colorful Alloy
                 addAND(list, y);
+            }
             return;
         }
         list.add(expr);

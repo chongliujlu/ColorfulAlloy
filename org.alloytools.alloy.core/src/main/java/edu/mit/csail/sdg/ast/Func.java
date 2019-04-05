@@ -17,9 +17,7 @@ package edu.mit.csail.sdg.ast;
 
 import static edu.mit.csail.sdg.alloy4.TableView.clean;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 import org.alloytools.util.table.Table;
 
@@ -170,7 +168,11 @@ public final class Func extends Browsable implements Clause {
      * @throws ErrorSyntax if this function's return type declaration contains a
      *             predicate/function call
      */
-    public Func(Pos pos, Pos isPrivate, String label, List<Decl> decls, Expr returnDecl, Expr body) throws Err {
+    //colorful Alloy
+    public Func(Pos pos, Pos isPrivate, String label, List<Decl> decls, Expr returnDecl, Expr body) throws Err{
+        this(pos,isPrivate,label,decls,returnDecl,body,new HashSet<Integer>());
+    }
+    public Func(Pos pos, Pos isPrivate, String label, List<Decl> decls, Expr returnDecl, Expr body, Set<Integer> color) throws Err {
         if (pos == null)
             pos = Pos.UNKNOWN;
         this.pos = pos;
@@ -183,6 +185,7 @@ public final class Func extends Browsable implements Clause {
             returnDecl = ExprUnary.Op.ONEOF.make(null, returnDecl);
         this.returnDecl = returnDecl;
         this.body = body;
+        this.color=color; //colorful Alloy
         if (body.mult != 0)
             throw new ErrorSyntax(body.span(), "Multiplicity expression not allowed here.");
         this.decls = ConstList.make(decls);

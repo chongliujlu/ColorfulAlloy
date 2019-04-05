@@ -503,6 +503,8 @@ public final class CompModule extends Browsable implements Module {
                 right = visitThis(x.right);
             }
             //---------------- colorful Alloy----------
+
+
             // If it's a macro invocation, instantiate it
             if (right instanceof Macro)
                 return ((Macro) right).addArg(left).instantiate(this, warns);
@@ -512,7 +514,7 @@ public final class CompModule extends Browsable implements Module {
             // otherwise, process as regular join or as method call
             left = left.typecheck_as_set();
             if (!left.errors.isEmpty() || !(right instanceof ExprChoice))
-                return ExprBinary.Op.JOIN.make(x.pos, x.closingBracket, left, right);
+                return ExprBinary.Op.JOIN.make(x.pos, x.closingBracket, left, right,x.color);    //colorful Alloy
             return process(x.pos, x.closingBracket, right.pos, ((ExprChoice) right).choices, ((ExprChoice) right).reasons, left);
         }
 
@@ -546,8 +548,6 @@ public final class CompModule extends Browsable implements Module {
                 right = visitThis(x.right);
             }
             //---------------- colorful Alloy----------
-
-
             if (x.op == ExprBinary.Op.JOIN) {
                 // If it's a macro invocation, instantiate it
                 if (right instanceof Macro)
@@ -558,7 +558,7 @@ public final class CompModule extends Browsable implements Module {
                 // otherwise, process as regular join or as method call
                 left = left.typecheck_as_set();
                 if (!left.errors.isEmpty() || !(right instanceof ExprChoice))
-                    return x.op.make(x.pos, x.closingBracket, left, right);
+                    return x.op.make(x.pos, x.closingBracket, left, right,x.color);
                 return process(x.pos, x.closingBracket, right.pos, ((ExprChoice) right).choices, ((ExprChoice) right).reasons, left);
             }
             CompModule.feats.addAll(x.color); //colorful Alloy
@@ -1679,7 +1679,7 @@ public final class CompModule extends Browsable implements Module {
     }
 
     /** Add a FUN or PRED declaration. */
-    public void addFunc(Pos p, Pos isPrivate, String n, Expr f, List<Decl> decls, Expr t, Expr v) throws Err {
+    public Func addFunc(Pos p, Pos isPrivate, String n, Expr f, List<Decl> decls, Expr t, Expr v) throws Err {
         if (decls == null)
             decls = new ArrayList<Decl>();
         else
@@ -1708,6 +1708,7 @@ public final class CompModule extends Browsable implements Module {
             funcs.put(n, list);
         }
         list.add(ans);
+        return ans;//colorful Alloy
     }
 
     /** Each FunAST will now point to a bodyless Func object. */
@@ -1752,7 +1753,7 @@ public final class CompModule extends Browsable implements Module {
                 if (err)
                     continue;
                 try {
-                    f = new Func(f.pos, f.isPrivate, fullname, tmpdecls.makeConst(), ret, f.getBody());
+                    f = new Func(f.pos, f.isPrivate, fullname, tmpdecls.makeConst(), ret, f.getBody(),f.color);
                     list.set(listi, f);
                     rep.typecheck("" + f + ", RETURN: " + f.returnDecl.type() + "\n");
                 } catch (Err ex) {
@@ -1816,7 +1817,21 @@ public final class CompModule extends Browsable implements Module {
     }
 
     // ============================================================================================================================//
-
+    //colorful Alloy
+    Expr addAssertion(Pos pos, String name, Expr value, Object color) throws Err {
+        status = 3;
+        if (name == null || name.length() == 0)
+            name = "assert$" + (1 + asserts.size());
+        dup(pos, name, false);
+        Expr expr = ExprUnary.Op.NOOP.make(value.span().merge(pos), value);
+        Expr old = asserts.put(name, expr);
+        //Expr old = asserts.put(name, ExprUnary.Op.NOOP.make(value.span().merge(pos), value));
+        if (old != null) {
+            asserts.put(name, old);
+            throw new ErrorSyntax(pos, "\"" + name + "\" is already the name of an assertion in this module.");
+        }
+        return expr;
+    }
     /** Add an ASSERT declaration. */
     String addAssertion(Pos pos, String name, Expr value) throws Err {
         status = 3;
@@ -1866,12 +1881,21 @@ public final class CompModule extends Browsable implements Module {
     // ============================================================================================================================//
 
     /** Add a FACT declaration. */
-    public void addFact(Pos pos, String name, Expr value) throws Err {
+    //colorful Alloy
+    public Expr addFact(Pos pos, String name, Expr value) throws Err {
         status = 3;
         if (name == null || name.length() == 0)
             name = "fact$" + (1 + facts.size());
-        facts.add(new Pair<String,Expr>(name, ExprUnary.Op.NOOP.make(value.span().merge(pos), value)));
+        Expr fact = ExprUnary.Op.NOOP.make(value.span().merge(pos), value);//colorful Alloy
+        facts.add(new Pair<String,Expr>(name, fact));
+        return fact;//colorful Alloy
     }
+//    public void addFact(Pos pos, String name, Expr value) throws Err {
+//        status = 3;
+//        if (name == null || name.length() == 0)
+//            name = "fact$" + (1 + facts.size());
+//        facts.add(new Pair<String,Expr>(name, ExprUnary.Op.NOOP.make(value.span().merge(pos), value)));
+//    }
 
     /**
      * Each fact name now points to a typechecked Expr rather than an untypechecked

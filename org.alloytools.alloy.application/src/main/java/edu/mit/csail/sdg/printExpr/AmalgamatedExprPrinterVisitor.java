@@ -151,6 +151,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
         if(!x.args.isEmpty())
             str.append("(");
+
         for(Expr arg: x.args){
 
             str.append(visitThis(arg));
@@ -161,7 +162,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
         }
 
         // delete the last "or" or "and" string
-        str.delete(str.length()-14,str.length()-1);
+        str.delete(str.length()-13,str.length()-1);
 
         if(x.op.equals(ExprList.Op.AND))
             str.deleteCharAt(str.length()-1);

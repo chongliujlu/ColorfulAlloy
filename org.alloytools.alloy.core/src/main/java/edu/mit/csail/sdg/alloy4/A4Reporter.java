@@ -61,7 +61,6 @@ public class A4Reporter {
      * This method is called by the parser to report parser events.
      */
     public void parse(String msg) {
-        System.out.println(" A4 report 0");
         if (parent != null)
             parent.parse(msg);
     }
@@ -112,7 +111,6 @@ public class A4Reporter {
      * @param symmetry - the amount of symmetry breaking chosen by the user (0...)
      */
     public void translate(String solver, int bitwidth, int maxseq, int skolemDepth, int symmetry) {
-        System.out.println(" A4Report 1");
         if (parent != null)
             parent.translate(solver, bitwidth, maxseq, skolemDepth, symmetry);
     }
@@ -126,7 +124,7 @@ public class A4Reporter {
      * @param clauses - the total number of clauses
      */
     public void solve(int primaryVars, int totalVars, int clauses) {
-        System.out.println(" A4Report 3");
+
         if (parent != null)
             parent.solve(primaryVars, totalVars, clauses);
     }
@@ -152,7 +150,7 @@ public class A4Reporter {
      * @param solution - the satisfying A4Solution object
      */
     public void resultSAT(Object command, long solvingTime, Object solution) {
-        System.out.println(" A4Report 5");
+
         if (parent != null)
             parent.resultSAT(command, solvingTime, solution);
     }

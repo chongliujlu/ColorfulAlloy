@@ -709,7 +709,6 @@ final class SimpleReporter extends A4Reporter {
                         if(cmd!=null && cmd.feats!=null){
 
                             expressionProject.runfeatures=new HashSet<>(cmd.feats.feats);
-
                             //exactly
                                 if(cmd.feats.isExact){
                                     expressionProject reconstructExpr=new expressionProject();
@@ -721,11 +720,9 @@ final class SimpleReporter extends A4Reporter {
                                 }
                         }
 
-
                         File Nmodule=new File(tempcode);
                         String output = Nmodule.getAbsolutePath();
 
-                      //  cb(out,"bold","features: "+print+"\r\n"); //show
                         if(print!=null)
                             Util.writeAll(output, print.toString());
                         Module worldNewExecute = CompUtil.parseEverything_fromFile(rep, null, output);
@@ -800,6 +797,8 @@ final class SimpleReporter extends A4Reporter {
             AmalgamatedExprPrinterVisitor printAmalgamatedExpr=new AmalgamatedExprPrinterVisitor();
             ExprPrinterVisitor printExprs=new ExprPrinterVisitor();
 
+            //print opens
+            printOpenLine((CompModule)world,print);
 
 
             if(!CompModule.feats.isEmpty()) {
@@ -961,8 +960,8 @@ final class SimpleReporter extends A4Reporter {
 
                 print.append("{\r\n");
 
-                print.append("        "+asser.b.accept(printAmalgamatedExpr));
-
+                if((asser.b instanceof ExprUnary) && !(((ExprUnary) asser.b).sub instanceof ExprConstant))
+                    print.append("        "+asser.b.accept(printAmalgamatedExpr));
                 print.append("\r\n        }");
             }
         }
@@ -1013,14 +1012,19 @@ final class SimpleReporter extends A4Reporter {
                         print.append(func.returnDecl.accept(printAmalgamatedExpr));
                     }
 
-                    print.append("{\r\n  ");
+                    print.append("{\r\n        ");
 
 
 
 
                     //filter cases such as pred show{}: pred show{true }
-                    if(!(func.getBody() instanceof ExprConstant))
-                        print.append("        "+func.getBody().accept(printAmalgamatedExpr));
+                    if(!(func.getBody() instanceof ExprConstant)) {
+                        if (!func.color.isEmpty()) {
+                            addFeatureprefix(func.color, print);
+                        }
+
+                        print.append(func.getBody().accept(printAmalgamatedExpr));
+                    }
                     print.append("\r\n        }\r\n");
                 }
             }
@@ -1292,6 +1296,24 @@ final class SimpleReporter extends A4Reporter {
             str.append(" implies ");
         }
 
+        private void addFeatureprefix(Set<Integer> PFeature,StringBuilder str) {
+            if(PFeature.size()>1)
+                str.append("(");
+            for (Integer i: PFeature){
+                if(i>0)
+                str.append(" F"+i +  " in Product and");
+                else
+                    str.append(" F"+i +  " not in Product and");
+            }
+            if(str.length()>3){
+                str.delete(str.length()-4,str.length());
+            }
+
+            if(PFeature.size()>1)
+                str.append(")");
+            str.append(" implies ");
+        }
+
         //colorful Alloy
         /**
          * generate code for exactly method
@@ -1331,6 +1353,8 @@ final class SimpleReporter extends A4Reporter {
             ConstList.TempList<Sig> sigsFinal = new ConstList.TempList<Sig>(oldsigs.size());
             sigsFinal=projectSigs(reconstructExpr,oldsigs);
 
+
+
             //add sigs to module
             for(Sig s: sigsFinal.makeConst()){
                 newModule.sigs.put(s.label,s);
@@ -1362,50 +1386,10 @@ final class SimpleReporter extends A4Reporter {
             // add func/pred
             SafeList<Func> funs =world.getAllFunc();
             for(Func fun: funs) {
+                fun.getBody().color.addAll(fun.color);
                 Expr nbody = (fun.getBody()).accept(reconstructExpr);
                 if(nbody==null)
                     continue;
-
-//                if(nbody==null) {
-//
-//                    if (fun.label.startsWith("run$"))
-//                        continue;
-//                    if (fun.label.startsWith("$$Default"))
-//                        continue;
-//
-//                    if(fun.returnDecl.equals(ExprConstant.FALSE))
-//                        print.append("pred "+fun.label+" ");
-//                    else
-//                        print.append("fun "+fun.label+" ");
-//
-//
-//                    print.append("[");
-//                    for (Decl d : fun.decls) {
-//                        if(d.disjoint!=null)
-//                            print.append( " disj "); //"disj" key word
-//
-//                        for (ExprHasName v : d.names) {
-//                            print.append( v.accept(printExprs)+",");
-//                        }
-//
-//                        print.deleteCharAt(print.length()-1);
-//                        print.append(":"+d.expr.accept(printExprs)+" ,");
-//                    }
-//                    print.deleteCharAt(print.length()-1);
-//                    if(!fun.decls.isEmpty())
-//                        print.append("]");
-////return
-//                    if(!(fun.returnDecl.equals(ExprConstant.FALSE))){
-//                        print.append(":");
-//                        if(fun.returnDecl instanceof Expr)
-//                            print.append(fun.returnDecl.accept(printExprs));
-//                    }
-//
-//                    print.append("{ }\r\n");
-//
-//                    continue;
-//                }
-
 
                 //project decls-------------
                 ConstList.TempList<Decl> decls = new ConstList.TempList<Decl>(fun.decls.size());
@@ -1455,51 +1439,6 @@ final class SimpleReporter extends A4Reporter {
             }
             else
                 print.append(cmd.label);
-
-//            if(cmd.feats!=null && !(cmd.feats.feats.isEmpty())){
-//                print.append(" with ");
-//                if(cmd.feats.isExact)
-//                    print.append( " exactly ");
-//                if(cmd.feats.feats.contains(1))
-//                    print.append("➀,");
-//                if(cmd.feats.feats.contains(2))
-//                    print.append("➁,");
-//                if(cmd.feats.feats.contains(3))
-//                    print.append("➂,");
-//                if(cmd.feats.feats.contains(4))
-//                    print.append("➃,");
-//                if(cmd.feats.feats.contains(5))
-//                    print.append("➄,");
-//                if(cmd.feats.feats.contains(6))
-//                    print.append("➅,");
-//                if(cmd.feats.feats.contains(7))
-//                    print.append("➆,");
-//                if(cmd.feats.feats.contains(8))
-//                    print.append("➇,");
-//                if(cmd.feats.feats.contains(9))
-//                    print.append("➈,");
-//                if(cmd.feats.feats.contains(-1))
-//                    print.append("➊,");
-//                if(cmd.feats.feats.contains(-2))
-//                    print.append("➋,");
-//                if(cmd.feats.feats.contains(-3))
-//                    print.append("➌,");
-//                if(cmd.feats.feats.contains(-4))
-//                    print.append("➍,");
-//                if(cmd.feats.feats.contains(-5))
-//                    print.append("➎,");
-//                if(cmd.feats.feats.contains(-6))
-//                    print.append("➏,");
-//                if(cmd.feats.feats.contains(-7))
-//                    print.append("➐,");
-//                if(cmd.feats.feats.contains(-8))
-//                    print.append("➑,");
-//                if(cmd.feats.feats.contains(9))
-//                    print.append("➒,");
-//
-//                print.deleteCharAt(print.length()-1);
-//
-//            }
 
             print.append(" for ");
             print.append(cmd.overall>0? cmd.overall +" ":4+" ");

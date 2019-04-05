@@ -2457,7 +2457,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
             toolbar.add(stopbutton = OurUtil.button("Stop", "Stops the current analysis", "images/24_execute_abort2.gif", doStop(2)));
             stopbutton.setVisible(false);
             toolbar.add(showbutton = OurUtil.button("Show", "Shows the latest instance", "images/24_graph.gif", doShowLatest()));
-          //  toolbar.add(OurUtil.button("Amalgamate","Generate amalgmate Module code","", doAmalgamatedModule()));//colorfull Alloy
+            //toolbar.add(OurUtil.button("Amalgamate","Generate amalgmate Module code","", doAmalgamatedModule()));//colorfull Alloy
 
             toolbar.add(Box.createHorizontalGlue());
             toolbar.setBorder(new OurBorder(false, false, false, false));
