@@ -376,8 +376,8 @@ final class SimpleReporter extends A4Reporter {
     @Override
     public void solve(final int primaryVars, final int totalVars, final int clauses) {
         minimized = 0;
-        //cb("solve", "" + totalVars + " vars. " + primaryVars + " primary vars. " + clauses + " clauses. " + (System.currentTimeMillis() - lastTime) + "ms.\n");
-         cb("solve", "" + totalVars + " vars. " + primaryVars + " primary vars. " + clauses + " clauses. " + (lastTime) + "ms.\n");
+        cb("solve", "" + totalVars + " vars. " + primaryVars + " primary vars. " + clauses + " clauses. " + (System.currentTimeMillis() - lastTime +getexecutecodeTime+parserTime) + "ms.\n");
+       // cb("solve", "" + totalVars + " vars. " + primaryVars + " primary vars. " + clauses + " clauses. " + (System.currentTimeMillis() - lastTime) + "ms.\n");
         lastTime = System.currentTimeMillis();
     }
 
@@ -417,7 +417,6 @@ final class SimpleReporter extends A4Reporter {
         }
         //cb("sat", cmd.check, cmd.expects, filename, formulafilename, System.currentTimeMillis() - lastTime);
         cb("sat", cmd.check, cmd.expects, filename, formulafilename, System.currentTimeMillis() - lastTime,codefilename); //colorful Alloy
-
     }
 
     /** {@inheritDoc} */
@@ -429,8 +428,8 @@ final class SimpleReporter extends A4Reporter {
         minimized = System.currentTimeMillis();
 
         String filename = tempfile + ".als"; //colorful Alloy
-        //cb("minimizing", cmd.check, cmd.expects, before, minimized - lastTime);
-        cb("minimizing", cmd.check, cmd.expects, before, minimized - lastTime,filename ); //colorful Alloy
+      //  cb("minimizing", cmd.check, cmd.expects, before, minimized - lastTime);
+        cb("minimizing", cmd.check, cmd.expects, before,minimized -lastTime,filename ); //colorful Alloy
     }
 
     /** {@inheritDoc} */
@@ -499,6 +498,12 @@ final class SimpleReporter extends A4Reporter {
      * System.currentTimeMillis() to determine the elapsed time.
      */
     private long          lastTime  = 0;
+    // used to compute code generating time(feature project code )
+    static private  long         getexecutecodeTime=0; //colorful Alloy
+    //used to compute code parser time.
+    static private  long         parserTime=0; //colorful Alloy
+
+
 
     /**
      * If we performed unsat core minimization, then this is the start of the
@@ -671,6 +676,11 @@ final class SimpleReporter extends A4Reporter {
             final Module world = CompUtil.parseEverything_fromFile(rep, map, options.originalFilename, resolutionMode);
             final List<Sig> sigs = world.getAllReachableSigs();
             final ConstList<Command> cmds = world.getAllCommands();
+
+            //record features in the original module
+            Set<Integer> Modulefeats = new HashSet<>();      //colorful Alloy
+            Modulefeats.addAll(CompModule.feats);           //colorful Alloy
+
             cb(out, "warnings", bundleWarningNonFatal);
             if (rep.warn > 0 && !bundleWarningNonFatal)
                 return;
@@ -702,40 +712,37 @@ final class SimpleReporter extends A4Reporter {
                         final Command cmd = cmds.get(i);
                         rep.tempfile = tempCNF;
                         cb(out, "bold", "Executing \"" + cmd + "\"\n");
-                       // A4Solution ai = TranslateAlloyToKodkod.execute_commandFromBook(rep, world.getAllReachableSigs(), cmd, options);
-
 
 //----------------------------------------------colorful Alloy---------------------------------------------------------------
-                       // cb(out, "bold", "Time0  \"" + System.currentTimeMillis() + "\"\n");
+
                         A4Solution ai;
-                        long          startTime  = System.currentTimeMillis();
-                        StringBuilder  print =new StringBuilder();
-                        if(cmd!=null && cmd.feats!=null){
+                        long startTime = System.currentTimeMillis();
+                        StringBuilder print = new StringBuilder();
+                        if (cmd != null && cmd.feats != null) {
 
-                            expressionProject.runfeatures=new HashSet<>(cmd.feats.feats);
+                            expressionProject.runfeatures = new HashSet<>(cmd.feats.feats);
                             //exactly
-                                if(cmd.feats.isExact){
-                                    expressionProject reconstructExpr=new expressionProject();
-                                    generateModule(print,world,reconstructExpr,cmd);
+                            if (cmd.feats.isExact) {
+                                expressionProject reconstructExpr = new expressionProject();
+                                generateModule(print, world, reconstructExpr, cmd,Modulefeats);
 
-                            //amalgatmate
-                                }else{
-                                    printAmalgamatedModule(out,print,world,cmd);
-                                }
+                                //amalgatmate
+                            } else {
+                                printAmalgamatedModule(print, world, cmd,Modulefeats);
+                            }
                         }
-
-                        //cb(out, "bold", "Time1  \"" + System.currentTimeMillis() + "\"\n");
-                        File Nmodule=new File(tempcode);
+                        getexecutecodeTime=System.currentTimeMillis() - startTime;
+                        File Nmodule = new File(tempcode);
                         String output = Nmodule.getAbsolutePath();
 
-                        if(print!=null)
+                        if (print != null)
                             Util.writeAll(output, print.toString());
-                        //cb(out, "bold", "Time2  \"" + System.currentTimeMillis() + "\"\n");
+                        long afterprinttime = System.currentTimeMillis();
+
                         Module worldNewExecute = CompUtil.parseEverything_fromFile(rep, null, output);
-                        cb(out, "bold", "translate to kodokod start time  \"" + System.currentTimeMillis() + "\"\n");
-                        cb(out, "bold", "feature project and parser time:  \"" + (System.currentTimeMillis()-startTime) + " ms.\"\n");
+                        parserTime=System.currentTimeMillis()-afterprinttime;
+
                         ai = TranslateAlloyToKodkod.execute_commandFromBook(rep, worldNewExecute.getAllReachableSigs(), worldNewExecute.getAllCommands().get(0), options);
-                        //cb(out, "bold", "Time4  \"" + System.currentTimeMillis() + "\"\n");
 
 //----------------------------------------------colorful Alloy---------------------------------------------------------------
 
@@ -748,6 +755,9 @@ final class SimpleReporter extends A4Reporter {
                             result.add(tempCNF + ".core");
                         else result.add("");
                     }
+
+
+
             (new File(tempdir)).delete(); // In case it was UNSAT, or
                                          // canceled...
             if (result.size() > 1) {
@@ -801,7 +811,7 @@ final class SimpleReporter extends A4Reporter {
          * @param world original module(before print)
          * @param cmd executed Command
          */
-        private void printAmalgamatedModule(WorkerCallback out,StringBuilder print,Module world,Command cmd) throws Exception {
+        public void printAmalgamatedModule(StringBuilder print, Module world, Command cmd,Set<Integer> Modulefeats)  {
             AmalgamatedExprPrinterVisitor printAmalgamatedExpr=new AmalgamatedExprPrinterVisitor();
             ExprPrinterVisitor printExprs=new ExprPrinterVisitor();
 
@@ -809,36 +819,19 @@ final class SimpleReporter extends A4Reporter {
             printOpenLine((CompModule)world,print);
 
 
-            if(!CompModule.feats.isEmpty()) {
-                print.append("abstract sig Feature{}\r\n");
-                print.append("one sig ");
-                for (Integer i : CompModule.feats) {
-                    if(i>0)
-                        print.append("F"+i+",");
-                    else if(i<0) {
-                        if(! CompModule.feats.contains(-i))
-                            print.append("F"+ -i+ ",");
-                    }
-                }
-                print.deleteCharAt(print.length()-1);
-                print.append(" extends Feature{}\r\n");
-
-                //print.append("one sig F1,F2,F3,F4,F5,F6,F7,F8,F9 extends Feature{}\r\n");
-                print.append("sig Product in Feature{}\r\n\r\n");
-            }
-
+            printModulePrefix(Modulefeats,print);
 
             printAmalgamatedSigs(print,world,printExprs,printAmalgamatedExpr);
 
-            printAmalgamatedfact(out,print,world,printAmalgamatedExpr);
+            printAmalgamatedfact(print,world,printAmalgamatedExpr);
 
 
-            printAmalgamatedfuns(out,print,world,printAmalgamatedExpr);
+            printAmalgamatedfuns(print,world,printAmalgamatedExpr);
 
             printAmalgamatedAssert(print,world,printAmalgamatedExpr);
 
             if(cmd!=null)
-                printAmalgamatedCommand(print,world,cmd,printAmalgamatedExpr);
+                printAmalgamatedCommand(print,world,cmd,printAmalgamatedExpr,Modulefeats);
         }
 
         //colorful Alloy
@@ -850,7 +843,7 @@ final class SimpleReporter extends A4Reporter {
          * @param cmd   executed Command
          * @param printAmalgamatedExpr  Visitor, used to print the amalgamated expression
          */
-        private void printAmalgamatedCommand(StringBuilder print, Module world,Command cmd, AmalgamatedExprPrinterVisitor printAmalgamatedExpr) {
+        private void printAmalgamatedCommand(StringBuilder print, Module world,Command cmd, AmalgamatedExprPrinterVisitor printAmalgamatedExpr,Set<Integer>moudulefeats) {
 
                 if(!cmd.label.equals("Default")){
 
@@ -874,7 +867,6 @@ final class SimpleReporter extends A4Reporter {
 
                     print.append(" for ");
                     print.append(cmd.overall>0? cmd.overall +" ":4+" ");
-                    System.out.println("command overall:"+cmd.overall);
 
                     if(cmd.scope.size()>=1)
                         print.append(" but ");
@@ -887,9 +879,15 @@ final class SimpleReporter extends A4Reporter {
 
                     print.deleteCharAt(print.length()-1);
 
+                    if (cmd.expects >= 0)
+                        print.append(" expect ").append(cmd.expects);
 
-                    if(cmd.feats!=null && !(cmd.feats.feats.isEmpty())){
-                        print.append(" \r\n\r\nfact selectedFeatures {\r\n        ");
+                    print.append(" \r\n\r\nfact selectedFeatures {\r\n        ");
+                    if(cmd.feats==null && cmd.feats.feats.isEmpty()){
+                        print.append(" no Product");
+
+                    }
+                    else{
 
                         Set<Integer> NFeatures=new HashSet<>();
                         Set<Integer> PFeatures=new HashSet<>();
@@ -981,7 +979,7 @@ final class SimpleReporter extends A4Reporter {
          * @param world original module(before print)
          * @param printAmalgamatedExpr visitor, used to print the amalgamated expression
          */
-        private void printAmalgamatedfuns(WorkerCallback out,StringBuilder print, Module world, AmalgamatedExprPrinterVisitor printAmalgamatedExpr) throws Exception{
+        private void printAmalgamatedfuns(StringBuilder print, Module world, AmalgamatedExprPrinterVisitor printAmalgamatedExpr) {
 
             for(Func func: world.getAllFunc()){
 
@@ -1023,8 +1021,6 @@ final class SimpleReporter extends A4Reporter {
                     print.append("{\r\n        ");
 
 
-
-
                     //filter cases such as pred show{}: pred show{true }
                     if(!(func.getBody() instanceof ExprConstant)) {
                         if (!func.color.isEmpty()) {
@@ -1045,7 +1041,7 @@ final class SimpleReporter extends A4Reporter {
          * @param world original module(before print)
          * @param printAmalgamatedExpr visitor, used to print the amalgamated expression
          */
-        private void printAmalgamatedfact(WorkerCallback out,StringBuilder print, Module world, AmalgamatedExprPrinterVisitor printAmalgamatedExpr)throws Exception {
+        private void printAmalgamatedfact(StringBuilder print, Module world, AmalgamatedExprPrinterVisitor printAmalgamatedExpr){
 
 
             for (Pair<String, Expr> f: world.getAllFacts()){
@@ -1057,11 +1053,8 @@ final class SimpleReporter extends A4Reporter {
                 else
                     print.append(" "+f.a+ "{\r\n" );
 
-               // cb(out, "bold", "4 \""+"\"\n");
-
-               // cb(out, "bold", "4 \""+f.b.toString()+"\"\n");
                 print.append("        "+f.b.accept(printAmalgamatedExpr));
-              //  cb(out, "bold", "5 \""+"\"\n");
+
                 print.append(" \r\n        }\r\n ");
             }
         }
@@ -1147,12 +1140,15 @@ final class SimpleReporter extends A4Reporter {
                         {
                             // one  ----> lone
                             if(((ExprUnary) f.decl().expr).op.equals(ExprUnary.Op.ONEOF)) {
-                                print.append( "lone ");
+
+                                    print.append( f.color.isEmpty()?"one ":"lone ");
+
                                 print.append( ((ExprUnary) f.decl().expr).sub.accept(printExprs)+",");
                             }
                             // some -----> set
                             else if(((ExprUnary) f.decl().expr).op.equals(ExprUnary.Op.SOMEOF)) {
-                                print.append( "set ");
+
+                                print.append(f.color.isEmpty()? "some ":"set ");
                                 print.append( ((ExprUnary) f.decl().expr).sub.accept(printExprs)+",");
                             }
                             else {
@@ -1330,29 +1326,10 @@ final class SimpleReporter extends A4Reporter {
          * @param reconstructExpr visitor, used to project feature code
          * @param cmd executed Command
          */
-        private void generateModule(StringBuilder print, Module world, expressionProject reconstructExpr,Command cmd) {
+        public void generateModule(StringBuilder print, Module world, expressionProject reconstructExpr, Command cmd,Set<Integer> Modulefeats) {
 
             CompModule newModule = new CompModule(null, ((CompModule) world).span().filename, "");
-
-            if(!CompModule.feats.isEmpty()) {
-                print.append("abstract sig Feature{}\r\n");
-                print.append("one sig ");
-                for (Integer i : CompModule.feats) {
-                    if(i>0)
-                        print.append("F"+i+",");
-                    else if(i<0) {
-                        if(! CompModule.feats.contains(-i))
-                            print.append("F"+ -i+ ",");
-                    }
-                }
-                print.deleteCharAt(print.length()-1);
-                print.append(" extends Feature{}\r\n");
-                //print.append("one sig F1,F2,F3,F4,F5,F6,F7,F8,F9 extends Feature{}\r\n");
-                print.append("sig Product in Feature{}\r\n\r\n");
-            }
-
-
-
+            printModulePrefix(Modulefeats,print);
 
             // project sigs------------------------------------------------------------------------------------------
 
@@ -1372,8 +1349,6 @@ final class SimpleReporter extends A4Reporter {
 
             //print opens
             printOpenLine((CompModule)world,print);
-
-
 
 
             //print sigs
@@ -1426,10 +1401,29 @@ final class SimpleReporter extends A4Reporter {
             printAssert(print, printExprs,reconstructExpr,world);
 
 //print command ➀
-            printCommand(print,world,printExprs,cmd);
+            printCommand(print,world,printExprs,cmd,Modulefeats);
         }
 
-        private void printCommand(StringBuilder print, Module world, ExprPrinterVisitor printExprs,Command cmd ) {
+        private void printModulePrefix(Set<Integer> modulefeats, StringBuilder print) {
+            if(!modulefeats.isEmpty()) {
+                print.append("abstract sig Feature{}\r\n");
+                print.append("one sig ");
+                for (Integer i : modulefeats) {
+                    if(i>0)
+                        print.append("F"+i+",");
+                    else if(i<0) {
+                        if(! modulefeats.contains(-i))
+                            print.append("F"+ -i+ ",");
+                    }
+                }
+                print.deleteCharAt(print.length()-1);
+                print.append(" extends Feature{}\r\n");
+                print.append("sig Product in Feature{}\r\n\r\n");
+            }
+
+        }
+
+        private void printCommand(StringBuilder print, Module world, ExprPrinterVisitor printExprs,Command cmd ,Set<Integer> modulefeats) {
             if(cmd.check)
                 print.append("\r\n\r\ncheck ");
             else print.append("\r\nrun ");
@@ -1462,10 +1456,15 @@ final class SimpleReporter extends A4Reporter {
 
             print.deleteCharAt(print.length()-1);
 
+            if (cmd.expects >= 0)
+                print.append(" expect ").append(cmd.expects);
 
-            if(cmd.feats!=null && !(cmd.feats.feats.isEmpty())){
-                print.append(" \r\n\r\nfact selectedFeatures {\r\n        ");
-
+            print.append(" \r\n\r\nfact selectedFeatures {\r\n        ");
+            if(cmd.feats==null || cmd.feats.feats.isEmpty()){
+                print.append("no Product");
+            }
+            //some features are selected
+            else{
                 Set<Integer> NFeatures=new HashSet<>();
                 Set<Integer> PFeatures=new HashSet<>();
                 for(Integer i: cmd.feats.feats){
@@ -1494,26 +1493,27 @@ final class SimpleReporter extends A4Reporter {
                         print.append("F8+");
                     if(cmd.feats.feats.contains(9))
                         print.append("F9+");
-
-
                 }
 
-                if(!NFeatures.isEmpty()){
+                if(!NFeatures.isEmpty() && PFeatures.isEmpty()){
                     Set<Integer> retain=new HashSet<>();
-                    for(Integer i: CompModule.feats){
-                        retain.add(i>0? i: -1);
+                    for(Integer integer:modulefeats){
+                        for(Integer i: CompModule.feats){
+                            retain.add(i>0? i: -1);
+                        }
                     }
-
-                    retain.retainAll(NFeatures);
-
-                    for(Integer i: retain){
-                        print.append("F"+i+"+");
-                    }
+                        retain.retainAll(NFeatures);
+                    if(retain.isEmpty())
+                        print.append("none ");
+                    else
+                        for(Integer i: retain){
+                            print.append("F"+i+"+");
+                        }
                 }
 
                 print.deleteCharAt(print.length()-1);
-                print.append("\r\n        }");
             }
+            print.append("\r\n        }");
         }
 
         //colorful Alloy
