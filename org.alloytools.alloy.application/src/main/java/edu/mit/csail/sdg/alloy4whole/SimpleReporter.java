@@ -1498,11 +1498,11 @@ final class SimpleReporter extends A4Reporter {
                 if(!NFeatures.isEmpty() && PFeatures.isEmpty()){
                     Set<Integer> retain=new HashSet<>();
                     for(Integer integer:modulefeats){
-                        for(Integer i: CompModule.feats){
-                            retain.add(i>0? i: -1);
-                        }
+
+                            retain.add(integer>0? integer: -integer);
+
                     }
-                        retain.retainAll(NFeatures);
+                    retain.removeAll(NFeatures);
                     if(retain.isEmpty())
                         print.append("none ");
                     else
