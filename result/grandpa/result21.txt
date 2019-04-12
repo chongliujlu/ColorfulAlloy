@@ -1,0 +1,96 @@
+command,project Time,command parser time,PrimaryVars,totalVars,clauses,solveTime,instancegenerate time 
+Check OwnGrandPa for 2,0,6,21,322,518,1,1
+Check OwnGrandPa with exactly [-1, -2, -3] for 2,0,4,10,108,132,0,0
+Check OwnGrandPa with [-1, -2, -3] for 2,0,7,21,322,521,1,1
+Check OwnGrandPa with exactly [1] for 2,0,5,6,43,46,0,0
+Check OwnGrandPa with [1, -2, -3] for 2,0,6,21,322,521,1,0
+Check OwnGrandPa with exactly [2] for 2,0,3,14,179,235,0,1
+Check OwnGrandPa with [-1, 2, -3] for 2,0,6,21,322,521,1,0
+Check OwnGrandPa with exactly [3] for 2,0,4,0,0,0,0,0
+Check OwnGrandPa with [-1, -2, 3] for 2,0,5,21,322,521,0,0
+Check OwnGrandPa with exactly [1, 2] for 2,1,5,10,75,90,1,0
+Check OwnGrandPa with [1, 2, -3] for 2,0,5,21,323,522,1,0
+Check OwnGrandPa with exactly [1, 3] for 2,0,5,0,0,0,0,0
+Check OwnGrandPa with [1, -2, 3] for 2,1,6,21,323,522,1,0
+Check OwnGrandPa with exactly [2, 3] for 2,1,5,14,205,289,1,1
+Check OwnGrandPa with [-1, 2, 3] for 2,0,7,21,322,522,1,1
+Check OwnGrandPa with exactly [1, 2, 3] for 2,0,5,10,97,140,0,0
+Check OwnGrandPa with [1, 2, 3] for 2,0,5,21,323,522,1,0
+Check OwnGrandPa for 5,1,5,78,2544,5142,3,1
+Check OwnGrandPa with exactly [-1, -2, -3] for 5,0,3,40,978,1374,1,1
+Check OwnGrandPa with [-1, -2, -3] for 5,0,6,78,2544,5145,3,1
+Check OwnGrandPa with exactly [1] for 5,0,5,36,1074,1880,1,1
+Check OwnGrandPa with [1, -2, -3] for 5,0,6,78,2544,5145,3,1
+Check OwnGrandPa with exactly [2] for 5,0,5,65,1503,2240,1,1
+Check OwnGrandPa with [-1, 2, -3] for 5,0,6,78,2544,5145,5,1
+Check OwnGrandPa with exactly [3] for 5,0,4,0,0,0,0,0
+Check OwnGrandPa with [-1, -2, 3] for 5,0,6,78,2544,5145,4,0
+Check OwnGrandPa with exactly [1, 2] for 5,0,5,61,1499,2561,2,1
+Check OwnGrandPa with [1, 2, -3] for 5,0,6,78,2545,5146,4,1
+Check OwnGrandPa with exactly [1, 3] for 5,1,4,0,0,0,1,0
+Check OwnGrandPa with [1, -2, 3] for 5,0,6,78,2545,5146,3,0
+Check OwnGrandPa with exactly [2, 3] for 5,0,4,65,1700,2852,2,2
+Check OwnGrandPa with [-1, 2, 3] for 5,0,9,78,2544,5146,4,1
+Check OwnGrandPa with exactly [1, 2, 3] for 5,1,5,61,1692,3169,3,2
+Check OwnGrandPa with [1, 2, 3] for 5,1,6,78,2545,5146,4,1
+Check OwnGrandPa for 10,0,5,253,15047,35647,22,8
+Check OwnGrandPa with exactly [-1, -2, -3] for 10,0,4,130,6458,9644,5,2
+Check OwnGrandPa with [-1, -2, -3] for 10,0,5,253,15047,35650,21,11
+Check OwnGrandPa with exactly [1] for 10,0,5,126,9314,20660,11,4
+Check OwnGrandPa with [1, -2, -3] for 10,0,6,253,15047,35650,23,8
+Check OwnGrandPa with exactly [2] for 10,0,4,230,8464,13210,8,5
+Check OwnGrandPa with [-1, 2, -3] for 10,1,5,253,15047,35650,25,17
+Check OwnGrandPa with exactly [3] for 10,0,5,0,0,0,0,0
+Check OwnGrandPa with [-1, -2, 3] for 10,0,5,253,15047,35650,28,0
+Check OwnGrandPa with exactly [1, 2] for 10,0,5,226,11252,24070,13,6
+Check OwnGrandPa with [1, 2, -3] for 10,0,7,253,15048,35651,23,11
+Check OwnGrandPa with exactly [1, 3] for 10,0,4,0,0,0,0,0
+Check OwnGrandPa with [1, -2, 3] for 10,1,6,253,15048,35651,23,0
+Check OwnGrandPa with exactly [2, 3] for 10,0,4,230,9706,17632,14,7
+Check OwnGrandPa with [-1, 2, 3] for 10,0,6,253,15047,35651,27,16
+Check OwnGrandPa with exactly [1, 2, 3] for 10,1,5,226,12490,28488,22,10
+Check OwnGrandPa with [1, 2, 3] for 10,0,9,253,15048,35651,25,24
+Check OwnGrandPa for 15,1,6,528,45312,119832,99,57
+Check OwnGrandPa with exactly [-1, -2, -3] for 15,0,5,270,18983,28489,25,5
+Check OwnGrandPa with [-1, -2, -3] for 15,0,7,528,45312,119835,129,61
+Check OwnGrandPa with exactly [1] for 15,0,5,266,30624,78765,60,18
+Check OwnGrandPa with [1, -2, -3] for 15,0,7,528,45312,119835,92,42
+Check OwnGrandPa with exactly [2] for 15,0,5,495,24539,38710,25,23
+Check OwnGrandPa with [-1, 2, -3] for 15,1,5,528,45312,119835,94,59
+Check OwnGrandPa with exactly [3] for 15,0,5,0,0,0,1,0
+Check OwnGrandPa with [-1, -2, 3] for 15,0,6,528,45312,119835,97,0
+Check OwnGrandPa with exactly [1, 2] for 15,0,5,491,36082,88755,66,28
+Check OwnGrandPa with [1, 2, -3] for 15,0,6,528,45313,119836,95,35
+Check OwnGrandPa with exactly [1, 3] for 15,1,5,0,0,0,1,0
+Check OwnGrandPa with [1, -2, 3] for 15,0,7,528,45313,119836,96,1
+Check OwnGrandPa with exactly [2, 3] for 15,0,6,495,28426,53142,41,30
+Check OwnGrandPa with [-1, 2, 3] for 15,0,8,528,45312,119836,106,59
+Check OwnGrandPa with exactly [1, 2, 3] for 15,0,8,491,39965,103183,89,45
+Check OwnGrandPa with [1, 2, 3] for 15,0,7,528,45313,119836,95,114
+Check AllDescendFromAdamAndEve with [1] for 2 expect 0,0,7,21,311,496,1,0
+Check AllDescendFromAdamAndEve with exactly [1] for 2 expect 0,0,4,6,37,49,1,0
+Check AllDescendFromAdamAndEve with [1, -2, -3] for 2 expect 0,0,7,21,311,498,1,0
+Check AllDescendFromAdamAndEve with exactly [1, 2] for 2 expect 0,0,5,10,53,69,1,0
+Check AllDescendFromAdamAndEve with [1, 2, -3] for 2 expect 0,0,6,21,312,499,1,0
+Check AllDescendFromAdamAndEve with exactly [1, 3] for 2 expect 0,0,5,0,0,0,0,0
+Check AllDescendFromAdamAndEve with [1, -2, 3] for 2 expect 0,0,5,21,312,499,1,0
+Check AllDescendFromAdamAndEve with exactly [1, 2, 3] for 2 expect 0,0,6,10,79,107,1,0
+Check AllDescendFromAdamAndEve with [1, 2, 3] for 2 expect 0,0,9,21,312,499,3,1
+Check AllDescendFromAdamAndEve with [1] for 5 expect 0,1,10,78,2377,4808,5,3
+Check AllDescendFromAdamAndEve with exactly [1] for 5 expect 0,0,5,36,1021,1881,2,1
+Check AllDescendFromAdamAndEve with [1, -2, -3] for 5 expect 0,0,6,78,2377,4810,4,2
+Check AllDescendFromAdamAndEve with exactly [1, 2] for 5 expect 0,0,5,61,1271,2262,2,2
+Check AllDescendFromAdamAndEve with [1, 2, -3] for 5 expect 0,0,6,78,2378,4811,5,3
+Check AllDescendFromAdamAndEve with exactly [1, 3] for 5 expect 0,0,5,0,0,0,1,0
+Check AllDescendFromAdamAndEve with [1, -2, 3] for 5 expect 0,0,7,78,2378,4811,5,0
+Check AllDescendFromAdamAndEve with exactly [1, 2, 3] for 5 expect 0,0,5,61,1489,2774,3,2
+Check AllDescendFromAdamAndEve with [1, 2, 3] for 5 expect 0,0,6,78,2378,4811,3,4
+Check AllDescendFromAdamAndEve with [1] for 10 expect 0,0,7,253,13860,33273,23,3245
+Check AllDescendFromAdamAndEve with exactly [1] for 10 expect 0,1,5,126,9106,20661,19,5284
+Check AllDescendFromAdamAndEve with [1, -2, -3] for 10 expect 0,0,6,253,13860,33275,26,3341
+Check AllDescendFromAdamAndEve with exactly [1, 2] for 10 expect 0,0,5,226,9844,21871,18,8588
+Check AllDescendFromAdamAndEve with [1, 2, -3] for 10 expect 0,0,7,253,13861,33276,35,3642
+Check AllDescendFromAdamAndEve with exactly [1, 3] for 10 expect 0,0,6,0,0,0,1,0
+Check AllDescendFromAdamAndEve with [1, -2, 3] for 10 expect 0,0,6,253,13861,33276,24,0
+Check AllDescendFromAdamAndEve with exactly [1, 2, 3] for 10 expect 0,0,4,226,11182,25893,18,13076
+Check AllDescendFromAdamAndEve with [1, 2, 3] for 10 expect 0,0,6,253,13861,33276,24,3633

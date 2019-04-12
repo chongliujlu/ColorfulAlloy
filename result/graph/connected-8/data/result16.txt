@@ -1,0 +1,66 @@
+command,project Time,command parser time,PrimaryVars,totalVars,clauses,solveTime,instancegenerate time 
+Check Connected with [4] for 8,0,6,310,8625,16563,10,4560
+Check Connected with exactly [4] for 8,1,5,0,0,0,1,0
+Check Connected with [-1, -2, -3, 4, -5, -6] for 8,0,7,310,8625,16568,12,1
+Check Connected with exactly [1, 4] for 8,0,4,0,0,0,1,0
+Check Connected with [1, -2, -3, 4, -5, -6] for 8,0,6,310,8626,16569,11,0
+Check Connected with exactly [2, 4] for 8,0,5,0,0,0,1,0
+Check Connected with [-1, 2, -3, 4, -5, -6] for 8,0,7,310,8626,16569,10,0
+Check Connected with exactly [3, 4] for 8,0,4,216,5893,11738,7,6282
+Check Connected with [-1, -2, 3, 4, -5, -6] for 8,0,7,310,8626,16569,12,4730
+Check Connected with exactly [4, 5] for 8,0,5,0,0,0,1,0
+Check Connected with [-1, -2, -3, 4, 5, -6] for 8,0,7,310,8626,16569,10,1
+Check Connected with exactly [4, 6] for 8,0,5,0,0,0,1,0
+Check Connected with [-1, -2, -3, 4, -5, 6] for 8,0,6,310,8626,16569,9,1
+Check Connected with exactly [1, 2, 4] for 8,0,4,0,0,0,1,0
+Check Connected with [1, 2, -3, 4, -5, -6] for 8,0,6,310,8626,16569,10,0
+Check Connected with exactly [1, 3, 4] for 8,0,4,216,4856,9665,5,5487
+Check Connected with [1, -2, 3, 4, -5, -6] for 8,0,7,310,8626,16569,13,4657
+Check Connected with exactly [1, 4, 5] for 8,0,5,0,0,0,1,0
+Check Connected with [1, -2, -3, 4, 5, -6] for 8,0,6,310,8626,16569,11,1
+Check Connected with exactly [1, 4, 6] for 8,0,5,0,0,0,1,0
+Check Connected with [1, -2, -3, 4, -5, 6] for 8,0,7,310,8626,16569,11,0
+Check Connected with exactly [2, 3, 4] for 8,0,5,0,0,0,1,0
+Check Connected with [-1, 2, 3, 4, -5, -6] for 8,0,6,310,8626,16569,12,0
+Check Connected with exactly [2, 4, 5] for 8,0,6,0,0,0,1,0
+Check Connected with [-1, 2, -3, 4, 5, -6] for 8,1,7,310,8626,16569,13,0
+Check Connected with exactly [2, 4, 6] for 8,1,5,0,0,0,1,0
+Check Connected with [-1, 2, -3, 4, -5, 6] for 8,0,7,310,8626,16569,13,0
+Check Connected with exactly [3, 4, 5] for 8,0,5,288,6777,13255,10,5948
+Check Connected with [-1, -2, 3, 4, 5, -6] for 8,0,7,310,8626,16569,13,4653
+Check Connected with exactly [3, 4, 6] for 8,0,6,0,0,0,1,0
+Check Connected with [-1, -2, 3, 4, -5, 6] for 8,0,6,310,8626,16569,10,0
+Check Connected with exactly [4, 5, 6] for 8,1,5,0,0,0,1,0
+Check Connected with [-1, -2, -3, 4, 5, 6] for 8,0,6,310,8626,16569,9,0
+Check Connected with exactly [1, 2, 3, 4] for 8,1,4,0,0,0,0,0
+Check Connected with [1, 2, 3, 4, -5, -6] for 8,1,6,310,8626,16569,11,0
+Check Connected with exactly [1, 2, 4, 5] for 8,0,4,0,0,0,1,0
+Check Connected with [1, 2, -3, 4, 5, -6] for 8,0,6,310,8626,16569,10,0
+Check Connected with exactly [1, 2, 4, 6] for 8,0,5,0,0,0,1,0
+Check Connected with [1, 2, -3, 4, -5, 6] for 8,0,6,310,8626,16569,11,0
+Check Connected with exactly [1, 3, 4, 5] for 8,1,5,288,5740,11182,7,6158
+Check Connected with [1, -2, 3, 4, 5, -6] for 8,1,8,310,8626,16569,13,4714
+Check Connected with exactly [1, 3, 4, 6] for 8,1,5,0,0,0,1,0
+Check Connected with [1, -2, 3, 4, -5, 6] for 8,0,7,310,8626,16569,11,1
+Check Connected with exactly [1, 4, 5, 6] for 8,0,5,0,0,0,1,0
+Check Connected with [1, -2, -3, 4, 5, 6] for 8,0,6,310,8626,16569,10,0
+Check Connected with exactly [2, 3, 4, 5] for 8,0,4,0,0,0,1,0
+Check Connected with [-1, 2, 3, 4, 5, -6] for 8,0,6,310,8626,16569,11,0
+Check Connected with exactly [2, 3, 4, 6] for 8,1,6,0,0,0,0,0
+Check Connected with [-1, 2, 3, 4, -5, 6] for 8,1,7,310,8626,16569,11,1
+Check Connected with exactly [2, 4, 5, 6] for 8,0,5,0,0,0,1,0
+Check Connected with [-1, 2, -3, 4, 5, 6] for 8,0,6,310,8626,16569,11,0
+Check Connected with exactly [3, 4, 5, 6] for 8,0,6,304,8501,16205,12,5378
+Check Connected with [-1, -2, 3, 4, 5, 6] for 8,1,7,310,8626,16569,13,4765
+Check Connected with exactly [1, 2, 3, 4, 5] for 8,0,5,0,0,0,1,0
+Check Connected with [1, 2, 3, 4, 5, -6] for 8,0,7,310,8626,16569,11,0
+Check Connected with exactly [1, 2, 3, 4, 6] for 8,0,5,0,0,0,0,0
+Check Connected with [1, 2, 3, 4, -5, 6] for 8,1,6,310,8626,16569,10,0
+Check Connected with exactly [1, 2, 4, 5, 6] for 8,0,5,0,0,0,1,0
+Check Connected with [1, 2, -3, 4, 5, 6] for 8,0,8,310,8626,16569,13,0
+Check Connected with exactly [1, 3, 4, 5, 6] for 8,0,4,304,7464,14132,7,6369
+Check Connected with [1, -2, 3, 4, 5, 6] for 8,0,7,310,8626,16569,11,4672
+Check Connected with exactly [2, 3, 4, 5, 6] for 8,0,6,0,0,0,1,0
+Check Connected with [-1, 2, 3, 4, 5, 6] for 8,1,7,310,8626,16569,11,0
+Check Connected with exactly [1, 2, 3, 4, 5, 6] for 8,0,6,0,0,0,1,0
+Check Connected with [1, 2, 3, 4, 5, 6] for 8,1,6,310,8626,16569,10,1

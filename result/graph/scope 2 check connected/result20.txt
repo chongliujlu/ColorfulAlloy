@@ -1,0 +1,66 @@
+command,project Time,command parser time,PrimaryVars,totalVars,clauses,solveTime,instancegenerate time 
+Check Connected with [4] for 2,0,9,34,399,600,3,1
+Check Connected with exactly [4] for 2,0,7,0,0,0,1,0
+Check Connected with [-1, -2, -3, 4, -5, -6] for 2,0,10,34,399,605,1,1
+Check Connected with exactly [1, 4] for 2,0,4,0,0,0,0,0
+Check Connected with [1, -2, -3, 4, -5, -6] for 2,0,9,34,400,606,1,0
+Check Connected with exactly [2, 4] for 2,1,5,0,0,0,1,0
+Check Connected with [-1, 2, -3, 4, -5, -6] for 2,0,8,34,400,606,1,0
+Check Connected with exactly [3, 4] for 2,0,4,18,199,311,1,0
+Check Connected with [-1, -2, 3, 4, -5, -6] for 2,0,9,34,400,606,1,1
+Check Connected with exactly [4, 5] for 2,0,7,0,0,0,0,0
+Check Connected with [-1, -2, -3, 4, 5, -6] for 2,0,10,34,400,606,2,0
+Check Connected with exactly [4, 6] for 2,0,6,0,0,0,1,0
+Check Connected with [-1, -2, -3, 4, -5, 6] for 2,0,10,34,400,606,2,0
+Check Connected with exactly [1, 2, 4] for 2,0,6,0,0,0,0,0
+Check Connected with [1, 2, -3, 4, -5, -6] for 2,1,7,34,400,606,2,0
+Check Connected with exactly [1, 3, 4] for 2,0,6,18,186,285,1,1
+Check Connected with [1, -2, 3, 4, -5, -6] for 2,0,15,34,400,606,2,1
+Check Connected with exactly [1, 4, 5] for 2,0,4,0,0,0,0,0
+Check Connected with [1, -2, -3, 4, 5, -6] for 2,0,9,34,400,606,2,0
+Check Connected with exactly [1, 4, 6] for 2,0,6,0,0,0,0,0
+Check Connected with [1, -2, -3, 4, -5, 6] for 2,0,6,34,400,606,1,0
+Check Connected with exactly [2, 3, 4] for 2,0,7,0,0,0,1,0
+Check Connected with [-1, 2, 3, 4, -5, -6] for 2,0,10,34,400,606,2,0
+Check Connected with exactly [2, 4, 5] for 2,0,7,0,0,0,0,0
+Check Connected with [-1, 2, -3, 4, 5, -6] for 2,0,8,34,400,606,2,0
+Check Connected with exactly [2, 4, 6] for 2,0,8,0,0,0,1,0
+Check Connected with [-1, 2, -3, 4, -5, 6] for 2,0,10,34,400,606,1,0
+Check Connected with exactly [3, 4, 5] for 2,0,6,24,273,418,1,0
+Check Connected with [-1, -2, 3, 4, 5, -6] for 2,1,6,34,400,606,1,0
+Check Connected with exactly [3, 4, 6] for 2,0,8,0,0,0,1,0
+Check Connected with [-1, -2, 3, 4, -5, 6] for 2,0,9,34,400,606,2,0
+Check Connected with exactly [4, 5, 6] for 2,0,8,0,0,0,0,0
+Check Connected with [-1, -2, -3, 4, 5, 6] for 2,0,9,34,400,606,1,0
+Check Connected with exactly [1, 2, 3, 4] for 2,1,6,0,0,0,0,0
+Check Connected with [1, 2, 3, 4, -5, -6] for 2,0,12,34,400,606,1,0
+Check Connected with exactly [1, 2, 4, 5] for 2,0,7,0,0,0,1,0
+Check Connected with [1, 2, -3, 4, 5, -6] for 2,0,10,34,400,606,1,0
+Check Connected with exactly [1, 2, 4, 6] for 2,1,7,0,0,0,1,0
+Check Connected with [1, 2, -3, 4, -5, 6] for 2,0,8,34,400,606,1,0
+Check Connected with exactly [1, 3, 4, 5] for 2,0,6,24,260,392,1,0
+Check Connected with [1, -2, 3, 4, 5, -6] for 2,0,10,34,400,606,2,0
+Check Connected with exactly [1, 3, 4, 6] for 2,0,6,0,0,0,1,0
+Check Connected with [1, -2, 3, 4, -5, 6] for 2,0,8,34,400,606,2,0
+Check Connected with exactly [1, 4, 5, 6] for 2,0,7,0,0,0,1,0
+Check Connected with [1, -2, -3, 4, 5, 6] for 2,0,9,34,400,606,2,0
+Check Connected with exactly [2, 3, 4, 5] for 2,0,6,0,0,0,0,0
+Check Connected with [-1, 2, 3, 4, 5, -6] for 2,0,9,34,400,606,1,0
+Check Connected with exactly [2, 3, 4, 6] for 2,0,7,0,0,0,1,0
+Check Connected with [-1, 2, 3, 4, -5, 6] for 2,0,8,34,400,606,1,0
+Check Connected with exactly [2, 4, 5, 6] for 2,0,7,0,0,0,1,0
+Check Connected with [-1, 2, -3, 4, 5, 6] for 2,0,9,34,400,606,1,0
+Check Connected with exactly [3, 4, 5, 6] for 2,1,6,28,349,520,2,0
+Check Connected with [-1, -2, 3, 4, 5, 6] for 2,0,7,34,400,606,1,0
+Check Connected with exactly [1, 2, 3, 4, 5] for 2,1,6,0,0,0,0,0
+Check Connected with [1, 2, 3, 4, 5, -6] for 2,1,7,34,400,606,1,0
+Check Connected with exactly [1, 2, 3, 4, 6] for 2,0,5,0,0,0,0,0
+Check Connected with [1, 2, 3, 4, -5, 6] for 2,0,9,34,400,606,2,0
+Check Connected with exactly [1, 2, 4, 5, 6] for 2,0,6,0,0,0,1,0
+Check Connected with [1, 2, -3, 4, 5, 6] for 2,0,7,34,400,606,1,0
+Check Connected with exactly [1, 3, 4, 5, 6] for 2,0,8,28,336,494,1,1
+Check Connected with [1, -2, 3, 4, 5, 6] for 2,0,7,34,400,606,1,0
+Check Connected with exactly [2, 3, 4, 5, 6] for 2,1,8,0,0,0,0,0
+Check Connected with [-1, 2, 3, 4, 5, 6] for 2,1,10,34,400,606,1,1
+Check Connected with exactly [1, 2, 3, 4, 5, 6] for 2,0,7,0,0,0,0,0
+Check Connected with [1, 2, 3, 4, 5, 6] for 2,0,8,34,400,606,2,0
