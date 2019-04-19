@@ -1213,7 +1213,10 @@ final class SimpleReporter extends A4Reporter {
                 addFeatureprefix(NFeatures,print,"in","or");
 
                 print.append(" no "+ label);
+                if(s.isLone!=null)
+                print.append(" else (some  "+label + " or no "+label +")\r\n        }");
 
+                else
                 print.append( " else (some " +label +") \r\n        }" );
             }
 
@@ -1224,6 +1227,9 @@ final class SimpleReporter extends A4Reporter {
                 //F in P implies
                 addFeatureprefix(PFeatures,print,"in","and");
 
+                if(s.isLone!=null){
+                    print.append(" (some  "+label + " or no "+label +") else no "+label+"\r\n        }");
+                }else
                 print.append(" (some  "+label + ") else no "+label+"\r\n        }");
             }
         }

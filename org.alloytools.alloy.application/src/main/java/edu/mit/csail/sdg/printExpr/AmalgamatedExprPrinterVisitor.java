@@ -494,7 +494,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
         if(x.op.equals(ExprUnary.Op.LONEOF))
             tempExpr.append(" lone ");
         if(x.op.equals(ExprUnary.Op.ONEOF))
-            tempExpr.append(" ");
+            tempExpr.append(" one ");
         if(x.op.equals(ExprUnary.Op.EXACTLYOF))
             tempExpr.append(" exactly ");
         if(x.op.equals(ExprUnary.Op.NOT)||x.op.equals(ExprUnary.Op.NO)||
