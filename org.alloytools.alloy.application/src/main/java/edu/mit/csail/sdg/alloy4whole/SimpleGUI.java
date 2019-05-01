@@ -2112,7 +2112,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
         // Add the new JNI location to the java.library.path
         try {
-
+            System.setProperty("java.library.path", binary);
             // The above line is actually useless on Sun JDK/JRE (see Sun's bug ID 4280189)
             // The following 4 lines should work for Sun's JDK/JRE (though they probably won't work for others)
             String[] newarray = new String[] {
