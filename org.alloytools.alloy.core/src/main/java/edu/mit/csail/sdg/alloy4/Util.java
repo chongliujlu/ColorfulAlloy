@@ -484,10 +484,7 @@ public final class Util {
             }
             destname = (destdir + '/' + destname).replace('/', File.separatorChar);
             int last = destname.lastIndexOf(File.separatorChar);
-            new File(destname.substring(0, last + 1)).mkdirs(); // Error will be
-                                                               // caught later
-                                                               // by the file
-                                                               // copy
+            new File(destname.substring(0, last + 1)).mkdirs(); // Error will be caught later by the file copy
             if (copy(name, destname)) {
                 args[j] = destname;
                 j++;

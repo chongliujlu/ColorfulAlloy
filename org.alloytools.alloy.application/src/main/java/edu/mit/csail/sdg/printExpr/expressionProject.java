@@ -3,16 +3,26 @@ package edu.mit.csail.sdg.printExpr;
 import edu.mit.csail.sdg.alloy4.ConstList;
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.ast.*;
-
 import java.util.HashSet;
 import java.util.Set;
 
 public  class expressionProject extends VisitReturn<Expr> {
-    Set<Integer> NFeatures=new HashSet<>(); //painted NF1,NF2----> 1,2
+    /**
+     * store marked Negative features for Expr, for example,
+     * if a expression painted with ➊➋, NFeature={1,2}
+     */
+    Set<Integer> NFeatures=new HashSet<>();
+    /**
+     * store marked Negative features for Expr, for example,
+     * if a expression painted with ➀➁, PFeature={1,2}
+     */
     Set<Integer> PFeatures=new HashSet<>();
 
-
-    public static Set<Integer> runfeatures; //colorful Alloy
+    /**
+     * features in the execute command, for example,
+     * run {} with exactly ➀,➋ for 3 , executefeats={1,-2}
+     */
+    public static Set<Integer> executefeats; //colorful Alloy
 
     /**
      * computer the Negative Features and positive Features respectively
@@ -36,8 +46,8 @@ public  class expressionProject extends VisitReturn<Expr> {
 
         computeFeatures(x);
 
-        // runfeatures: null,PFeatures:null; runfeatures:PF1... PFeatures: null; runfeatures:PF1, NF2 ,PF3... PFeatures: PF3,NF4
-        if(runfeatures.containsAll(PFeatures)|| runfeatCointainOnlyNFeature()){
+        // executefeats: null,PFeatures:null; executefeats:PF1... PFeatures: null; executefeats:PF1, NF2 ,PF3... PFeatures: PF3,NF4
+        if(executefeats.containsAll(PFeatures)|| runfeatCointainOnlyNFeature()){
 
             Expr leftExpr=  visitThis(x.left);
            Expr rightExpr= visitThis(x.right);
@@ -63,7 +73,7 @@ public  class expressionProject extends VisitReturn<Expr> {
     private boolean paintWithOppositeFeature(Set<Integer> color) {
         if(!color.isEmpty()){
             for(Integer i: color){
-                if(runfeatures.contains(-i)){
+                if(executefeats.contains(-i)){
                     return true;
                 }
 
@@ -81,7 +91,7 @@ public  class expressionProject extends VisitReturn<Expr> {
         ConstList.TempList<Expr> temp = new ConstList.TempList<>(x.args.size());
         computeFeatures(x);
 
-        if(runfeatures.containsAll(PFeatures)|| runfeatCointainOnlyNFeature()){
+        if(executefeats.containsAll(PFeatures)|| runfeatCointainOnlyNFeature()){
             for(Expr expr: x.args){
                 if(visitThis(expr)!=null){
                     temp.add(visitThis(expr));
@@ -99,7 +109,7 @@ public  class expressionProject extends VisitReturn<Expr> {
         if(paintWithOppositeFeature(x.color))
             return null;
         computeFeatures(x);
-        if(runfeatures.containsAll(PFeatures)|| runfeatCointainOnlyNFeature()){
+        if(executefeats.containsAll(PFeatures)|| runfeatCointainOnlyNFeature()){
             return x;
         }
         return null;
@@ -112,7 +122,7 @@ public  class expressionProject extends VisitReturn<Expr> {
 
         computeFeatures(x);
 
-        if(runfeatures.containsAll(PFeatures)|| runfeatCointainOnlyNFeature()){
+        if(executefeats.containsAll(PFeatures)|| runfeatCointainOnlyNFeature()){
             return x;
         }
         return null;
@@ -127,7 +137,7 @@ public  class expressionProject extends VisitReturn<Expr> {
 
         computeFeatures(x);
 
-        if(runfeatures.containsAll(PFeatures)|| runfeatCointainOnlyNFeature() ){
+        if(executefeats.containsAll(PFeatures)|| runfeatCointainOnlyNFeature() ){
             cond= visitThis(x.cond);
             leftExpr=  visitThis(x.left);
             rightExpr= visitThis(x.right);
@@ -146,7 +156,7 @@ public  class expressionProject extends VisitReturn<Expr> {
             return null;
         computeFeatures(x);
         // no positive feature marked
-        if(runfeatures.containsAll(PFeatures)|| runfeatCointainOnlyNFeature() )
+        if(executefeats.containsAll(PFeatures)|| runfeatCointainOnlyNFeature() )
             return ExprLet.make(x.pos,x.var,visitThis(x.expr),visitThis(x.sub));
 
         return null;
@@ -159,7 +169,7 @@ public  class expressionProject extends VisitReturn<Expr> {
             return null;
 
         computeFeatures(x);
-        if(runfeatures.containsAll(PFeatures)|| runfeatCointainOnlyNFeature() ) {
+        if(executefeats.containsAll(PFeatures)|| runfeatCointainOnlyNFeature() ) {
 
             //project decls-------------
             ConstList.TempList<Decl> decls = new ConstList.TempList<Decl>(x.decls.size());
@@ -200,7 +210,7 @@ public  class expressionProject extends VisitReturn<Expr> {
         Expr tempExpr=null;
         computeFeatures(x);
         //1,2   1,0                           -1   , 2,3,4
-        if(runfeatures.containsAll(PFeatures)|| runfeatCointainOnlyNFeature()){
+        if(executefeats.containsAll(PFeatures)|| runfeatCointainOnlyNFeature()){
             if(x.sub instanceof Sig || x.sub instanceof Sig.Field){
                 return x;
             }else{
@@ -223,7 +233,7 @@ public  class expressionProject extends VisitReturn<Expr> {
         if(paintWithOppositeFeature(x.color))
             return null;
         computeFeatures(x);
-        if(runfeatures.containsAll(PFeatures)||runfeatCointainOnlyNFeature()){
+        if(executefeats.containsAll(PFeatures)||runfeatCointainOnlyNFeature()){
             return x;
         }
         return null;
@@ -237,7 +247,7 @@ public  class expressionProject extends VisitReturn<Expr> {
         Sig signew=null;
         computeFeatures(x);
 
-        if(runfeatures.containsAll(PFeatures) ||(runfeatCointainOnlyNFeature())){
+        if(executefeats.containsAll(PFeatures) ||(runfeatCointainOnlyNFeature())){
             //used to generate new Sig
             Attr []attributes = new Attr[x.attributes.size()];
             for( int i=0; i<x.attributes.size();i++){
@@ -272,7 +282,7 @@ public  class expressionProject extends VisitReturn<Expr> {
         Expr tempExpr=null;
         computeFeatures(x);
 
-        if(runfeatures.containsAll(PFeatures)||runfeatCointainOnlyNFeature()){
+        if(executefeats.containsAll(PFeatures)||runfeatCointainOnlyNFeature()){
 //???
             tempExpr=  visitThis(x.decl().expr);
         }
@@ -288,8 +298,8 @@ public  class expressionProject extends VisitReturn<Expr> {
      * @return
      */
     private boolean runfeatCointainOnlyNFeature() {
-        if(!runfeatures.isEmpty())
-            for(Integer i: runfeatures){
+        if(!executefeats.isEmpty())
+            for(Integer i: executefeats){
                 if(i<0)
                 return true;
 

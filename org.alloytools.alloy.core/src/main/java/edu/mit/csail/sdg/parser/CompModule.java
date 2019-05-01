@@ -82,8 +82,12 @@ import edu.mit.csail.sdg.ast.VisitReturn;
  */
 
 public final class CompModule extends Browsable implements Module {
-
-    public static Set<Integer> feats =new HashSet<>(); //colorful Alloy
+    //colorful Alloy
+    /**
+     * used in colorful Alloy
+     * Stores features appear in this module
+     */
+    public static Set<Integer> feats =new HashSet<>();
 
     // These fields are shared by all Modules that point to each other
 
@@ -231,9 +235,9 @@ public final class CompModule extends Browsable implements Module {
     /**
      * Mutable; this class represents the current typechecking context.
      */
-    static final class Context extends VisitReturn<Expr> {
+   public static final class Context extends VisitReturn<Expr> {
         //store the colors marked till current Expr
-       static Set <Integer> contextFeats=new HashSet<>(); //colorful Alloy
+      public static Set <Integer> contextFeats=new HashSet<>(); //colorful Alloy
 
         /**
          * The place where warnings should go; can be null if we don't care about
@@ -401,7 +405,7 @@ public final class CompModule extends Browsable implements Module {
             return true;
         }
 
-        private Expr process(Pos pos, Pos closingBracket, Pos rightPos, List<Expr> choices, List<String> oldReasons, Expr arg) {
+        private Expr process(Pos pos, Pos closingBracket, Pos rightPos, List<Expr> choices, List<String> oldReasons, Expr arg,Set<Integer> color) {
             TempList<Expr> list = new TempList<Expr>(choices.size());
             TempList<String> reasons = new TempList<String>(choices.size());
             for (int i = 0; i < choices.size(); i++) {
@@ -417,29 +421,40 @@ public final class CompModule extends Browsable implements Module {
                 if (y instanceof ExprBadCall) {
                     ExprBadCall bc = (ExprBadCall) y;
                     if (bc.args.size() < bc.fun.count()) {
-                        ConstList<Expr> newargs = Util.append(bc.args, arg);
-                        if (applicable(bc.fun, newargs))
-                            y = ExprCall.make(bc.pos, bc.closingBracket, bc.fun, newargs, bc.extraWeight);
+                        ConstList<Expr> newargs = Util.append(bc.args, arg);//colorful Alloy
+                        if (applicable(bc.fun, newargs)) {
+                            contextFeats.addAll(color);//colorful Alloy
+                            if(!contextFeats.containsAll(bc.fun.color))//colorful Alloy
+                                throw new ErrorColor(bc.pos, (bc.fun.isPred? "pred \"": "fun \"")+bc.fun.label.substring(5)+"\" marked with "+bc.fun.color.toString()); //colorful Alloy
+                            y = ExprCall.make(bc.pos, bc.closingBracket, bc.fun, newargs, bc.extraWeight, color);//colorful Alloy
+                        }
                         else
-                            y = ExprBadCall.make(bc.pos, bc.closingBracket, bc.fun, newargs, bc.extraWeight);
+                        {y = ExprBadCall.make(bc.pos, bc.closingBracket, bc.fun, newargs, bc.extraWeight);
+                            y.color.addAll(color);} //colorful Alloy
                     } else {
-                        y = ExprBinary.Op.JOIN.make(pos, closingBracket, arg, y);
+                        y = ExprBinary.Op.JOIN.make(pos, closingBracket, arg, y,color);//colorful Alloy
                     }
                 } else {
-                    y = ExprBinary.Op.JOIN.make(pos, closingBracket, arg, x);
+                    y = ExprBinary.Op.JOIN.make(pos, closingBracket, arg, x,color);//colorful
                 }
                 list.add(y);
                 reasons.add(oldReasons.get(i));
             }
-            return ExprChoice.make(isIntsNotUsed, rightPos, list.makeConst(), reasons.makeConst());
+            return ExprChoice.make(isIntsNotUsed, rightPos, list.makeConst(), reasons.makeConst(),color); //colorful Alloy
         }
 
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprList x) throws Err {
             TempList<Expr> temp = new TempList<Expr>(x.args.size());
-            for (int i = 0; i < x.args.size(); i++)
+            Set<Integer> tempfeats=new HashSet<>(); //colorful Alloy
+            tempfeats.addAll(contextFeats);//colorful Alloy
+
+            for (int i = 0; i < x.args.size(); i++){
                 temp.add(visitThis(x.args.get(i)));
+                contextFeats.clear();     //colorful Alloy
+                contextFeats.addAll(tempfeats);//colorful Alloy
+            }
 
             CompModule.feats.addAll(x.color); //colorful Alloy
             return ExprList.make(x.pos, x.closingBracket, x.op, temp.makeConst(), x.color); // [HASLab] colorful Alloy
@@ -493,6 +508,7 @@ public final class CompModule extends Browsable implements Module {
             }
             else {
                 contextFeats.addAll(x.color);//colorful Alloy
+                CompModule.feats.addAll(x.color); //colorful Alloy
                 Set<Integer> temp=new HashSet<>(); //colorful Alloy
                 temp.addAll(contextFeats);//colorful Alloy
 
@@ -515,7 +531,7 @@ public final class CompModule extends Browsable implements Module {
             left = left.typecheck_as_set();
             if (!left.errors.isEmpty() || !(right instanceof ExprChoice))
                 return ExprBinary.Op.JOIN.make(x.pos, x.closingBracket, left, right,x.color);    //colorful Alloy
-            return process(x.pos, x.closingBracket, right.pos, ((ExprChoice) right).choices, ((ExprChoice) right).reasons, left);
+            return process(x.pos, x.closingBracket, right.pos, ((ExprChoice) right).choices, ((ExprChoice) right).reasons, left,x.color); //colorful Alloy
         }
 
         /** {@inheritDoc} */
@@ -559,7 +575,7 @@ public final class CompModule extends Browsable implements Module {
                 left = left.typecheck_as_set();
                 if (!left.errors.isEmpty() || !(right instanceof ExprChoice))
                     return x.op.make(x.pos, x.closingBracket, left, right,x.color);
-                return process(x.pos, x.closingBracket, right.pos, ((ExprChoice) right).choices, ((ExprChoice) right).reasons, left);
+                return process(x.pos, x.closingBracket, right.pos, ((ExprChoice) right).choices, ((ExprChoice) right).reasons, left,x.color);
             }
             CompModule.feats.addAll(x.color); //colorful Alloy
             return x.op.make(x.pos, x.closingBracket, left, right, x.color); // [HASLab] colorful Alloy
@@ -683,8 +699,8 @@ public final class CompModule extends Browsable implements Module {
             Expr obj = resolve(x.pos, x.label);
             obj.paint(x.color); // [HASLab] colorful Alloy
             CompModule.feats.addAll(x.color); //colorful Alloy
-
             contextFeats.addAll(x.color);//colorful Alloy
+
             if(obj instanceof ExprUnary)
             //colorful Alloy
             if(!contextFeats.containsAll(((ExprUnary) obj).sub.color)){
@@ -1856,6 +1872,7 @@ public final class CompModule extends Browsable implements Module {
             Expr expr = e.getValue();
             Context.contextFeats.clear();//colorful Alloy
             Context.contextFeats.addAll(expr.color);//colorful Alloy
+            CompModule.feats.addAll(expr.color); //colorful Alloy
             expr = cx.check(expr).resolve_as_formula(warns);
             if (expr.errors.isEmpty()) {
                 e.setValue(expr);

@@ -2112,11 +2112,9 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
         // Add the new JNI location to the java.library.path
         try {
-            System.setProperty("java.library.path", binary);
-            // The above line is actually useless on Sun JDK/JRE (see Sun's bug
-            // ID 4280189)
-            // The following 4 lines should work for Sun's JDK/JRE (though they
-            // probably won't work for others)
+
+            // The above line is actually useless on Sun JDK/JRE (see Sun's bug ID 4280189)
+            // The following 4 lines should work for Sun's JDK/JRE (though they probably won't work for others)
             String[] newarray = new String[] {
                                               binary
             };
@@ -2124,7 +2122,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
             old.setAccessible(true);
             old.set(null, newarray);
         } catch (Throwable ex) {}
-
         // Pre-load the preferences dialog
         prefDialog = new PreferencesDialog(log, binary);
         prefDialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -2210,8 +2207,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
         });
         t.start();
     }
-
-
 
     /** {@inheritDoc} */
     @Override

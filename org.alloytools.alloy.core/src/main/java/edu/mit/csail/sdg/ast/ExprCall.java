@@ -22,17 +22,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import edu.mit.csail.sdg.alloy4.ConstList;
+import edu.mit.csail.sdg.alloy4.*;
 import edu.mit.csail.sdg.alloy4.ConstList.TempList;
-import edu.mit.csail.sdg.alloy4.Env;
-import edu.mit.csail.sdg.alloy4.Err;
-import edu.mit.csail.sdg.alloy4.ErrorSyntax;
-import edu.mit.csail.sdg.alloy4.ErrorType;
-import edu.mit.csail.sdg.alloy4.ErrorWarning;
-import edu.mit.csail.sdg.alloy4.JoinableList;
-import edu.mit.csail.sdg.alloy4.Pos;
-import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.ast.Sig.Field;
+import edu.mit.csail.sdg.parser.CompModule;
 
 /**
  * Immutable; represents a call.
@@ -375,7 +368,7 @@ public final class ExprCall extends Expr {
 
     /** {@inheritDoc} */
     @Override
-    public Expr resolve(Type t, Collection<ErrorWarning> warns) {
+    public Expr resolve(Type t, Collection<ErrorWarning> warns){
         if (errors.size() > 0)
             return this;
         TempList<Expr> args = new TempList<Expr>(this.args.size());
@@ -400,7 +393,8 @@ public final class ExprCall extends Expr {
             // +"The argument has type "+y.type+"\nbut the parameter has type
             // "+p));
         }
-        return changed ? make(pos, closingBracket, fun, args.makeConst(), extraWeight) : this;
+        //CompModule.Context.contextFeats.addAll(this.color);//colorful Alloy
+        return changed ? make(pos, closingBracket, fun, args.makeConst(), extraWeight,this.color) : this;//colorful Alloy
     }
 
     // ============================================================================================================//

@@ -518,7 +518,6 @@ terminal Pos NFEAT7;           // 			 // [HASLab] colorful electrum
 terminal Pos NFEAT8;           // 			 // [HASLab] colorful electrum
 terminal Pos NFEAT9;           // 			 // [HASLab] colorful electrum
 terminal Pos PFEAT0;              //colorful Alloy
-//terminal Pos PFEAT0;           // 			 // [HASLab] colorful Alloy
 terminal ExprVar ID;
 
 terminal ExprConstant NUMBER, STR;

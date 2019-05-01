@@ -124,10 +124,10 @@ public  class ExprPrinterVisitor extends VisitReturn<String> {
                 s.append(" disj ");
 
             for (Expr e: decl.names){
-                s.append(visitThis(e)+" ,");
+                s.append(visitThis(e)+",");
             }
             s.deleteCharAt(s.length() - 1);
-            s.append(": ");
+            s.append(" :");
             s.append(visitThis(decl.expr)+",");
         }
         s.deleteCharAt(s.length()-1);
@@ -135,11 +135,10 @@ public  class ExprPrinterVisitor extends VisitReturn<String> {
             s.append("}");
         }
 
-        s.append("|");
+        s.append(" | ");
         s.append(visitThis(x.sub));
         s.append(")");
         return s.toString();
-
     }
 
     @Override

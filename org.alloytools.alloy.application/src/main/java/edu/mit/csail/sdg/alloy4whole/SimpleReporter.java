@@ -33,7 +33,6 @@ import edu.mit.csail.sdg.alloy4.*;
 import edu.mit.csail.sdg.ast.*;
 import edu.mit.csail.sdg.parser.CompModule;
 import edu.mit.csail.sdg.printExpr.*;
-import kodkod.engine.bool.Int;
 import org.alloytools.alloy.core.AlloyCore;
 
 import edu.mit.csail.sdg.alloy4.WorkerEngine.WorkerCallback;
@@ -47,7 +46,6 @@ import edu.mit.csail.sdg.translator.A4SolutionReader;
 import edu.mit.csail.sdg.translator.A4SolutionWriter;
 import edu.mit.csail.sdg.translator.TranslateAlloyToKodkod;
 
-import static edu.mit.csail.sdg.alloy4.A4Preferences.ImplicitThis;
 import static edu.mit.csail.sdg.ast.Sig.UNIV;
 
 /** This helper method is used by SimpleGUI. */
@@ -498,12 +496,10 @@ final class SimpleReporter extends A4Reporter {
      * System.currentTimeMillis() to determine the elapsed time.
      */
     private long          lastTime  = 0;
-    // used to compute code generating time(feature project code )
+    // used to compute the time to generate new execute code
     static private  long         getexecutecodeTime=0; //colorful Alloy
     //used to compute code parser time.
     static private  long         parserTime=0; //colorful Alloy
-
-
 
     /**
      * If we performed unsat core minimization, then this is the start of the
@@ -677,9 +673,9 @@ final class SimpleReporter extends A4Reporter {
             final List<Sig> sigs = world.getAllReachableSigs();
             final ConstList<Command> cmds = world.getAllCommands();
 
-            //record features in the original module
-            Set<Integer> Modulefeats = new HashSet<>();      //colorful Alloy
-            Modulefeats.addAll(CompModule.feats);           //colorful Alloy
+            //uesed to record features appears in the original module
+            Set<Integer> allFeats = new HashSet<>();      //colorful Alloy
+            allFeats.addAll(CompModule.feats);           //colorful Alloy
 
             cb(out, "warnings", bundleWarningNonFatal);
             if (rep.warn > 0 && !bundleWarningNonFatal)
@@ -718,17 +714,22 @@ final class SimpleReporter extends A4Reporter {
                         A4Solution ai;
                         long startTime = System.currentTimeMillis();
                         StringBuilder print = new StringBuilder();
-                        if (cmd != null && cmd.feats != null) {
+                        if (cmd != null ) {
+                            if(cmd.feats == null){
+                                expressionProject.executefeats = new HashSet<>();
+                                printAmalgamatedModule(print, world, cmd, allFeats);
 
-                            expressionProject.runfeatures = new HashSet<>(cmd.feats.feats);
-                            //exactly
-                            if (cmd.feats.isExact) {
-                                expressionProject reconstructExpr = new expressionProject();
-                                generateModule(print, world, reconstructExpr, cmd,Modulefeats);
+                            }else {
+                                expressionProject.executefeats = new HashSet<>(cmd.feats.feats);
+                                //exactly
+                                if (cmd.feats.isExact) {
+                                    expressionProject reconstructExpr = new expressionProject();
+                                    generateModule(print, world, reconstructExpr, cmd, allFeats);
 
-                                //amalgatmate
-                            } else {
-                                printAmalgamatedModule(print, world, cmd,Modulefeats);
+                                    //amalgatmate
+                                } else {
+                                    printAmalgamatedModule(print, world, cmd, allFeats);
+                                }
                             }
                         }
                         getexecutecodeTime=System.currentTimeMillis() - startTime;
@@ -810,28 +811,34 @@ final class SimpleReporter extends A4Reporter {
          * @param print used to store the generated code
          * @param world original module(before print)
          * @param cmd executed Command
+         * @param allFeats the features appear in the original module
          */
-        public void printAmalgamatedModule(StringBuilder print, Module world, Command cmd,Set<Integer> Modulefeats)  {
+        public void printAmalgamatedModule(StringBuilder print, Module world, Command cmd,Set<Integer> allFeats){
+
             AmalgamatedExprPrinterVisitor printAmalgamatedExpr=new AmalgamatedExprPrinterVisitor();
             ExprPrinterVisitor printExprs=new ExprPrinterVisitor();
 
+            //print module keyword
+            if(!world.getModelName().equals("unknown")){
+                print.append("module "+world.getModelName()+"\r\n\r\n");
+            }
+
             //print opens
             printOpenLine((CompModule)world,print);
+            print.append("\r\n");
 
-
-            printModulePrefix(Modulefeats,print);
+            addAuxiliarySignatures(allFeats,print);
 
             printAmalgamatedSigs(print,world,printExprs,printAmalgamatedExpr);
 
             printAmalgamatedfact(print,world,printAmalgamatedExpr);
-
 
             printAmalgamatedfuns(print,world,printAmalgamatedExpr);
 
             printAmalgamatedAssert(print,world,printAmalgamatedExpr);
 
             if(cmd!=null)
-                printAmalgamatedCommand(print,world,cmd,printAmalgamatedExpr,Modulefeats);
+                printAmalgamatedCommand(print,world,cmd,printAmalgamatedExpr,allFeats);
         }
 
         //colorful Alloy
@@ -857,7 +864,6 @@ final class SimpleReporter extends A4Reporter {
                             if(cmd.label.equals(func.label.substring(5))){
                                 if(!(func.getBody() instanceof ExprConstant))
                                 print.append(func.getBody().accept(printAmalgamatedExpr));
-
                             }
                         }
                         print.append("}");
@@ -870,7 +876,12 @@ final class SimpleReporter extends A4Reporter {
 
                     if(cmd.scope.size()>=1)
                         print.append(" but ");
+                    if(cmd.bitwidth!=-1){
+                        print.append(cmd.bitwidth+" Int ");
+                    }
                     for(CommandScope cs:cmd.scope){
+                        if(cmd.bitwidth!=-1)
+                            print.append(",");
                         if(cs.isExact)
                             print.append(" exactly ");
                         print.append(cs.startingScope+" ");
@@ -884,7 +895,7 @@ final class SimpleReporter extends A4Reporter {
 
                     print.append(" \r\n\r\nfact selectedFeatures {\r\n        ");
                     if(cmd.feats==null && cmd.feats.feats.isEmpty()){
-                        print.append(" no Product");
+                        print.append(" no _Product_");
 
                     }
                     else{
@@ -899,47 +910,47 @@ final class SimpleReporter extends A4Reporter {
 
                         if(!PFeatures.isEmpty()){
                             if(cmd.feats.feats.contains(1))
-                                print.append("F1+");
+                                print.append("_F1+");
                             if(cmd.feats.feats.contains(2))
-                                print.append("F2+");
+                                print.append("_F2+");
                             if(cmd.feats.feats.contains(3))
-                                print.append("F3+");
+                                print.append("_F3+");
                             if(cmd.feats.feats.contains(4))
-                                print.append("F4+");
+                                print.append("_F4+");
                             if(cmd.feats.feats.contains(5))
-                                print.append("F5+");
+                                print.append("_F5+");
                             if(cmd.feats.feats.contains(6))
-                                print.append("F6+");
+                                print.append("_F6+");
                             if(cmd.feats.feats.contains(7))
-                                print.append("F7+");
+                                print.append("_F7+");
                             if(cmd.feats.feats.contains(8))
-                                print.append("F8+");
+                                print.append("_F8+");
                             if(cmd.feats.feats.contains(9))
-                                print.append("F9+");
+                                print.append("_F9+");
 
                             print.deleteCharAt(print.length()-1);
-                            print.append(" in Product  &&");
+                            print.append(" in _Product_  &&");
                         }
 
                         if(!NFeatures.isEmpty()){
                             if(cmd.feats.feats.contains(-1))
-                                print.append("F1 not in Product &&");
+                                print.append("_F1 not in _Product_ &&");
                             if(cmd.feats.feats.contains(-2))
-                                print.append("F2 not in Product &&");
+                                print.append("_F2 not in _Product_ &&");
                             if(cmd.feats.feats.contains(-3))
-                                print.append("F3 not in Product &&");
+                                print.append("_F3 not in _Product_ &&");
                             if(cmd.feats.feats.contains(-4))
-                                print.append("F4 not in Product &&");
+                                print.append("_F4 not in _Product_ &&");
                             if(cmd.feats.feats.contains(-5))
-                                print.append("F5 not in Product &&");
+                                print.append("_F5 not in _Product_ &&");
                             if(cmd.feats.feats.contains(-6))
-                                print.append("F6 not in Product &&");
+                                print.append("_F6 not in _Product_ &&");
                             if(cmd.feats.feats.contains(-7))
-                                print.append("F7 not in Product &&");
+                                print.append("_F7 not in _Product_ &&");
                             if(cmd.feats.feats.contains(-8))
-                                print.append("F8 not in Product &&");
+                                print.append("_F8 not in _Product_ &&");
                             if(cmd.feats.feats.contains(9))
-                                print.append("F9 not in Product &&");
+                                print.append("_F9 not in _Product_ &&");
                         }
                         print.deleteCharAt(print.length()-1);
                         print.deleteCharAt(print.length()-1);
@@ -961,7 +972,7 @@ final class SimpleReporter extends A4Reporter {
                     continue;
 
                 print.append("\r\n\r\n");
-                print.append("assert  ");
+                print.append("assert ");
                 print.append(asser.a);
 
                 print.append("{\r\n");
@@ -1001,7 +1012,7 @@ final class SimpleReporter extends A4Reporter {
                                 print.append( " disj "); //"disj" key word
 
                             for (Expr expr: decl.names){
-                                print.append(expr.accept(printAmalgamatedExpr)+" ,");
+                                print.append(expr.accept(printAmalgamatedExpr)+",");
                             }
                             print.deleteCharAt(print.length() - 1);
                             print.append(": ");
@@ -1043,34 +1054,24 @@ final class SimpleReporter extends A4Reporter {
          */
         private void printAmalgamatedfact(StringBuilder print, Module world, AmalgamatedExprPrinterVisitor printAmalgamatedExpr){
 
-
             for (Pair<String, Expr> f: world.getAllFacts()){
-
                 print.append("\r\nfact ");
-
-                if (f.a.startsWith("fact$"))
-                    print.append("{\r\n");
-                else
-                    print.append(" "+f.a+ "{\r\n" );
-
+                print.append(f.a.startsWith("fact$")? "{\r\n" : f.a+ "{\r\n");
                 print.append("        "+f.b.accept(printAmalgamatedExpr));
-
                 print.append(" \r\n        }\r\n ");
             }
         }
 
         //colorful Alloy
-
         /**
-         * convenient method, help to print amalgamated  sig fact
+         * convenient method, help to print facts of sig
          * @param print
          * @param s sig these facts belongs to
          * @param facts
          * @param printAmalgamatedExpr
          */
-        private void printAmalgamatedfact(StringBuilder print,Sig s, SafeList<Expr> facts, AmalgamatedExprPrinterVisitor printAmalgamatedExpr) {
+        private void printAmalgamatedfact(StringBuilder print, Sig s, SafeList<Expr> facts, AmalgamatedExprPrinterVisitor printAmalgamatedExpr) {
             for (Expr f: facts){
-
                 print.append("{\r\n");
                 String temp =f.accept(printAmalgamatedExpr);
                 if(s.label.startsWith("this/"))
@@ -1098,15 +1099,12 @@ final class SimpleReporter extends A4Reporter {
                     print.append("abstract ");
                 if(s.isLone !=null)
                     print.append("lone ");
-                // change to lone
+
+                // if painted with features, change to "lone"
                 if (s.isOne!=null)
-                    print.append("lone ");
-                //change to set
-                //if(s.isSome != null)
-                //  print.append(" ");
+                    print.append( s.color.isEmpty()?"one ":"lone ");
 
                 print.append("sig "+ s.label.substring(5));
-
 
                 if(s.isSubsig!=null ){
                     if(((Sig.PrimSig) s).parent!=UNIV){
@@ -1131,8 +1129,6 @@ final class SimpleReporter extends A4Reporter {
 
                 //print fields
                 print.append("{");
-
-
                     for (Sig.Field f:s.getFields()){
                         print.append("\r\n        "+f.label +": ");
 
@@ -1140,14 +1136,11 @@ final class SimpleReporter extends A4Reporter {
                         {
                             // one  ----> lone
                             if(((ExprUnary) f.decl().expr).op.equals(ExprUnary.Op.ONEOF)) {
-
                                     print.append( f.color.isEmpty()?"one ":"lone ");
-
                                 print.append( ((ExprUnary) f.decl().expr).sub.accept(printExprs)+",");
                             }
                             // some -----> set
                             else if(((ExprUnary) f.decl().expr).op.equals(ExprUnary.Op.SOMEOF)) {
-
                                 print.append(f.color.isEmpty()? "some ":"set ");
                                 print.append( ((ExprUnary) f.decl().expr).sub.accept(printExprs)+",");
                             }
@@ -1169,10 +1162,8 @@ final class SimpleReporter extends A4Reporter {
                 print.append("}");
 
 
-                // sig facts
+                // Add original facts to sig
                 printAmalgamatedfact(print,s,s.getFacts(), printAmalgamatedExpr);
-
-
 
                 // add feature facts to sig and field  ------------------------------
                 addFeatureFact(s, print);
@@ -1180,14 +1171,12 @@ final class SimpleReporter extends A4Reporter {
                 if(s.getFields().size()>0){
 
                     for (Sig.Field f:s.getFields()){
-
                         addFeatureFact(f,print);
                     }
                 }
                 print.append("\r\n");
             }
         }
-
 
         //colorful Alloy
         /**
@@ -1224,13 +1213,15 @@ final class SimpleReporter extends A4Reporter {
 
                 print.append("\r\nfact{ \r\n        ");
 
-                //F in P implies
-                addFeatureprefix(PFeatures,print,"in","and");
+                if(s.isOne!=null){
+                    //F in P implies
+                    addFeatureprefix(PFeatures,print,"in","and");
+                    print.append(" (some  "+label + ") else no "+label+"\r\n        }");
+                }else{
+                    addFeatureprefix(PFeatures,print,"not in","and");
+                    print.append(" no  "+label +"\r\n        }");
+                }
 
-                if(s.isLone!=null){
-                    print.append(" (some  "+label + " or no "+label +") else no "+label+"\r\n        }");
-                }else
-                print.append(" (some  "+label + ") else no "+label+"\r\n        }");
             }
         }
 
@@ -1292,7 +1283,7 @@ final class SimpleReporter extends A4Reporter {
             if(PFeature.size()>1)
                 str.append("(");
             for (Integer i: PFeature){
-                str.append(" F"+i + " "+inOrNot+" Product "+operator);
+                str.append(" _F"+i + " "+inOrNot+" _Product_ "+operator);
             }
             if(str.length()>=2){
                 str.deleteCharAt(str.length()-1);
@@ -1311,9 +1302,9 @@ final class SimpleReporter extends A4Reporter {
                 str.append("(");
             for (Integer i: PFeature){
                 if(i>0)
-                str.append(" F"+i +  " in Product and");
+                str.append(" _F"+i +  " in _Product_ and");
                 else
-                    str.append(" F"+i +  " not in Product and");
+                    str.append(" _F"+i +  " not in _Product_ and");
             }
             if(str.length()>3){
                 str.delete(str.length()-4,str.length());
@@ -1326,7 +1317,7 @@ final class SimpleReporter extends A4Reporter {
 
         //colorful Alloy
         /**
-         * generate code for exactly method
+         * generate code for iterative method
          * @param print used to store the generated code
          * @param world original module(before print)
          * @param reconstructExpr visitor, used to project feature code
@@ -1335,16 +1326,20 @@ final class SimpleReporter extends A4Reporter {
         public void generateModule(StringBuilder print, Module world, expressionProject reconstructExpr, Command cmd,Set<Integer> Modulefeats) {
 
             CompModule newModule = new CompModule(null, ((CompModule) world).span().filename, "");
-            printModulePrefix(Modulefeats,print);
+
+            if(!world.getModelName().equals("unknown")){
+                print.append("module "+world.getModelName()+"\r\n\r\n");
+            }
+
+            //print opens
+            printOpenLine((CompModule)world,print);
+            print.append("\r\n");
+
+            addAuxiliarySignatures(Modulefeats,print);
 
             // project sigs------------------------------------------------------------------------------------------
-
-            //get sigs
             SafeList<Sig> oldsigs = world.getAllSigs();
-            ConstList.TempList<Sig> sigsFinal = new ConstList.TempList<Sig>(oldsigs.size());
-            sigsFinal=projectSigs(reconstructExpr,oldsigs);
-
-
+            ConstList.TempList<Sig> sigsFinal=projectSigs(reconstructExpr,oldsigs);
 
             //add sigs to module
             for(Sig s: sigsFinal.makeConst()){
@@ -1352,9 +1347,6 @@ final class SimpleReporter extends A4Reporter {
             }
             //used to print expr
             ExprPrinterVisitor printExprs =new ExprPrinterVisitor();
-
-            //print opens
-            printOpenLine((CompModule)world,print);
 
 
             //print sigs
@@ -1410,29 +1402,42 @@ final class SimpleReporter extends A4Reporter {
             printCommand(print,world,printExprs,cmd,Modulefeats);
         }
 
-        private void printModulePrefix(Set<Integer> modulefeats, StringBuilder print) {
-            if(!modulefeats.isEmpty()) {
-                print.append("abstract sig Feature{}\r\n");
+        //colorful Alloy
+        /**
+         * Add auxiliary signatures for new generated module
+         * @param allfeats all features appear in orginal Module
+         * @param print  store the generated code
+         */
+        private void addAuxiliarySignatures(Set<Integer> allfeats, StringBuilder print) {
+            if(!allfeats.isEmpty()) {
+                print.append("abstract sig _Feature_{}\r\n");
                 print.append("one sig ");
-                for (Integer i : modulefeats) {
+                for (Integer i : allfeats) {
                     if(i>0)
-                        print.append("F"+i+",");
+                        print.append("_F"+i+",");
                     else if(i<0) {
-                        if(! modulefeats.contains(-i))
-                            print.append("F"+ -i+ ",");
+                        if(! allfeats.contains(-i))
+                            print.append("_F"+ -i+ ",");
                     }
                 }
                 print.deleteCharAt(print.length()-1);
-                print.append(" extends Feature{}\r\n");
-                print.append("sig Product in Feature{}\r\n\r\n");
+                print.append(" extends _Feature_{}\r\n");
+                print.append("sig _Product_ in _Feature_{}\r\n\r\n");
             }
-
         }
 
+        //colorful Alloy
+        /**
+         * convenient method, print execute command for iterative metod.
+         * @param print store generated code
+         * @param world original module
+         * @param printExprs expression print visitor
+         * @param cmd current execute command
+         * @param modulefeats features in the module,used when painted with negative features,for example, "check{} with ➊ for 3"
+         */
         private void printCommand(StringBuilder print, Module world, ExprPrinterVisitor printExprs,Command cmd ,Set<Integer> modulefeats) {
-            if(cmd.check)
-                print.append("\r\n\r\ncheck ");
-            else print.append("\r\nrun ");
+
+            print.append(cmd.check? "\r\n\r\ncheck ":"\r\nrun " );
 
             if(cmd.label.startsWith("run$") || cmd.label.startsWith("check$")){
                 print.append("{" );
@@ -1441,7 +1446,6 @@ final class SimpleReporter extends A4Reporter {
                     if(!(runFunc.getBody() instanceof ExprConstant)){
                         print.append(runFunc.getBody().accept(printExprs));
                     }
-
                 }
                 print.append("}");
             }
@@ -1453,7 +1457,12 @@ final class SimpleReporter extends A4Reporter {
 
             if(cmd.scope.size()>=1)
                 print.append(" but ");
+            if(cmd.bitwidth!=-1){
+                print.append(cmd.bitwidth+" Int ");
+            }
             for(CommandScope cs:cmd.scope){
+                if(cmd.bitwidth!=-1)
+                    print.append(",");
                 if(cs.isExact)
                     print.append(" exactly ");
                 print.append(cs.startingScope+" ");
@@ -1467,7 +1476,7 @@ final class SimpleReporter extends A4Reporter {
 
             print.append(" \r\n\r\nfact selectedFeatures {\r\n        ");
             if(cmd.feats==null || cmd.feats.feats.isEmpty()){
-                print.append("no Product");
+                print.append("no _Product_");
             }
             //some features are selected
             else{
@@ -1478,42 +1487,40 @@ final class SimpleReporter extends A4Reporter {
                         NFeatures.add(-i);
                     else PFeatures.add(i);
                 }
-                print.append("Product=");
+                print.append("_Product_=");
                 if(!PFeatures.isEmpty()){
 
                     if(cmd.feats.feats.contains(1))
-                        print.append("F1+");
+                        print.append("_F1+");
                     if(cmd.feats.feats.contains(2))
-                        print.append("F2+");
+                        print.append("_F2+");
                     if(cmd.feats.feats.contains(3))
-                        print.append("F3+");
+                        print.append("_F3+");
                     if(cmd.feats.feats.contains(4))
-                        print.append("F4+");
+                        print.append("_F4+");
                     if(cmd.feats.feats.contains(5))
-                        print.append("F5+");
+                        print.append("_F5+");
                     if(cmd.feats.feats.contains(6))
-                        print.append("F6+");
+                        print.append("_F6+");
                     if(cmd.feats.feats.contains(7))
-                        print.append("F7+");
+                        print.append("_F7+");
                     if(cmd.feats.feats.contains(8))
-                        print.append("F8+");
+                        print.append("_F8+");
                     if(cmd.feats.feats.contains(9))
-                        print.append("F9+");
+                        print.append("_F9+");
                 }
 
                 if(!NFeatures.isEmpty() && PFeatures.isEmpty()){
                     Set<Integer> retain=new HashSet<>();
                     for(Integer integer:modulefeats){
-
                             retain.add(integer>0? integer: -integer);
-
                     }
                     retain.removeAll(NFeatures);
                     if(retain.isEmpty())
                         print.append("none ");
                     else
                         for(Integer i: retain){
-                            print.append("F"+i+"+");
+                            print.append("_F"+i+"+");
                         }
                 }
 
@@ -1524,36 +1531,33 @@ final class SimpleReporter extends A4Reporter {
 
         //colorful Alloy
         /**
-         *
-         * @param print
-         * @param printExprs
-         * @param reconstructExpr
-         * @param world
+         *convenient method,print assertation for iterative metod.
+         * @param print store generated code
+         * @param printExprs expression print visitor,used to print expressions after project
+         * @param reconstructExpr used to get project expressions
+         * @param world original module
          */
         private void printAssert(StringBuilder print, ExprPrinterVisitor printExprs, expressionProject reconstructExpr, Module world) {
             for(Pair<String,Expr> asser:world.getAllAssertions()){
                 Expr temp=asser.b.accept(reconstructExpr);
 
                 if(temp==null){
-                    print.append("\r\nassert "+(asser.a.startsWith("check$")? "":asser.a )+"{ }");
+                    print.append("\r\nassert "+(asser.a.startsWith("check$")? " {}":asser.a )+" { }");
                     continue;
                 }
 
                 if(asser.a.startsWith("check$"))
                     continue;
-                print.append("\r\n");
 
-                print.append("assert  ");
+                print.append("\r\n"+"assert "+asser.a+" {\r\n");
 
-                print.append(asser.a);
-
-                print.append("{\r\n");
                 if((temp instanceof ExprUnary) && !(((ExprUnary) temp).sub instanceof ExprConstant))
                     print.append("        "+temp.accept(printExprs));
                 print.append("\r\n        }");
             }
         }
 
+        //colorful Alloy
         /**
          * convenient method, project Sigs according the select features
          * @param reconstructExpr ,visitor, used to
@@ -1576,15 +1580,13 @@ final class SimpleReporter extends A4Reporter {
                     }
                     sigsFinal.add(sigTemp);
                 }
-
             }
             return sigsFinal;
-
         }
 
         //colorful Alloy
         /**
-         * convinent method,used to print fun and pred for exactly method
+         * convinent method,used to print fun and pred for iterative method
          * @param print used to store the generated code
          * @param newModule new module store new facts
          * @param printExprs visitor, used to print Expr
@@ -1612,7 +1614,7 @@ final class SimpleReporter extends A4Reporter {
                     }
 
                     print.deleteCharAt(print.length()-1);
-                    print.append(":"+d.expr.accept(printExprs)+" ,");
+                    print.append(" :"+d.expr.accept(printExprs)+",");
                 }
                 print.deleteCharAt(print.length()-1);
                 if(!f.decls.isEmpty())
@@ -1624,7 +1626,7 @@ final class SimpleReporter extends A4Reporter {
                         print.append(f.returnDecl.accept(printExprs));
                 }
 
-                print.append("{ \r\n");
+                print.append(" { \r\n");
 
                 if(f.getBody() instanceof ExprConstant)
                     print.append("\r\n}");
@@ -1635,20 +1637,15 @@ final class SimpleReporter extends A4Reporter {
 
         //colorful Alloy
         /**
-         * convinent method,used to print fact for exactly method
+         * convinent method,used to print fact for iterative method
          * @param print used to store the generated code
          * @param newModule new module store new facts
          * @param printExprs visitor, used to print Expr
          */
         private void printFacts(StringBuilder print,Module newModule, ExprPrinterVisitor printExprs) {
             for (Pair<String, Expr> f: newModule.getAllFacts()){
-
                 print.append("\r\nfact ");
-                if (f.a.startsWith("fact$"))
-                    print.append("{\r\n");
-                else
-                    print.append(" "+f.a+ "{\r\n" );
-
+                print.append(f.a.startsWith("fact$")?" {\r\n":f.a+ " {\r\n" );
                 print.append("        "+f.b.accept(printExprs) +"\r\n        }\r\n");
             }
         }
@@ -1725,10 +1722,15 @@ final class SimpleReporter extends A4Reporter {
 
         }
 
+        //colorful Alloy
+        /**
+         * used to print the code for import module,for example, "open util/ordering[Time]"
+         * @param root  original module
+         * @param print store the generated code
+         */
         private void printOpenLine( CompModule root,StringBuilder print) {
 
             for (CompModule.Open open:root.getOpens()){
-
 
                 if(!open.filename.equals("util/integer")){
 
