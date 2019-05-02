@@ -1410,8 +1410,8 @@ final class SimpleReporter extends A4Reporter {
          */
         private void addAuxiliarySignatures(Set<Integer> allfeats, StringBuilder print) {
             if(!allfeats.isEmpty()) {
-                print.append("abstract sig _Feature_{}\r\n");
-                print.append("one sig ");
+                print.append("private abstract sig _Feature_{}\r\n");
+                print.append("private one sig ");
                 for (Integer i : allfeats) {
                     if(i>0)
                         print.append("_F"+i+",");
@@ -1422,7 +1422,7 @@ final class SimpleReporter extends A4Reporter {
                 }
                 print.deleteCharAt(print.length()-1);
                 print.append(" extends _Feature_{}\r\n");
-                print.append("sig _Product_ in _Feature_{}\r\n\r\n");
+                print.append("private sig _Product_ in _Feature_{}\r\n\r\n");
             }
         }
 
