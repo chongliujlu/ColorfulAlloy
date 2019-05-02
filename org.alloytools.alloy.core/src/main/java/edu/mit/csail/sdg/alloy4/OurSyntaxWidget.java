@@ -207,9 +207,8 @@ public final class OurSyntaxWidget {
                 public void actionPerformed(ActionEvent e) {
                     try {
                         pane.getDocument().insertString(pane.getSelectionStart(), "" + ((char) (OurSyntaxDocument.O1 + k)), null);
-                        pane.getDocument().insertString(pane.getSelectionEnd(), "" + ((char) (OurSyntaxDocument.O1 + k)), null);
-                        if (pane.getSelectionStart() == pane.getSelectionEnd())
-                            pane.setSelectionStart(pane.getSelectionStart() - 1);
+                        if (pane.getSelectionStart() != pane.getSelectionEnd())
+                            pane.getDocument().insertString(pane.getSelectionEnd(), "" + ((char) (OurSyntaxDocument.O1 + k)), null);
                         pane.setSelectionEnd(pane.getSelectionEnd() - 1);
                     } catch (BadLocationException e1) {
                         // TODO Auto-generated catch block
@@ -222,9 +221,8 @@ public final class OurSyntaxWidget {
                 public void actionPerformed(ActionEvent e) {
                     try {
                         pane.getDocument().insertString(pane.getSelectionStart(), "" + ((char) (OurSyntaxDocument.E1 + k)), null);
-                        pane.getDocument().insertString(pane.getSelectionEnd(), "" + ((char) (OurSyntaxDocument.E1 + k)), null);
-                        if (pane.getSelectionStart() == pane.getSelectionEnd())
-                            pane.setSelectionStart(pane.getSelectionStart() - 1);
+                        if (pane.getSelectionStart() != pane.getSelectionEnd())
+                            pane.getDocument().insertString(pane.getSelectionEnd(), "" + ((char) (OurSyntaxDocument.E1 + k)), null);
                         pane.setSelectionEnd(pane.getSelectionEnd() - 1);
                     } catch (BadLocationException e1) {
                         // TODO Auto-generated catch block
