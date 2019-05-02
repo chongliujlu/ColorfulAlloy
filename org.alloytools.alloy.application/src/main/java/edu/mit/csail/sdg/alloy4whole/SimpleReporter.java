@@ -874,7 +874,7 @@ final class SimpleReporter extends A4Reporter {
                     print.append(" for ");
                     print.append(cmd.overall>0? cmd.overall +" ":4+" ");
 
-                    if(cmd.scope.size()>=1)
+                    if(cmd.scope.size()>=1||cmd.bitwidth!=-1)
                         print.append(" but ");
                     if(cmd.bitwidth!=-1){
                         print.append(cmd.bitwidth+" Int ");
@@ -1455,7 +1455,7 @@ final class SimpleReporter extends A4Reporter {
             print.append(" for ");
             print.append(cmd.overall>0? cmd.overall +" ":4+" ");
 
-            if(cmd.scope.size()>=1)
+            if(cmd.scope.size()>=1 || cmd.bitwidth!=-1)
                 print.append(" but ");
             if(cmd.bitwidth!=-1){
                 print.append(cmd.bitwidth+" Int ");
