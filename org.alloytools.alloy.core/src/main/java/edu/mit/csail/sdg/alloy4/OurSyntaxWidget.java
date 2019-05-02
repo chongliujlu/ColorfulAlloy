@@ -954,4 +954,10 @@ public final class OurSyntaxWidget {
             }
         }
     }
+
+    /** The colors of each of the features. */
+    // [HASLab] colorful Alloy
+    public static Color C[] = {
+                               new Color(255, 225, 205), new Color(255, 205, 225), new Color(205, 255, 225), new Color(225, 255, 205), new Color(225, 205, 255), new Color(205, 225, 255), new Color(225, 255, 225), new Color(225, 225, 255), new Color(255, 225, 225)
+    };
 }
