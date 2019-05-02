@@ -60,6 +60,9 @@ public class FeatureScope {
             throw new NullPointerException();
         if (feats.stream().filter(f -> f < -9 || f > 9 || f == 0).count() > 0)
             throw new ErrorSyntax(pos, "Features must be within 1 and 9: " + feats);
+        for (Integer f : feats)
+            if (feats.contains(-f))
+                throw new ErrorSyntax(pos, "Negative and positive of same feature: " + f);
         this.pos = pos;
         this.isExact = isExact;
         this.feats = feats;

@@ -207,9 +207,8 @@ public final class OurSyntaxWidget {
                 public void actionPerformed(ActionEvent e) {
                     try {
                         pane.getDocument().insertString(pane.getSelectionStart(), "" + ((char) (OurSyntaxDocument.O1 + k)), null);
-                        pane.getDocument().insertString(pane.getSelectionEnd(), "" + ((char) (OurSyntaxDocument.O1 + k)), null);
-                        if (pane.getSelectionStart() == pane.getSelectionEnd())
-                            pane.setSelectionStart(pane.getSelectionStart() - 1);
+                        if (pane.getSelectionStart() != pane.getSelectionEnd())
+                            pane.getDocument().insertString(pane.getSelectionEnd(), "" + ((char) (OurSyntaxDocument.O1 + k)), null);
                         pane.setSelectionEnd(pane.getSelectionEnd() - 1);
                     } catch (BadLocationException e1) {
                         // TODO Auto-generated catch block
@@ -222,9 +221,8 @@ public final class OurSyntaxWidget {
                 public void actionPerformed(ActionEvent e) {
                     try {
                         pane.getDocument().insertString(pane.getSelectionStart(), "" + ((char) (OurSyntaxDocument.E1 + k)), null);
-                        pane.getDocument().insertString(pane.getSelectionEnd(), "" + ((char) (OurSyntaxDocument.E1 + k)), null);
-                        if (pane.getSelectionStart() == pane.getSelectionEnd())
-                            pane.setSelectionStart(pane.getSelectionStart() - 1);
+                        if (pane.getSelectionStart() != pane.getSelectionEnd())
+                            pane.getDocument().insertString(pane.getSelectionEnd(), "" + ((char) (OurSyntaxDocument.E1 + k)), null);
                         pane.setSelectionEnd(pane.getSelectionEnd() - 1);
                     } catch (BadLocationException e1) {
                         // TODO Auto-generated catch block
@@ -233,6 +231,21 @@ public final class OurSyntaxWidget {
                 }
             });
         }
+        pane.getActionMap().put("alloy_c0", new AbstractAction("alloy_c0") {
+
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    pane.getDocument().insertString(pane.getSelectionStart(), "" + ("\uD83C\uDD0B"), null);
+                    if (pane.getSelectionStart() != pane.getSelectionEnd())
+                        pane.getDocument().insertString(pane.getSelectionEnd(), "" + ("\uD83C\uDD0B"), null);
+                    pane.setSelectionEnd(pane.getSelectionEnd() - 1);
+                } catch (BadLocationException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
+            }
+        });
+
         pane.getActionMap().put("alloy_copy", new AbstractAction("alloy_copy") {
 
             @Override
@@ -310,6 +323,7 @@ public final class OurSyntaxWidget {
             pane.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_1 + i, InputEvent.CTRL_MASK), "alloy_c" + (i + 1));
             pane.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_1 + i, InputEvent.CTRL_MASK | InputEvent.SHIFT_MASK), "alloy_s" + (i + 1));
         }
+        pane.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_0, InputEvent.CTRL_MASK), "alloy_c0");
         pane.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK), "alloy_copy");
         pane.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_MASK), "alloy_cut");
         pane.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_MASK), "alloy_paste");
@@ -940,4 +954,10 @@ public final class OurSyntaxWidget {
             }
         }
     }
+
+    /** The colors of each of the features. */
+    // [HASLab] colorful Alloy
+    public static Color C[] = {
+                               new Color(255, 225, 205), new Color(255, 205, 225), new Color(205, 255, 225), new Color(225, 255, 205), new Color(225, 205, 255), new Color(205, 225, 255), new Color(225, 255, 225), new Color(225, 225, 255), new Color(255, 225, 225)
+    };
 }

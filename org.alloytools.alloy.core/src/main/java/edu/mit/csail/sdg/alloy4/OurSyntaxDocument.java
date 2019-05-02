@@ -183,19 +183,13 @@ class OurSyntaxDocument extends DefaultStyledDocument {
         return style(font, fontSize, true, false, false, new Color(c.getRed() - 41, c.getGreen() - 41, c.getBlue() - 41), getPos(n), getNeg(n), 0);
     }
 
-    /** The colors of each of the features. */
-    // [HASLab] colorful Alloy
-    static Color C[] = {
-                        new Color(255, 225, 205), new Color(255, 205, 225), new Color(205, 255, 225), new Color(225, 255, 205), new Color(225, 205, 255), new Color(205, 225, 255), new Color(225, 255, 225), new Color(225, 225, 255), new Color(255, 225, 225)
-    };
-
     /** Convert the list of positive features (1) into a list of colors. */
     // [HASLab] colorful Alloy
     private static Set<Color> getPos(List<Mode> n) {
         Set<Color> res = new HashSet<Color>();
         for (int i = 1; i <= 9; i++)
             if (n.contains(Mode.valueOf("PFEAT" + i)))
-                res.add(C[i - 1]);
+                res.add(OurSyntaxWidget.C[i - 1]);
         return res;
     }
 
@@ -205,7 +199,7 @@ class OurSyntaxDocument extends DefaultStyledDocument {
         Set<Color> res = new HashSet<Color>();
         for (int i = 1; i <= 9; i++)
             if (n.contains(Mode.valueOf("NFEAT" + i)))
-                res.add(C[i - 1]);
+                res.add(OurSyntaxWidget.C[i - 1]);
         return res;
     }
 
@@ -614,7 +608,7 @@ class OurSyntaxDocument extends DefaultStyledDocument {
                 }
                 for (int k = 0; k < 9; k++) // paint the delimiters
                     if (c == (char) (O1 + k) || c == (char) (E1 + k))
-                        setCharacterAttributes(oldi, i - oldi, styleColorMark(mode, C[k]), true);
+                        setCharacterAttributes(oldi, i - oldi, styleColorMark(mode, OurSyntaxWidget.C[k]), true);
                 // if not in style, apply
                 if (opens && isPositiveColor(c) && !mode.contains(Mode.valueOf("PFEAT" + (c - O1 + 1))) && !mode.contains(Mode.FEATURESCOPE)) {
                     mode.add(Mode.valueOf("PFEAT" + (c - O1 + 1)));

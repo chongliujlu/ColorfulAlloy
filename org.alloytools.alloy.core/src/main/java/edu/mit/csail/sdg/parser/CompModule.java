@@ -1833,21 +1833,23 @@ public final class CompModule extends Browsable implements Module {
     }
 
     // ============================================================================================================================//
-    //colorful Alloy
-    Expr addAssertion(Pos pos, String name, Expr value, Object color) throws Err {
-        status = 3;
-        if (name == null || name.length() == 0)
-            name = "assert$" + (1 + asserts.size());
-        dup(pos, name, false);
-        Expr expr = ExprUnary.Op.NOOP.make(value.span().merge(pos), value);
-        Expr old = asserts.put(name, expr);
-        //Expr old = asserts.put(name, ExprUnary.Op.NOOP.make(value.span().merge(pos), value));
-        if (old != null) {
-            asserts.put(name, old);
-            throw new ErrorSyntax(pos, "\"" + name + "\" is already the name of an assertion in this module.");
-        }
-        return expr;
-    }
+    
+//    //colorful Alloy
+//    Expr addAssertion(Pos pos, String name, Expr value, Object color) throws Err {
+//        status = 3;
+//        if (name == null || name.length() == 0)
+//            name = "assert$" + (1 + asserts.size());
+//        dup(pos, name, false);
+//        Expr expr = ExprUnary.Op.NOOP.make(value.span().merge(pos), value);
+//        Expr old = asserts.put(name, expr);
+//        //Expr old = asserts.put(name, ExprUnary.Op.NOOP.make(value.span().merge(pos), value));
+//        if (old != null) {
+//            asserts.put(name, old);
+//            throw new ErrorSyntax(pos, "\"" + name + "\" is already the name of an assertion in this module.");
+//        }
+//        return expr;
+//    }
+    
     /** Add an ASSERT declaration. */
     String addAssertion(Pos pos, String name, Expr value) throws Err {
         status = 3;
@@ -1897,22 +1899,23 @@ public final class CompModule extends Browsable implements Module {
 
     // ============================================================================================================================//
 
-    /** Add a FACT declaration. */
-    //colorful Alloy
-    public Expr addFact(Pos pos, String name, Expr value) throws Err {
-        status = 3;
-        if (name == null || name.length() == 0)
-            name = "fact$" + (1 + facts.size());
-        Expr fact = ExprUnary.Op.NOOP.make(value.span().merge(pos), value);//colorful Alloy
-        facts.add(new Pair<String,Expr>(name, fact));
-        return fact;//colorful Alloy
-    }
-//    public void addFact(Pos pos, String name, Expr value) throws Err {
+//    //colorful Alloy
+//    public Expr addFact(Pos pos, String name, Expr value) throws Err {
 //        status = 3;
 //        if (name == null || name.length() == 0)
 //            name = "fact$" + (1 + facts.size());
-//        facts.add(new Pair<String,Expr>(name, ExprUnary.Op.NOOP.make(value.span().merge(pos), value)));
+//        Expr fact = ExprUnary.Op.NOOP.make(value.span().merge(pos), value);//colorful Alloy
+//        facts.add(new Pair<String,Expr>(name, fact));
+//        return fact;//colorful Alloy
 //    }
+
+    /** Add a FACT declaration. */
+    public void addFact(Pos pos, String name, Expr value) throws Err {
+        status = 3;
+        if (name == null || name.length() == 0)
+            name = "fact$" + (1 + facts.size());
+        facts.add(new Pair<String,Expr>(name, ExprUnary.Op.NOOP.make(value.span().merge(pos), value)));
+    }
 
     /**
      * Each fact name now points to a typechecked Expr rather than an untypechecked
