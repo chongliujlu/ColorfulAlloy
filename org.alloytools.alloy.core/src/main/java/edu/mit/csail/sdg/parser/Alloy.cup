@@ -23,6 +23,7 @@
  
 package edu.mit.csail.sdg.parser;
 
+import java.util.Arrays;
 import java.util.Stack;
 import java.util.List;
 import java.util.ArrayList;
@@ -47,6 +48,7 @@ import edu.mit.csail.sdg.ast.Attr.AttrType;
 import edu.mit.csail.sdg.ast.FeatureScope;
 import edu.mit.csail.sdg.ast.CommandScope;
 import edu.mit.csail.sdg.ast.Decl;
+import edu.mit.csail.sdg.ast.Browsable;
 import edu.mit.csail.sdg.ast.Expr;
 import edu.mit.csail.sdg.ast.ExprBadJoin;
 import edu.mit.csail.sdg.ast.ExprITE;
@@ -526,7 +528,7 @@ terminal ExprConstant NUMBER, STR;
 
 nonterminal Expr                       AndExprA;
 nonterminal Expr                       AndExprB;
-nonterminal Expr					   Assert; //colorful Alloy
+nonterminal List<Browsable>			   Assert; //colorful Alloy
 nonterminal Expr                       BaseExpr;
 nonterminal Expr                       Bind;
 nonterminal Expr                       BracketExprA;
@@ -554,7 +556,7 @@ nonterminal Expr                       SuperP;
 nonterminal Expr                       SuperOrBar;
 nonterminal List<Expr>                 Exprs;
 nonterminal List<Expr>                 Exprp;
-nonterminal Func                       Function; // colorful Alloy
+nonterminal List<Browsable>            Function; 		// [HASLab] colorful Alloy
 nonterminal Expr                       ImpliesExprA;
 nonterminal Expr                       ImpliesExprB;
 nonterminal Expr                       ImpliesExprCloseA;
@@ -578,16 +580,15 @@ nonterminal Expr                       OrExprA;
 nonterminal Expr                       OrExprB;
 nonterminal Expr                       OverrideExprA;
 nonterminal Expr                       OverrideExprB;
-nonterminal  Func                          Predicate; //
+nonterminal List<Browsable>            Predicate; 		// [HASLab] colorful Alloy
 nonterminal Expr                       RangeExprA;
 nonterminal Expr                       RangeExprB;
 nonterminal Pair<Pos,ExprBinary.Op>    RelOp;
 nonterminal Expr                       RelationExprA;
 nonterminal Expr                       RelationExprB;
-nonterminal Expr                         Fact; //colorful Alloy
-
+nonterminal List<Expr>                 Fact; //colorful Alloy
 nonterminal List<CommandScope>         Scope;
-nonterminal List<Sig>                  Sig; 			// [HASLab] colorful Alloy
+nonterminal List<Browsable>            Sig; 			// [HASLab] colorful Alloy
 nonterminal List<ExprVar>              SigIn;
 nonterminal List<Pos>                  SigQual;
 nonterminal List<Pos>                  SigQuals;
@@ -597,11 +598,12 @@ nonterminal List<ExprVar>              SigRefs;
 nonterminal List<ExprVar>              SigRefu;
 nonterminal                            File;
 nonterminal                            Spec;
+nonterminal List<Browsable>            PSpec;    		// [HASLab] colorful Alloy
 nonterminal CommandScope               TypeNumber;
 nonterminal CommandScope               Typescope;
 nonterminal List<CommandScope>         Typescopes;
-nonterminal List<Integer>              Featscope;      // [HASLab] colorful Alloy
-nonterminal FeatureScope               Product;        // [HASLab] colorful Alloy
+nonterminal List<Integer>              Featscope;      	// [HASLab] colorful Alloy
+nonterminal FeatureScope               Product;        	// [HASLab] colorful Alloy
 nonterminal Expr                       ShiftExprA;
 nonterminal Expr                       ShiftExprB;
 nonterminal Expr                       MulExprA;
@@ -625,67 +627,38 @@ Spec ::= Spec Vis:p OPEN:o Name:a LBRACKET SigRefs:b RBRACKET:c                {
 Spec ::= Spec Vis:p OPEN:o Name:a LBRACKET SigRefs:b RBRACKET   AS Name:c      {: nod(a); nod(c); parser.alloymodule.addOpen(o.merge(c.pos), p, a, b,    c);    :};
 Spec ::= Spec Vis:p ENUM:o Name:a LBRACE Names:n RBRACE:c                      {: nod(a);         parser.alloymodule.addEnum(o.merge(c),     p, a, n,    c);    :};
 Spec ::= Spec Vis:p ENUM:o Name:a LBRACE         RBRACE:c                      {: nod(a);         parser.alloymodule.addEnum(o.merge(c),     p, a, null, c);    :};
-//Spec ::= Spec       FACT:o          Super:e {:         parser.alloymodule.addFact      (o , ""       , e); :};
-//Spec ::= Spec       FACT:o   Name:n Super:e {: nod(n); parser.alloymodule.addFact      (o , n.label  , e); :};
-//Spec ::= Spec       FACT:o   STR:n  Super:e {:         parser.alloymodule.addFact      (o , n.string , e); :};
-//Spec ::= Spec       ASSERT:o        Super:e {:         parser.alloymodule.addAssertion (o , ""       , e); :};
-//Spec ::= Spec       ASSERT:o Name:n Super:e {: nod(n); parser.alloymodule.addAssertion (o , n.label  , e); :};
-//Spec ::= Spec       ASSERT:o STR:n  Super:e {:         parser.alloymodule.addAssertion (o , n.string , e); :};
-Spec ::= Spec Sig             ;
-Spec ::= Spec Function        ;
-Spec ::= Spec Predicate       ;
 Spec ::= Spec Macro           ;
 Spec ::= Spec Command         ;
+Spec ::= Spec PSpec           ;
 Spec ::= ;
 
-Spec::= Spec Assert;
-Assert::= ASSERT:o        Super:e {:       Expr expr=  parser.alloymodule.addAssertion (o , ""       , e,null);  RESULT=expr;:};//colorful Alloy
-Assert::= ASSERT:o Name:n Super:e {: nod(n); Expr expr= parser.alloymodule.addAssertion (o , n.label  , e,null); RESULT=expr;:};//colorful Alloy
-Assert::= ASSERT:o STR:n  Super:e {:         Expr expr= parser.alloymodule.addAssertion (o , n.string , e,null);RESULT=expr; :};//colorful Alloy
-
-Assert::=PFEAT1 Assert:p PFEAT1{:  p.paint(1); RESULT=p; :};         //colorful Alloy
-Assert::=PFEAT2 Assert:p PFEAT2{:  p.paint(2); RESULT=p; :};         //colorful Alloy
-Assert::=PFEAT3 Assert:p PFEAT3{:  p.paint(3); RESULT=p; :};         //colorful Alloy
-Assert::=PFEAT4 Assert:p PFEAT4{:  p.paint(4); RESULT=p; :};         //colorful Alloy
-Assert::=PFEAT5 Assert:p PFEAT5{:  p.paint(5); RESULT=p; :};         //colorful Alloy
-Assert::=PFEAT6 Assert:p PFEAT6{:  p.paint(6); RESULT=p; :};         //colorful Alloy
-Assert::=PFEAT7 Assert:p PFEAT7{:  p.paint(7); RESULT=p; :};         //colorful Alloy
-Assert::=PFEAT8 Assert:p PFEAT8{:  p.paint(8); RESULT=p; :};         //colorful Alloy
-Assert::=PFEAT9 Assert:p PFEAT9{:  p.paint(9); RESULT=p; :};         //colorful Alloy
-Assert::=NFEAT1 Assert:p NFEAT1{:  p.paint(-1); RESULT=p; :};         //colorful Alloy
-Assert::=NFEAT2 Assert:p NFEAT2{:  p.paint(-2); RESULT=p; :};         //colorful Alloy
-Assert::=NFEAT3 Assert:p NFEAT3{:  p.paint(-3); RESULT=p; :};         //colorful Alloy
-Assert::=NFEAT4 Assert:p NFEAT4{:  p.paint(-4); RESULT=p; :};         //colorful Alloy
-Assert::=NFEAT5 Assert:p NFEAT5{:  p.paint(-5); RESULT=p; :};         //colorful Alloy
-Assert::=NFEAT6 Assert:p NFEAT6{:  p.paint(-6); RESULT=p; :};         //colorful Alloy
-Assert::=NFEAT7 Assert:p NFEAT7{:  p.paint(-7); RESULT=p; :};         //colorful Alloy
-Assert::=NFEAT8 Assert:p NFEAT8{:  p.paint(-8); RESULT=p; :};         //colorful Alloy
-Assert::=NFEAT9 Assert:p NFEAT9{:  p.paint(-9); RESULT=p; :};         //colorful Alloy
-
-Spec::= Spec Fact;																											//colorful Alloy
-Fact::=  FACT:o          Super:e {:         Expr expr=parser.alloymodule.addFact      (o , ""       , e); RESULT=expr; :}; //colorful Alloy
-Fact::=  FACT:o   Name:n Super:e {: nod(n); Expr expr=parser.alloymodule.addFact      (o , n.label  , e); RESULT=expr;:};  //colorful Alloy
-Fact::=  FACT:o   STR:n  Super:e {:         Expr expr=parser.alloymodule.addFact      (o , n.string , e); RESULT=expr;:};  //colorful Alloy
-
-Fact::=PFEAT1 Fact:p PFEAT1{: p.paint(1); RESULT=p; :};         //colorful Alloy
-Fact::=PFEAT2 Fact:p PFEAT2{: p.paint(2); RESULT=p; :};         //colorful Alloy
-Fact::=PFEAT3 Fact:p PFEAT3{: p.paint(3); RESULT=p; :};         //colorful Alloy
-Fact::=PFEAT4 Fact:p PFEAT4{: p.paint(4); RESULT=p; :};         //colorful Alloy
-Fact::=PFEAT5 Fact:p PFEAT5{: p.paint(5); RESULT=p; :};         //colorful Alloy
-Fact::=PFEAT6 Fact:p PFEAT6{: p.paint(6); RESULT=p; :};         //colorful Alloy
-Fact::=PFEAT7 Fact:p PFEAT7{: p.paint(7); RESULT=p; :};         //colorful Alloy
-Fact::=PFEAT8 Fact:p PFEAT8{: p.paint(8); RESULT=p; :};         //colorful Alloy
-Fact::=PFEAT9 Fact:p PFEAT9{: p.paint(9); RESULT=p; :};         //colorful Alloy
-Fact::=NFEAT1 Fact:p NFEAT1{: p.paint(-1); RESULT=p; :};         //colorful Alloy
-Fact::=NFEAT2 Fact:p NFEAT2{: p.paint(-2); RESULT=p; :};         //colorful Alloy
-Fact::=NFEAT3 Fact:p NFEAT3{: p.paint(-3); RESULT=p; :};         //colorful Alloy
-Fact::=NFEAT4 Fact:p NFEAT4{: p.paint(-4); RESULT=p; :};         //colorful Alloy
-Fact::=NFEAT5 Fact:p NFEAT5{: p.paint(-5); RESULT=p; :};         //colorful Alloy
-Fact::=NFEAT6 Fact:p NFEAT6{: p.paint(-6); RESULT=p; :};         //colorful Alloy
-Fact::=NFEAT7 Fact:p NFEAT7{: p.paint(-7); RESULT=p; :};         //colorful Alloy
-Fact::=NFEAT8 Fact:p NFEAT8{: p.paint(-8); RESULT=p; :};         //colorful Alloy
-Fact::=NFEAT9 Fact:p NFEAT9{: p.paint(-9); RESULT=p; :};         //colorful Alloy
-
+PSpec ::= PFEAT1 PSpec:p PFEAT1{:  for (Browsable b:p) b.paint(1); RESULT=p; :};         //colorful Alloy
+PSpec ::= PFEAT2 PSpec:p PFEAT2{:  for (Browsable b:p) b.paint(2); RESULT=p; :};         //colorful Alloy
+PSpec ::= PFEAT3 PSpec:p PFEAT3{:  for (Browsable b:p) b.paint(3); RESULT=p; :};         //colorful Alloy
+PSpec ::= PFEAT4 PSpec:p PFEAT4{:  for (Browsable b:p) b.paint(4); RESULT=p; :};         //colorful Alloy
+PSpec ::= PFEAT5 PSpec:p PFEAT5{:  for (Browsable b:p) b.paint(5); RESULT=p; :};         //colorful Alloy
+PSpec ::= PFEAT6 PSpec:p PFEAT6{:  for (Browsable b:p) b.paint(6); RESULT=p; :};         //colorful Alloy
+PSpec ::= PFEAT7 PSpec:p PFEAT7{:  for (Browsable b:p) b.paint(7); RESULT=p; :};         //colorful Alloy
+PSpec ::= PFEAT8 PSpec:p PFEAT8{:  for (Browsable b:p) b.paint(8); RESULT=p; :};         //colorful Alloy
+PSpec ::= PFEAT9 PSpec:p PFEAT9{:  for (Browsable b:p) b.paint(9); RESULT=p; :};         //colorful Alloy
+PSpec ::= NFEAT1 PSpec:p NFEAT1{:  for (Browsable b:p) b.paint(-1); RESULT=p; :};        //colorful Alloy
+PSpec ::= NFEAT2 PSpec:p NFEAT2{:  for (Browsable b:p) b.paint(-2); RESULT=p; :};        //colorful Alloy
+PSpec ::= NFEAT3 PSpec:p NFEAT3{:  for (Browsable b:p) b.paint(-3); RESULT=p; :};        //colorful Alloy
+PSpec ::= NFEAT4 PSpec:p NFEAT4{:  for (Browsable b:p) b.paint(-4); RESULT=p; :};        //colorful Alloy
+PSpec ::= NFEAT5 PSpec:p NFEAT5{:  for (Browsable b:p) b.paint(-5); RESULT=p; :};        //colorful Alloy
+PSpec ::= NFEAT6 PSpec:p NFEAT6{:  for (Browsable b:p) b.paint(-6); RESULT=p; :};        //colorful Alloy
+PSpec ::= NFEAT7 PSpec:p NFEAT7{:  for (Browsable b:p) b.paint(-7); RESULT=p; :};        //colorful Alloy
+PSpec ::= NFEAT8 PSpec:p NFEAT8{:  for (Browsable b:p) b.paint(-8); RESULT=p; :};        //colorful Alloy
+PSpec ::= NFEAT9 PSpec:p NFEAT9{:  for (Browsable b:p) b.paint(-9); RESULT=p; :};        //colorful Alloy
+PSpec ::= FACT:o          Super:e {:         parser.alloymodule.addFact      (o , ""       , e); RESULT = Arrays.asList(e); :};
+PSpec ::= FACT:o   Name:n Super:e {: nod(n); parser.alloymodule.addFact      (o , n.label  , e); RESULT = Arrays.asList(e); :};
+PSpec ::= FACT:o   STR:n  Super:e {:         parser.alloymodule.addFact      (o , n.string , e); RESULT = Arrays.asList(e); :};
+PSpec ::= ASSERT:o        Super:e {:         parser.alloymodule.addAssertion (o , ""       , e); RESULT = Arrays.asList(e); :};
+PSpec ::= ASSERT:o Name:n Super:e {: nod(n); parser.alloymodule.addAssertion (o , n.label  , e); RESULT = Arrays.asList(e); :};
+PSpec ::= ASSERT:o STR:n  Super:e {:         parser.alloymodule.addAssertion (o , n.string , e); RESULT = Arrays.asList(e); :};
+PSpec ::= Sig:s             {: RESULT = s; :};
+PSpec ::= Function:f        {: RESULT = f; :};
+PSpec ::= Predicate:p       {: RESULT = p; :};
 
 CommandPrefix ::= CHECK:c  {: RESULT = ExprVar.make(c, "c"); :};
 CommandPrefix ::= RUN:r    {: RESULT = ExprVar.make(r, "r"); :};
@@ -715,7 +688,6 @@ Scope      ::= FOR              Typescopes:b {: RESULT=b;                       
 Scope      ::=                               {: RESULT=new ArrayList<CommandScope>();                                                                                         :};
 
 // [HASLab] colorful Alloy, feature scopes
-
 Featscope ::= PFEAT1                   {: RESULT=new ArrayList<Integer>(); RESULT.add(1);  :};
 Featscope ::= PFEAT2                   {: RESULT=new ArrayList<Integer>(); RESULT.add(2);  :};
 Featscope ::= PFEAT3                   {: RESULT=new ArrayList<Integer>(); RESULT.add(3);  :};
@@ -752,7 +724,6 @@ Featscope ::= Featscope:a COMMA:c NFEAT6 {: if(a.contains(6)) throw new ErrorCol
 Featscope ::= Featscope:a COMMA:c NFEAT7 {: if(a.contains(7)) throw new ErrorColor(c,"Feature selected error: no negative and positive of same feature ");  RESULT=a; RESULT.add(-7); :};
 Featscope ::= Featscope:a COMMA:c NFEAT8 {: if(a.contains(8)) throw new ErrorColor(c,"Feature selected error: no negative and positive of same feature ");  RESULT=a; RESULT.add(-8); :};
 Featscope ::= Featscope:a COMMA:c NFEAT9 {: if(a.contains(9)) throw new ErrorColor(c,"Feature selected error: no negative and positive of same feature ");  RESULT=a; RESULT.add(-9); :};
-
 
 Typescopes ::= Typescope:a                    {: RESULT=new ArrayList<CommandScope>(); RESULT.add(a); :};
 Typescopes ::= Typescopes:a COMMA Typescope:b {: RESULT=a; a.add(b);                                  :};
@@ -810,85 +781,31 @@ Macro ::= Vis:p LET:o              Name:n                           MacroBody:v 
 MacroBody ::= Super:a       {: RESULT=a; :};
 MacroBody ::= EQUALS Expr:a {: RESULT=a; :};
 
-Function::=PFEAT1 Function:p PFEAT1{: p.paint(1); RESULT=p; :};         //colorful Alloy
-Function::=PFEAT2 Function:p PFEAT2{: p.paint(2); RESULT=p; :};         //colorful Alloy
-Function::=PFEAT3 Function:p PFEAT3{: p.paint(3); RESULT=p; :};         //colorful Alloy
-Function::=PFEAT4 Function:p PFEAT4{: p.paint(4); RESULT=p; :};         //colorful Alloy
-Function::=PFEAT5 Function:p PFEAT5{: p.paint(5); RESULT=p; :};         //colorful Alloy
-Function::=PFEAT6 Function:p PFEAT6{: p.paint(6); RESULT=p; :};         //colorful Alloy
-Function::=PFEAT7 Function:p PFEAT7{: p.paint(7); RESULT=p; :};         //colorful Alloy
-Function::=PFEAT8 Function:p PFEAT8{: p.paint(8); RESULT=p; :};         //colorful Alloy
-Function::=PFEAT9 Function:p PFEAT9{: p.paint(9); RESULT=p; :};         //colorful Alloy
-Function::=NFEAT1 Function:p NFEAT1{: p.paint(-1); RESULT=p; :};         //colorful Alloy
-Function::=NFEAT2 Function:p NFEAT2{: p.paint(-2); RESULT=p; :};         //colorful Alloy
-Function::=NFEAT3 Function:p NFEAT3{: p.paint(-3); RESULT=p; :};         //colorful Alloy
-Function::=NFEAT4 Function:p NFEAT4{: p.paint(-4); RESULT=p; :};         //colorful Alloy
-Function::=NFEAT5 Function:p NFEAT5{: p.paint(-5); RESULT=p; :};         //colorful Alloy
-Function::=NFEAT6 Function:p NFEAT6{: p.paint(-6); RESULT=p; :};         //colorful Alloy
-Function::=NFEAT7 Function:p NFEAT7{: p.paint(-7); RESULT=p; :};         //colorful Alloy
-Function::=NFEAT8 Function:p NFEAT8{: p.paint(-8); RESULT=p; :};         //colorful Alloy
-Function::=NFEAT9 Function:p NFEAT9{: p.paint(-9); RESULT=p; :};         //colorful Alloy
+// [HASLab] colorful Alloy, marked funcs
+Function ::= Vis:p FUN:o              Name:n LPAREN   Decls:d RPAREN   COLON Expr:r Super:v {: nod(n); Func fun = parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, null, d    , mult(r), v); RESULT = Arrays.asList(fun); :};
+Function ::= Vis:p FUN:o              Name:n LBRACKET Decls:d RBRACKET COLON Expr:r Super:v {: nod(n); Func fun = parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, null, d    , mult(r), v); RESULT = Arrays.asList(fun); :};
+Function ::= Vis:p FUN:o              Name:n                           COLON Expr:r Super:v {: nod(n); Func fun = parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, null, null , mult(r), v); RESULT = Arrays.asList(fun); :};
+Function ::= Vis:p FUN:o SigRef:f DOT Name:n LPAREN   Decls:d RPAREN   COLON Expr:r Super:v {: nod(n); Func fun = parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, f   , d    , mult(r), v); RESULT = Arrays.asList(fun); :};
+Function ::= Vis:p FUN:o SigRef:f DOT Name:n LBRACKET Decls:d RBRACKET COLON Expr:r Super:v {: nod(n); Func fun = parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, f   , d    , mult(r), v); RESULT = Arrays.asList(fun); :};
+Function ::= Vis:p FUN:o SigRef:f DOT Name:n                           COLON Expr:r Super:v {: nod(n); Func fun = parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, f   , null , mult(r), v); RESULT = Arrays.asList(fun); :};
 
-Function ::= Vis:p FUN:o              Name:n LPAREN   Decls:d RPAREN   COLON Expr:r Super:v {: nod(n); Func fun=parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, null, d    , mult(r), v);RESULT=fun; :};//colorful alloy
-Function ::= Vis:p FUN:o              Name:n LBRACKET Decls:d RBRACKET COLON Expr:r Super:v {: nod(n); Func fun=parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, null, d    , mult(r), v);RESULT=fun; :};
-Function ::= Vis:p FUN:o              Name:n                           COLON Expr:r Super:v {: nod(n); Func fun=parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, null, null , mult(r), v);RESULT=fun; :};
-Function ::= Vis:p FUN:o SigRef:f DOT Name:n LPAREN   Decls:d RPAREN   COLON Expr:r Super:v {: nod(n); Func fun=parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, f   , d    , mult(r), v);RESULT=fun; :};
-Function ::= Vis:p FUN:o SigRef:f DOT Name:n LBRACKET Decls:d RBRACKET COLON Expr:r Super:v {: nod(n); Func fun=parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, f   , d    , mult(r), v);RESULT=fun; :};
-Function ::= Vis:p FUN:o SigRef:f DOT Name:n                           COLON Expr:r Super:v {: nod(n); Func fun=parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, f   , null , mult(r), v);RESULT=fun; :};
-
-Predicate::=PFEAT1 Predicate:p PFEAT1{: p.paint(1); RESULT=p; :};         //colorful Alloy
-Predicate::=PFEAT2 Predicate:p PFEAT2{: p.paint(2); RESULT=p; :};         //colorful Alloy
-Predicate::=PFEAT3 Predicate:p PFEAT3{: p.paint(3); RESULT=p; :};         //colorful Alloy
-Predicate::=PFEAT4 Predicate:p PFEAT4{: p.paint(4); RESULT=p; :};         //colorful Alloy
-Predicate::=PFEAT5 Predicate:p PFEAT5{: p.paint(5); RESULT=p; :};         //colorful Alloy
-Predicate::=PFEAT6 Predicate:p PFEAT6{: p.paint(6); RESULT=p; :};         //colorful Alloy
-Predicate::=PFEAT7 Predicate:p PFEAT7{: p.paint(7); RESULT=p; :};         //colorful Alloy
-Predicate::=PFEAT8 Predicate:p PFEAT8{: p.paint(8); RESULT=p; :};         //colorful Alloy
-Predicate::=PFEAT9 Predicate:p PFEAT9{: p.paint(9); RESULT=p; :};         //colorful Alloy
-Predicate::=NFEAT1 Predicate:p NFEAT1{: p.paint(-1); RESULT=p; :};         //colorful Alloy
-Predicate::=NFEAT2 Predicate:p NFEAT2{: p.paint(-2); RESULT=p; :};         //colorful Alloy
-Predicate::=NFEAT3 Predicate:p NFEAT3{: p.paint(-3); RESULT=p; :};         //colorful Alloy
-Predicate::=NFEAT4 Predicate:p NFEAT4{: p.paint(-4); RESULT=p; :};         //colorful Alloy
-Predicate::=NFEAT5 Predicate:p NFEAT5{: p.paint(-5); RESULT=p; :};         //colorful Alloy
-Predicate::=NFEAT6 Predicate:p NFEAT6{: p.paint(-6); RESULT=p; :};         //colorful Alloy
-Predicate::=NFEAT7 Predicate:p NFEAT7{: p.paint(-7); RESULT=p; :};         //colorful Alloy
-Predicate::=NFEAT8 Predicate:p NFEAT8{: p.paint(-8); RESULT=p; :};         //colorful Alloy
-Predicate::=NFEAT9 Predicate:p NFEAT9{: p.paint(-9); RESULT=p; :};         //colorful Alloy
-
-Predicate ::= Vis:p PRED:o              Name:n LPAREN   Decls:d RPAREN   Super:v             {: nod(n); Func fun=parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, null, d    , null, v); RESULT=fun; :}; //
-Predicate ::= Vis:p PRED:o              Name:n LBRACKET Decls:d RBRACKET Super:v             {: nod(n); Func fun=parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, null, d    , null, v); RESULT=fun;:};
-Predicate ::= Vis:p PRED:o              Name:n                           Super:v             {: nod(n); Func fun=parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, null, null , null, v); RESULT=fun;:};
-Predicate ::= Vis:p PRED:o SigRef:f DOT Name:n LPAREN   Decls:d RPAREN   Super:v             {: nod(n); Func fun=parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, f   , d    , null, v); RESULT=fun;:};
-Predicate ::= Vis:p PRED:o SigRef:f DOT Name:n LBRACKET Decls:d RBRACKET Super:v             {: nod(n); Func fun=parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, f   , d    , null, v); RESULT=fun;:};
-Predicate ::= Vis:p PRED:o SigRef:f DOT Name:n                           Super:v             {: nod(n); Func fun=parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, f   , null , null, v); RESULT=fun;:};
+// [HASLab] colorful Alloy, marked preds
+Predicate ::= Vis:p PRED:o              Name:n LPAREN   Decls:d RPAREN   Super:v             {: nod(n); Func fun = parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, null, d    , null, v); RESULT = Arrays.asList(fun); :}; 
+Predicate ::= Vis:p PRED:o              Name:n LBRACKET Decls:d RBRACKET Super:v             {: nod(n); Func fun = parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, null, d    , null, v); RESULT = Arrays.asList(fun); :}; 
+Predicate ::= Vis:p PRED:o              Name:n                           Super:v             {: nod(n); Func fun = parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, null, null , null, v); RESULT = Arrays.asList(fun); :}; 
+Predicate ::= Vis:p PRED:o SigRef:f DOT Name:n LPAREN   Decls:d RPAREN   Super:v             {: nod(n); Func fun = parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, f   , d    , null, v); RESULT = Arrays.asList(fun); :}; 
+Predicate ::= Vis:p PRED:o SigRef:f DOT Name:n LBRACKET Decls:d RBRACKET Super:v             {: nod(n); Func fun = parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, f   , d    , null, v); RESULT = Arrays.asList(fun); :}; 
+Predicate ::= Vis:p PRED:o SigRef:f DOT Name:n                           Super:v             {: nod(n); Func fun = parser.alloymodule.addFunc(o.merge(v.span()), p, n.label, f   , null , null, v); RESULT = Arrays.asList(fun); :}; 
 
 Vis ::=           {: RESULT=null; :};
 Vis ::= PRIVATE:p {: RESULT=p;    :};
 
 // [HASLab] colorful Alloy, marked sigs
-Sig ::= PFEAT1 Sig:x PFEAT1 {: for (Sig s : x) s.paint(1); RESULT = x;   :}; // [HASLab] colorful Alloy
-Sig ::= PFEAT2 Sig:x PFEAT2 {: for (Sig s : x) s.paint(2); RESULT = x;   :}; // [HASLab] colorful Alloy
-Sig ::= PFEAT3 Sig:x PFEAT3 {: for (Sig s : x) s.paint(3); RESULT = x;   :}; // [HASLab] colorful Alloy
-Sig ::= PFEAT4 Sig:x PFEAT4 {: for (Sig s : x) s.paint(4); RESULT = x;   :}; // [HASLab] colorful Alloy
-Sig ::= PFEAT5 Sig:x PFEAT5 {: for (Sig s : x) s.paint(5); RESULT = x;   :}; // [HASLab] colorful Alloy
-Sig ::= PFEAT6 Sig:x PFEAT6 {: for (Sig s : x) s.paint(6); RESULT = x;   :}; // [HASLab] colorful Alloy
-Sig ::= PFEAT7 Sig:x PFEAT7 {: for (Sig s : x) s.paint(7); RESULT = x;   :}; // [HASLab] colorful Alloy
-Sig ::= PFEAT8 Sig:x PFEAT8 {: for (Sig s : x) s.paint(8); RESULT = x;   :}; // [HASLab] colorful Alloy
-Sig ::= PFEAT9 Sig:x PFEAT9 {: for (Sig s : x) s.paint(9); RESULT = x;   :}; // [HASLab] colorful Alloy
-Sig ::= NFEAT1 Sig:x NFEAT1 {: for (Sig s : x) s.paint(-1); RESULT = x;  :}; // [HASLab] colorful Alloy
-Sig ::= NFEAT2 Sig:x NFEAT2 {: for (Sig s : x) s.paint(-2); RESULT = x;  :}; // [HASLab] colorful Alloy
-Sig ::= NFEAT3 Sig:x NFEAT3 {: for (Sig s : x) s.paint(-3); RESULT = x;  :}; // [HASLab] colorful Alloy
-Sig ::= NFEAT4 Sig:x NFEAT4 {: for (Sig s : x) s.paint(-4); RESULT = x;  :}; // [HASLab] colorful Alloy
-Sig ::= NFEAT5 Sig:x NFEAT5 {: for (Sig s : x) s.paint(-5); RESULT = x;  :}; // [HASLab] colorful Alloy
-Sig ::= NFEAT6 Sig:x NFEAT6 {: for (Sig s : x) s.paint(-6); RESULT = x;  :}; // [HASLab] colorful Alloy
-Sig ::= NFEAT7 Sig:x NFEAT7 {: for (Sig s : x) s.paint(-7); RESULT = x;  :}; // [HASLab] colorful Alloy
-Sig ::= NFEAT8 Sig:x NFEAT8 {: for (Sig s : x) s.paint(-8); RESULT = x;  :}; // [HASLab] colorful Alloy
-Sig ::= NFEAT9 Sig:x NFEAT9 {: for (Sig s : x) s.paint(-9); RESULT = x;  :}; // [HASLab] colorful Alloy
 Sig ::= SigQuals:a Names:b SigIn:c LBRACE Decls:d RBRACE:o SuperOpt:e
  {:
    if (e==null) e = ExprConstant.Op.TRUE.make(o, 0);
    ExprVar cc = (c!=null && c.size()>0) ? c.remove(c.size()-1) : null;
-   RESULT = new ArrayList<Sig>(); // [HASLab] colorful Alloy
+   RESULT = new ArrayList<Browsable>(); // [HASLab] colorful Alloy
    for(ExprVar bb:b) {
       Sig s = parser.alloymodule.addSig(bb.label, cc, c, d, e,
          AttrType.WHERE   .makenull(bb.pos.merge(e==null ? o : e.span())),
