@@ -194,6 +194,11 @@ public final class ExprUnary extends Expr {
         /** The human readable label for this operator */
         private final String label;
 
+        //colorful Alloy
+        public String getOpLabel(){
+            return this.label;
+        }
+
         /**
          * Construct an ExprUnary node.
          *

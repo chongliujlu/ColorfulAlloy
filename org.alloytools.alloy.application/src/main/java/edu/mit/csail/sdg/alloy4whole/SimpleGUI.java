@@ -46,6 +46,7 @@ import static edu.mit.csail.sdg.alloy4.A4Preferences.WarningNonfatal;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.Welcome;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menu;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menuItem;
+import static edu.mit.csail.sdg.ast.Sig.UNIV;
 import static java.awt.event.KeyEvent.VK_A;
 import static java.awt.event.KeyEvent.VK_ALT;
 import static java.awt.event.KeyEvent.VK_E;
@@ -69,15 +70,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Random;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 
 import javax.swing.Action;
 import javax.swing.Box;
@@ -112,6 +105,11 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.text.html.HTMLDocument;
 
+import edu.mit.csail.sdg.alloy4.*;
+import edu.mit.csail.sdg.ast.*;
+import edu.mit.csail.sdg.parser.CompModule;
+import edu.mit.csail.sdg.printExpr.*;
+import edu.mit.csail.sdg.translator.*;
 import org.alloytools.alloy.core.AlloyCore;
 
 //import com.apple.eawt.Application;
@@ -119,55 +117,21 @@ import org.alloytools.alloy.core.AlloyCore;
 //import com.apple.eawt.ApplicationEvent;
 //
 
-import edu.mit.csail.sdg.alloy4.A4Preferences;
 import edu.mit.csail.sdg.alloy4.A4Preferences.BooleanPref;
 import edu.mit.csail.sdg.alloy4.A4Preferences.ChoicePref;
 import edu.mit.csail.sdg.alloy4.A4Preferences.Pref;
 import edu.mit.csail.sdg.alloy4.A4Preferences.StringPref;
 import edu.mit.csail.sdg.alloy4.A4Preferences.Verbosity;
-import edu.mit.csail.sdg.alloy4.A4Reporter;
-import edu.mit.csail.sdg.alloy4.Computer;
-import edu.mit.csail.sdg.alloy4.Err;
-import edu.mit.csail.sdg.alloy4.ErrorFatal;
-import edu.mit.csail.sdg.alloy4.ErrorType;
-import edu.mit.csail.sdg.alloy4.Listener;
-import edu.mit.csail.sdg.alloy4.MailBug;
-import edu.mit.csail.sdg.alloy4.OurAntiAlias;
-import edu.mit.csail.sdg.alloy4.OurBorder;
-import edu.mit.csail.sdg.alloy4.OurCombobox;
-import edu.mit.csail.sdg.alloy4.OurDialog;
-import edu.mit.csail.sdg.alloy4.OurSyntaxWidget;
-import edu.mit.csail.sdg.alloy4.OurTabbedSyntaxWidget;
-import edu.mit.csail.sdg.alloy4.OurTree;
-import edu.mit.csail.sdg.alloy4.OurUtil;
-import edu.mit.csail.sdg.alloy4.Pair;
-import edu.mit.csail.sdg.alloy4.Pos;
-import edu.mit.csail.sdg.alloy4.Runner;
-import edu.mit.csail.sdg.alloy4.Util;
-import edu.mit.csail.sdg.alloy4.Version;
-import edu.mit.csail.sdg.alloy4.WorkerEngine;
-import edu.mit.csail.sdg.alloy4.XMLNode;
 import edu.mit.csail.sdg.alloy4viz.VizGUI;
 import edu.mit.csail.sdg.alloy4whole.SimpleReporter.SimpleCallback1;
 import edu.mit.csail.sdg.alloy4whole.SimpleReporter.SimpleTask1;
 import edu.mit.csail.sdg.alloy4whole.SimpleReporter.SimpleTask2;
-import edu.mit.csail.sdg.ast.Browsable;
-import edu.mit.csail.sdg.ast.Command;
-import edu.mit.csail.sdg.ast.Expr;
-import edu.mit.csail.sdg.ast.ExprVar;
-import edu.mit.csail.sdg.ast.Module;
-import edu.mit.csail.sdg.ast.Sig;
 import edu.mit.csail.sdg.ast.Sig.Field;
 import edu.mit.csail.sdg.parser.CompUtil;
 import edu.mit.csail.sdg.sim.SimInstance;
 import edu.mit.csail.sdg.sim.SimTuple;
 import edu.mit.csail.sdg.sim.SimTupleset;
-import edu.mit.csail.sdg.translator.A4Options;
 import edu.mit.csail.sdg.translator.A4Options.SatSolver;
-import edu.mit.csail.sdg.translator.A4Solution;
-import edu.mit.csail.sdg.translator.A4SolutionReader;
-import edu.mit.csail.sdg.translator.A4Tuple;
-import edu.mit.csail.sdg.translator.A4TupleSet;
 import kodkod.engine.fol2sat.HigherOrderDeclException;
 
 /**
@@ -707,6 +671,9 @@ public final class SimpleGUI implements ComponentListener, Listener {
         }
         return null;
     }
+
+
+
 
     /** This method performs File->New. */
     private Runner doNew() {
@@ -1662,6 +1629,10 @@ public final class SimpleGUI implements ComponentListener, Listener {
         if (arg.startsWith("XML: ")) { // XML: filename
             viz.loadXML(Util.canon(arg.substring(5)), false);
         }
+
+        if(arg.startsWith("als: ")){//colorful Alloy
+            doOpenFile(arg.substring(5)); //colorful Alloy
+        }
         return null;
     }
 
@@ -2087,6 +2058,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
             toolbar.add(stopbutton = OurUtil.button("Stop", "Stops the current analysis", "images/24_execute_abort2.gif", doStop(2)));
             stopbutton.setVisible(false);
             toolbar.add(showbutton = OurUtil.button("Show", "Shows the latest instance", "images/24_graph.gif", doShowLatest()));
+
             toolbar.add(Box.createHorizontalGlue());
             toolbar.setBorder(new OurBorder(false, false, false, false));
         } finally {
@@ -2141,10 +2113,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
         // Add the new JNI location to the java.library.path
         try {
             System.setProperty("java.library.path", binary);
-            // The above line is actually useless on Sun JDK/JRE (see Sun's bug
-            // ID 4280189)
-            // The following 4 lines should work for Sun's JDK/JRE (though they
-            // probably won't work for others)
+            // The above line is actually useless on Sun JDK/JRE (see Sun's bug ID 4280189)
+            // The following 4 lines should work for Sun's JDK/JRE (though they probably won't work for others)
             String[] newarray = new String[] {
                                               binary
             };
@@ -2152,7 +2122,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
             old.setAccessible(true);
             old.set(null, newarray);
         } catch (Throwable ex) {}
-
         // Pre-load the preferences dialog
         prefDialog = new PreferencesDialog(log, binary);
         prefDialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);

@@ -48,7 +48,6 @@ import edu.mit.csail.sdg.ast.Sig.Field;
 import edu.mit.csail.sdg.ast.Type.ProductType;
 import edu.mit.csail.sdg.ast.VisitQueryOnce;
 import edu.mit.csail.sdg.parser.CompModule.Open;
-
 /**
  * This class provides convenience methods for calling the parser and the
  * compiler.

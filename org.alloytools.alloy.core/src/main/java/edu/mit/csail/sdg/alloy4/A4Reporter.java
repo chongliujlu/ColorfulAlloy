@@ -124,6 +124,7 @@ public class A4Reporter {
      * @param clauses - the total number of clauses
      */
     public void solve(int primaryVars, int totalVars, int clauses) {
+
         if (parent != null)
             parent.solve(primaryVars, totalVars, clauses);
     }
@@ -149,6 +150,7 @@ public class A4Reporter {
      * @param solution - the satisfying A4Solution object
      */
     public void resultSAT(Object command, long solvingTime, Object solution) {
+
         if (parent != null)
             parent.resultSAT(command, solvingTime, solution);
     }

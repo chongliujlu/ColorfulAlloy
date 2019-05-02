@@ -41,21 +41,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import edu.mit.csail.sdg.alloy4.A4Reporter;
-import edu.mit.csail.sdg.alloy4.ConstList;
+import edu.mit.csail.sdg.alloy4.*;
 import edu.mit.csail.sdg.alloy4.ConstList.TempList;
-import edu.mit.csail.sdg.alloy4.Env;
-import edu.mit.csail.sdg.alloy4.Err;
-import edu.mit.csail.sdg.alloy4.ErrorFatal;
-import edu.mit.csail.sdg.alloy4.ErrorSyntax;
-import edu.mit.csail.sdg.alloy4.ErrorType;
-import edu.mit.csail.sdg.alloy4.ErrorWarning;
-import edu.mit.csail.sdg.alloy4.JoinableList;
-import edu.mit.csail.sdg.alloy4.Pair;
-import edu.mit.csail.sdg.alloy4.Pos;
-import edu.mit.csail.sdg.alloy4.SafeList;
-import edu.mit.csail.sdg.alloy4.Util;
-import edu.mit.csail.sdg.alloy4.Version;
 import edu.mit.csail.sdg.ast.Attr;
 import edu.mit.csail.sdg.ast.Browsable;
 import edu.mit.csail.sdg.ast.Clause;
@@ -95,6 +82,12 @@ import edu.mit.csail.sdg.ast.VisitReturn;
  */
 
 public final class CompModule extends Browsable implements Module {
+    //colorful Alloy
+    /**
+     * used in colorful Alloy
+     * Stores features appear in this module
+     */
+    public static Set<Integer> feats =new HashSet<>();
 
     // These fields are shared by all Modules that point to each other
 
@@ -242,7 +235,9 @@ public final class CompModule extends Browsable implements Module {
     /**
      * Mutable; this class represents the current typechecking context.
      */
-    static final class Context extends VisitReturn<Expr> {
+   public static final class Context extends VisitReturn<Expr> {
+        //store the colors marked till current Expr
+      public static Set <Integer> contextFeats=new HashSet<>(); //colorful Alloy
 
         /**
          * The place where warnings should go; can be null if we don't care about
@@ -410,7 +405,7 @@ public final class CompModule extends Browsable implements Module {
             return true;
         }
 
-        private Expr process(Pos pos, Pos closingBracket, Pos rightPos, List<Expr> choices, List<String> oldReasons, Expr arg) {
+        private Expr process(Pos pos, Pos closingBracket, Pos rightPos, List<Expr> choices, List<String> oldReasons, Expr arg,Set<Integer> color) {
             TempList<Expr> list = new TempList<Expr>(choices.size());
             TempList<String> reasons = new TempList<String>(choices.size());
             for (int i = 0; i < choices.size(); i++) {
@@ -426,46 +421,106 @@ public final class CompModule extends Browsable implements Module {
                 if (y instanceof ExprBadCall) {
                     ExprBadCall bc = (ExprBadCall) y;
                     if (bc.args.size() < bc.fun.count()) {
-                        ConstList<Expr> newargs = Util.append(bc.args, arg);
-                        if (applicable(bc.fun, newargs))
-                            y = ExprCall.make(bc.pos, bc.closingBracket, bc.fun, newargs, bc.extraWeight);
+                        ConstList<Expr> newargs = Util.append(bc.args, arg);//colorful Alloy
+                        if (applicable(bc.fun, newargs)) {
+                            contextFeats.addAll(color);//colorful Alloy
+                            if(!contextFeats.containsAll(bc.fun.color))//colorful Alloy
+                                throw new ErrorColor(bc.pos, (bc.fun.isPred? "pred \"": "fun \"")+bc.fun.label.substring(5)+"\" marked with "+bc.fun.color.toString()); //colorful Alloy
+                            y = ExprCall.make(bc.pos, bc.closingBracket, bc.fun, newargs, bc.extraWeight, color);//colorful Alloy
+                        }
                         else
-                            y = ExprBadCall.make(bc.pos, bc.closingBracket, bc.fun, newargs, bc.extraWeight);
+                        {y = ExprBadCall.make(bc.pos, bc.closingBracket, bc.fun, newargs, bc.extraWeight);
+                            y.color.addAll(color);} //colorful Alloy
                     } else {
-                        y = ExprBinary.Op.JOIN.make(pos, closingBracket, arg, y);
+                        y = ExprBinary.Op.JOIN.make(pos, closingBracket, arg, y,color);//colorful Alloy
                     }
                 } else {
-                    y = ExprBinary.Op.JOIN.make(pos, closingBracket, arg, x);
+                    y = ExprBinary.Op.JOIN.make(pos, closingBracket, arg, x,color);//colorful
                 }
                 list.add(y);
                 reasons.add(oldReasons.get(i));
             }
-            return ExprChoice.make(isIntsNotUsed, rightPos, list.makeConst(), reasons.makeConst());
+            return ExprChoice.make(isIntsNotUsed, rightPos, list.makeConst(), reasons.makeConst(),color); //colorful Alloy
         }
 
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprList x) throws Err {
             TempList<Expr> temp = new TempList<Expr>(x.args.size());
-            for (int i = 0; i < x.args.size(); i++)
+            Set<Integer> tempfeats=new HashSet<>(); //colorful Alloy
+            tempfeats.addAll(contextFeats);//colorful Alloy
+
+            for (int i = 0; i < x.args.size(); i++){
                 temp.add(visitThis(x.args.get(i)));
+                contextFeats.clear();     //colorful Alloy
+                contextFeats.addAll(tempfeats);//colorful Alloy
+            }
+
+            CompModule.feats.addAll(x.color); //colorful Alloy
             return ExprList.make(x.pos, x.closingBracket, x.op, temp.makeConst(), x.color); // [HASLab] colorful Alloy
         }
 
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprITE x) throws Err {
-            Expr f = visitThis(x.cond);
-            Expr a = visitThis(x.left);
-            Expr b = visitThis(x.right);
+           // Expr f = visitThis(x.cond);
+           // Expr a = visitThis(x.left);
+            // Expr b = visitThis(x.right);
+
+            contextFeats.addAll(x.color);//colorful Alloy
+        //---------------- colorful Alloy----------
+            Expr f,a,b;
+            if(x.color.isEmpty()){ //colorful Alloy
+                 f = visitThis(x.cond);
+                 a = visitThis(x.left);
+                 b = visitThis(x.right);
+            }
+            else {
+                Set<Integer> temp=new HashSet<>(); //colorful Alloy
+                temp.addAll(contextFeats);//colorful Alloy
+                    contextFeats.addAll(x.color);//colorful Alloy
+                 f = visitThis(x.cond);
+
+                contextFeats.clear();     //colorful Alloy
+                contextFeats.addAll(temp);//colorful Alloy
+                 a = visitThis(x.left);
+
+                contextFeats.clear();     //colorful Alloy
+                contextFeats.addAll(temp);//colorful Alloy
+                b = visitThis(x.right);
+            }
+        //---------------- colorful Alloy----------
+            CompModule.feats.addAll(x.color); //colorful Alloy
             return ExprITE.make(x.pos, f, a, b, x.color); // [HASLab] colorful Alloy
         }
 
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprBadJoin x) throws Err {
-            Expr left = visitThis(x.left);
-            Expr right = visitThis(x.right);
+          //  Expr left = visitThis(x.left);
+          //  Expr right = visitThis(x.right);
+
+            //---------------- colorful Alloy----------
+            Expr left,right;
+            if(x.color.isEmpty()){ //colorful Alloy
+                left = visitThis(x.left);
+                right = visitThis(x.right);
+            }
+            else {
+                contextFeats.addAll(x.color);//colorful Alloy
+                CompModule.feats.addAll(x.color); //colorful Alloy
+                Set<Integer> temp=new HashSet<>(); //colorful Alloy
+                temp.addAll(contextFeats);//colorful Alloy
+
+                left = visitThis(x.left);
+
+                contextFeats.clear();     //colorful Alloy
+                contextFeats.addAll(temp);//colorful Alloy
+                right = visitThis(x.right);
+            }
+            //---------------- colorful Alloy----------
+
+
             // If it's a macro invocation, instantiate it
             if (right instanceof Macro)
                 return ((Macro) right).addArg(left).instantiate(this, warns);
@@ -475,15 +530,40 @@ public final class CompModule extends Browsable implements Module {
             // otherwise, process as regular join or as method call
             left = left.typecheck_as_set();
             if (!left.errors.isEmpty() || !(right instanceof ExprChoice))
-                return ExprBinary.Op.JOIN.make(x.pos, x.closingBracket, left, right);
-            return process(x.pos, x.closingBracket, right.pos, ((ExprChoice) right).choices, ((ExprChoice) right).reasons, left);
+                return ExprBinary.Op.JOIN.make(x.pos, x.closingBracket, left, right,x.color);    //colorful Alloy
+            return process(x.pos, x.closingBracket, right.pos, ((ExprChoice) right).choices, ((ExprChoice) right).reasons, left,x.color); //colorful Alloy
         }
 
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprBinary x) throws Err {
-            Expr left = visitThis(x.left);
-            Expr right = visitThis(x.right);
+
+           // Expr left = visitThis(x.left);
+            //Expr right = visitThis(x.right);
+
+            //---------------- colorful Alloy----------
+            if(!x.op.equals(ExprBinary.Op.PLUS)&& !x.op.equals(ExprBinary.Op.INTERSECT))
+                if(!(x.left.color.containsAll(x.right.color)&&x.right.color.containsAll(x.left.color)))
+                    throw new ErrorColor(x.pos,"Can not paint part of Binary operator  except \" +\" and \"&\" ");
+            //sub must makred with all the positive features in parent
+
+            Expr left,right;
+            if(x.color.isEmpty()){ //colorful Alloy
+                 left = visitThis(x.left);
+                 right = visitThis(x.right);
+            }
+            else {
+                contextFeats.addAll(x.color);//colorful Alloy
+
+                Set<Integer> temp=new HashSet<>(); //colorful Alloy
+                temp.addAll(contextFeats);//colorful Alloy
+                left = visitThis(x.left);
+
+                contextFeats.clear();     //colorful Alloy
+                contextFeats.addAll(temp);//colorful Alloy
+                right = visitThis(x.right);
+            }
+            //---------------- colorful Alloy----------
             if (x.op == ExprBinary.Op.JOIN) {
                 // If it's a macro invocation, instantiate it
                 if (right instanceof Macro)
@@ -494,21 +574,25 @@ public final class CompModule extends Browsable implements Module {
                 // otherwise, process as regular join or as method call
                 left = left.typecheck_as_set();
                 if (!left.errors.isEmpty() || !(right instanceof ExprChoice))
-                    return x.op.make(x.pos, x.closingBracket, left, right);
-                return process(x.pos, x.closingBracket, right.pos, ((ExprChoice) right).choices, ((ExprChoice) right).reasons, left);
+                    return x.op.make(x.pos, x.closingBracket, left, right,x.color);
+                return process(x.pos, x.closingBracket, right.pos, ((ExprChoice) right).choices, ((ExprChoice) right).reasons, left,x.color);
             }
+            CompModule.feats.addAll(x.color); //colorful Alloy
             return x.op.make(x.pos, x.closingBracket, left, right, x.color); // [HASLab] colorful Alloy
         }
 
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprLet x) throws Err {
+            contextFeats.addAll(x.color);//colorful Alloy
+
             Expr right = visitThis(x.expr);
             right = right.resolve(right.type(), warns);
             ExprVar left = ExprVar.make(x.var.pos, x.var.label, right.type());
             put(left.label, left);
             Expr sub = visitThis(x.sub);
             remove(left.label);
+            CompModule.feats.addAll(x.color); //colorful Alloy
             return ExprLet.make(x.pos, left, right, sub, x.color); // [HASLab] colorful Alloy
         }
 
@@ -523,6 +607,8 @@ public final class CompModule extends Browsable implements Module {
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprQt x) throws Err {
+            contextFeats.addAll(x.color);//colorful Alloy
+
             TempList<Decl> decls = new TempList<Decl>(x.decls.size());
             boolean isMetaSig = false, isMetaField = false;
             for (Decl d : x.decls) {
@@ -602,6 +688,8 @@ public final class CompModule extends Browsable implements Module {
             for (Decl d : decls.makeConst())
                 for (ExprHasName v : d.names)
                     remove(v.label);
+
+            CompModule.feats.addAll(x.color); //colorful Alloy
             return x.op.make(x.pos, x.closingBracket, decls.makeConst(), sub, x.color); // [HASLab] colorful Alloy
         }
 
@@ -610,6 +698,24 @@ public final class CompModule extends Browsable implements Module {
         public Expr visit(ExprVar x) throws Err {
             Expr obj = resolve(x.pos, x.label);
             obj.paint(x.color); // [HASLab] colorful Alloy
+            CompModule.feats.addAll(x.color); //colorful Alloy
+            contextFeats.addAll(x.color);//colorful Alloy
+
+            if(obj instanceof ExprUnary)
+            //colorful Alloy
+            if(!contextFeats.containsAll(((ExprUnary) obj).sub.color)){
+                for(Integer i:((ExprUnary) obj).sub.color ) {
+                    // parent marked -1,sub marked with 1 or parent marked with 1 sub marked with -1
+                    if (contextFeats.contains(-i))
+                        throw new ErrorColor(obj.pos,"Expression "+obj.toString()+": "+
+                            contextFeats.toString()+"\r\nwhile "+(((ExprUnary) obj).sub instanceof Sig? "Sig ":"Field ") +((ExprUnary) obj).sub.toString()+": "+((ExprUnary) obj).sub.color.toString());
+                    //sub must makred with all the positive features in parent
+                    if(i>0 && (! (contextFeats.contains(i))))
+                        throw new ErrorColor(obj.pos,"Expression "+obj.toString()+": "+
+                                contextFeats.toString()+"\r\n"+(((ExprUnary) obj).sub instanceof Sig? "Sig ":"")  +((ExprUnary) obj).sub.toString() +": "+((ExprUnary) obj).sub.color.toString());
+                }
+            }
+
             if (obj instanceof Macro) {
                 Macro macro = ((Macro) obj).copy();
                 Expr instantiated = macro.instantiate(this, warns);
@@ -634,30 +740,36 @@ public final class CompModule extends Browsable implements Module {
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprUnary x) throws Err {
+             contextFeats.addAll(x.color);//colorful Alloy
+            CompModule.feats.addAll(x.color); //colorful Alloy
             return x.op.make(x.pos, visitThis(x.sub), x.color);
         }
 
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprCall x) {
+            CompModule.feats.addAll(x.color); //colorful Alloy
             return x;
         }
 
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprConstant x) {
+            CompModule.feats.addAll(x.color); //colorful Alloy
             return x;
         }
 
         /** {@inheritDoc} */
         @Override
         public Expr visit(Sig x) {
+            CompModule.feats.addAll(x.color); //colorful Alloy
             return x;
         }
 
         /** {@inheritDoc} */
         @Override
         public Expr visit(Field x) {
+            CompModule.feats.addAll(x.color); //colorful Alloy
             return x;
         }
 
@@ -1503,6 +1615,7 @@ public final class CompModule extends Browsable implements Module {
                     throw new ErrorSyntax(n.pos, "The sig \"" + n.label + "\" cannot be found.");
                 parents.add(resolveSig(res, topo, parentAST));
             }
+            for(Sig p: parents) checkFeatures(p,oldS); //colorful Alloy
             realSig = new SubsetSig(fullname, parents, oldS.color, oldS.attributes.toArray(new Attr[0])); // [HASLab] colorful Alloy
         } else {
             Sig sup = ((PrimSig) oldS).parent;
@@ -1513,6 +1626,7 @@ public final class CompModule extends Browsable implements Module {
             if (!(parent instanceof PrimSig))
                 throw new ErrorSyntax(sup.pos, "Cannot extend the subset signature \"" + parent + "\".\n" + "A signature can only extend a toplevel signature or a subsignature.");
             PrimSig p = (PrimSig) parent;
+            checkFeatures(p,oldS); //colorful Alloy
             realSig = new PrimSig(fullname, p, oldS.color, oldS.attributes.toArray(new Attr[0])); // [HASLab] colorful Alloy
         }
         res.new2old.put(realSig, oldS);
@@ -1528,6 +1642,25 @@ public final class CompModule extends Browsable implements Module {
         if (res.exactSigs.remove(oldS))
             res.exactSigs.add(realSig);
         return realSig;
+    }
+    //colorful Alloy
+
+    /**
+     * check if current sig marked with correct features
+     * @param p parent Sig
+     * @param oldS Sig to be checked
+     * @throws Err
+     */
+    private static void checkFeatures(Sig p, Sig oldS) throws Err {
+        if(!(oldS.color.containsAll(p.color))){
+            for(Integer i: p.color) {
+                // parent marked -1,sub marked with 1 or parent marked with 1 sub marked with -1
+                if (oldS.color.contains(i)) throw new ErrorColor(oldS.pos,"Parent sig "+p.toString()+": "+p.color.toString()+"\r\nSig "+oldS.toString()+": "+oldS.color.toString());
+                //sub must makred with all the positive features in parent
+                if(i>0 && (! (oldS.color.contains(i))))throw new ErrorColor(oldS.pos,
+                        "Parent sig "+p.toString()+": "+p.color.toString()+"\r\nSig "+oldS.toString()+": "+oldS.color.toString() );
+            }
+        }
     }
 
     /**
@@ -1562,7 +1695,7 @@ public final class CompModule extends Browsable implements Module {
     }
 
     /** Add a FUN or PRED declaration. */
-    public void addFunc(Pos p, Pos isPrivate, String n, Expr f, List<Decl> decls, Expr t, Expr v) throws Err {
+    public Func addFunc(Pos p, Pos isPrivate, String n, Expr f, List<Decl> decls, Expr t, Expr v) throws Err {
         if (decls == null)
             decls = new ArrayList<Decl>();
         else
@@ -1591,6 +1724,7 @@ public final class CompModule extends Browsable implements Module {
             funcs.put(n, list);
         }
         list.add(ans);
+        return ans;//colorful Alloy
     }
 
     /** Each FunAST will now point to a bodyless Func object. */
@@ -1609,6 +1743,8 @@ public final class CompModule extends Browsable implements Module {
                 boolean err = false;
                 for (Decl d : f.decls) {
                     TempList<ExprVar> tmpvars = new TempList<ExprVar>();
+                    Context.contextFeats.clear(); //colorful Alloy
+                    Context.contextFeats.addAll(d.color); //colorful Alloy
                     Expr val = cx.check(d.expr).resolve_as_set(warns);
                     if (!val.errors.isEmpty()) {
                         err = true;
@@ -1633,7 +1769,7 @@ public final class CompModule extends Browsable implements Module {
                 if (err)
                     continue;
                 try {
-                    f = new Func(f.pos, f.isPrivate, fullname, tmpdecls.makeConst(), ret, f.getBody());
+                    f = new Func(f.pos, f.isPrivate, fullname, tmpdecls.makeConst(), ret, f.getBody(),f.color);
                     list.set(listi, f);
                     rep.typecheck("" + f + ", RETURN: " + f.returnDecl.type() + "\n");
                 } catch (Err ex) {
@@ -1653,6 +1789,8 @@ public final class CompModule extends Browsable implements Module {
                 for (Decl d : ff.decls)
                     for (ExprHasName n : d.names)
                         cx.put(n.label, n);
+                    Context.contextFeats.clear();//colorful Alloy
+                Context.contextFeats.addAll(ff.color);//colorful Alloy
                 Expr newBody = cx.check(ff.getBody());
                 if (ff.isPred)
                     newBody = newBody.resolve_as_formula(warns);
@@ -1695,7 +1833,21 @@ public final class CompModule extends Browsable implements Module {
     }
 
     // ============================================================================================================================//
-
+    //colorful Alloy
+    Expr addAssertion(Pos pos, String name, Expr value, Object color) throws Err {
+        status = 3;
+        if (name == null || name.length() == 0)
+            name = "assert$" + (1 + asserts.size());
+        dup(pos, name, false);
+        Expr expr = ExprUnary.Op.NOOP.make(value.span().merge(pos), value);
+        Expr old = asserts.put(name, expr);
+        //Expr old = asserts.put(name, ExprUnary.Op.NOOP.make(value.span().merge(pos), value));
+        if (old != null) {
+            asserts.put(name, old);
+            throw new ErrorSyntax(pos, "\"" + name + "\" is already the name of an assertion in this module.");
+        }
+        return expr;
+    }
     /** Add an ASSERT declaration. */
     String addAssertion(Pos pos, String name, Expr value) throws Err {
         status = 3;
@@ -1718,6 +1870,9 @@ public final class CompModule extends Browsable implements Module {
         Context cx = new Context(this, warns);
         for (Map.Entry<String,Expr> e : asserts.entrySet()) {
             Expr expr = e.getValue();
+            Context.contextFeats.clear();//colorful Alloy
+            Context.contextFeats.addAll(expr.color);//colorful Alloy
+            CompModule.feats.addAll(expr.color); //colorful Alloy
             expr = cx.check(expr).resolve_as_formula(warns);
             if (expr.errors.isEmpty()) {
                 e.setValue(expr);
@@ -1743,12 +1898,21 @@ public final class CompModule extends Browsable implements Module {
     // ============================================================================================================================//
 
     /** Add a FACT declaration. */
-    public void addFact(Pos pos, String name, Expr value) throws Err {
+    //colorful Alloy
+    public Expr addFact(Pos pos, String name, Expr value) throws Err {
         status = 3;
         if (name == null || name.length() == 0)
             name = "fact$" + (1 + facts.size());
-        facts.add(new Pair<String,Expr>(name, ExprUnary.Op.NOOP.make(value.span().merge(pos), value)));
+        Expr fact = ExprUnary.Op.NOOP.make(value.span().merge(pos), value);//colorful Alloy
+        facts.add(new Pair<String,Expr>(name, fact));
+        return fact;//colorful Alloy
     }
+//    public void addFact(Pos pos, String name, Expr value) throws Err {
+//        status = 3;
+//        if (name == null || name.length() == 0)
+//            name = "fact$" + (1 + facts.size());
+//        facts.add(new Pair<String,Expr>(name, ExprUnary.Op.NOOP.make(value.span().merge(pos), value)));
+//    }
 
     /**
      * Each fact name now points to a typechecked Expr rather than an untypechecked
@@ -1759,6 +1923,8 @@ public final class CompModule extends Browsable implements Module {
         for (int i = 0; i < facts.size(); i++) {
             String name = facts.get(i).a;
             Expr expr = facts.get(i).b;
+            Context.contextFeats.clear(); //colorful Alloy
+            Context.contextFeats.addAll(expr.color);//colorful Alloy
             Expr checked = cx.check(expr);
             expr = checked.resolve_as_formula(warns);
             if (expr.errors.isEmpty()) {
@@ -1768,6 +1934,8 @@ public final class CompModule extends Browsable implements Module {
                 errors = errors.make(expr.errors);
         }
         for (Sig s : sigs.values()) {
+            Context.contextFeats.clear();//colorful Alloy
+            Context.contextFeats.addAll(s.color);//colorful Alloy
             Expr f = res.old2appendedfacts.get(res.new2old.get(s));
             if (f == null)
                 continue;
@@ -1777,15 +1945,21 @@ public final class CompModule extends Browsable implements Module {
             cx.rootsig = s;
             if (s.isOne == null) {
                 cx.put("this", s.decl.get());
+
+                Context.contextFeats.addAll(f.color);//colorful Alloy
                 formula = cx.check(f).resolve_as_formula(warns);
             } else {
                 cx.put("this", s);
+                Context.contextFeats.clear();//colorful Alloy
+                Context.contextFeats.addAll(f.color);//colorful Alloy
                 formula = cx.check(f).resolve_as_formula(warns);
             }
             cx.remove("this");
             if (formula.errors.size() > 0)
                 errors = errors.make(formula.errors);
             else {
+                if(!s.color.isEmpty()) //colorful Alloy
+                    formula.paint(s.color); //colorful Alloy
                 s.addFact(formula);
                 rep.typecheck("Fact " + s + "$fact: " + formula.type() + "\n");
             }
@@ -1987,18 +2161,23 @@ public final class CompModule extends Browsable implements Module {
             cx.rootfield = d;
             cx.rootsig = s;
             cx.put("this", s.decl.get());
+
+            if(!s.color.isEmpty()) d.paint(s.color); // colorful Alloy
+            Context.contextFeats.clear(); // colorful Alloy
+            Context.contextFeats.addAll(d.color);// colorful Alloy
+            CompModule.feats.addAll(d.color); //colorful Alloy
             Expr bound = cx.check(d.expr).resolve_as_set(warns);
+
             cx.remove("this");
             String[] names = new String[d.names.size()];
             for (int i = 0; i < names.length; i++)
                 names[i] = d.names.get(i).label;
-            Field[] fields = s.addTrickyField(d.span(), d.isPrivate, d.disjoint, d.disjoint2, null, names, bound, d.color); // [HASLab] , colorful Alloy 
+            Field[] fields = s.addTrickyField(d.span(), d.isPrivate, d.disjoint, d.disjoint2, null, names, bound, d.color); // [HASLab] , colorful Alloy
             for (Field f : fields) {
                 rep.typecheck("Sig " + s + ", Field " + f.label + ": " + f.type() + "\n");
             }
         }
     }
-
     // ============================================================================================================================//
 
     private static void rejectNameClash(final List<CompModule> modules) throws Err {
@@ -2106,6 +2285,7 @@ public final class CompModule extends Browsable implements Module {
      * may leave the world in an inconsistent state!
      */
     static CompModule resolveAll(final A4Reporter rep, final CompModule root) throws Err {
+        feats.clear(); //colorful Alloy
         final List<ErrorWarning> warns = new ArrayList<ErrorWarning>();
         for (CompModule m : root.getAllReachableModules())
             root.allModules.add(m);
@@ -2123,8 +2303,11 @@ public final class CompModule extends Browsable implements Module {
         root.new2old.put(NONE, NONE);
         HashSet<Object> topo = new HashSet<Object>();
         for (CompModule m : root.allModules)
-            for (Sig s : m.sigs.values())
+            for (Sig s : m.sigs.values()){
+                    if(!s.color.isEmpty())                 //colorful Alloy
+                        CompModule.feats.addAll(s.color);  //colorful Alloy
                 resolveSig(root, topo, s);
+            }
         // Add the non-defined fields to the sigs in topologically sorted order
         // (since fields in subsigs are allowed to refer to parent's fields)
         for (Sig oldS : root.new2old.keySet())

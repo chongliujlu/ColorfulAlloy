@@ -29,29 +29,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.mit.csail.sdg.alloy4.*;
+import edu.mit.csail.sdg.ast.*;
+import edu.mit.csail.sdg.parser.CompModule;
+import edu.mit.csail.sdg.printExpr.*;
 import org.alloytools.alloy.core.AlloyCore;
 
-import edu.mit.csail.sdg.alloy4.A4Reporter;
-import edu.mit.csail.sdg.alloy4.ConstList;
-import edu.mit.csail.sdg.alloy4.ConstMap;
-import edu.mit.csail.sdg.alloy4.Err;
-import edu.mit.csail.sdg.alloy4.ErrorSyntax;
-import edu.mit.csail.sdg.alloy4.ErrorType;
-import edu.mit.csail.sdg.alloy4.ErrorWarning;
-import edu.mit.csail.sdg.alloy4.MailBug;
-import edu.mit.csail.sdg.alloy4.OurDialog;
-import edu.mit.csail.sdg.alloy4.Pair;
-import edu.mit.csail.sdg.alloy4.Pos;
-import edu.mit.csail.sdg.alloy4.Util;
-import edu.mit.csail.sdg.alloy4.Version;
 import edu.mit.csail.sdg.alloy4.WorkerEngine.WorkerCallback;
 import edu.mit.csail.sdg.alloy4.WorkerEngine.WorkerTask;
-import edu.mit.csail.sdg.alloy4.XMLNode;
 import edu.mit.csail.sdg.alloy4viz.StaticInstanceReader;
 import edu.mit.csail.sdg.alloy4viz.VizGUI;
-import edu.mit.csail.sdg.ast.Command;
-import edu.mit.csail.sdg.ast.Module;
-import edu.mit.csail.sdg.ast.Sig;
 import edu.mit.csail.sdg.parser.CompUtil;
 import edu.mit.csail.sdg.translator.A4Options;
 import edu.mit.csail.sdg.translator.A4Solution;
@@ -59,10 +46,11 @@ import edu.mit.csail.sdg.translator.A4SolutionReader;
 import edu.mit.csail.sdg.translator.A4SolutionWriter;
 import edu.mit.csail.sdg.translator.TranslateAlloyToKodkod;
 
+import static edu.mit.csail.sdg.ast.Sig.UNIV;
+
 /** This helper method is used by SimpleGUI. */
 
 final class SimpleReporter extends A4Reporter {
-
     public static final class SimpleCallback1 implements WorkerCallback {
 
         private final SimpleGUI         gui;
@@ -134,6 +122,8 @@ final class SimpleReporter extends A4Reporter {
                     text = "syntax";
                 else if (ex instanceof ErrorType)
                     text = "type";
+                else if(ex instanceof ErrorColor) //colorful Alloy
+                    text="feature painted";      //colorful Alloy
                 else
                     fatal = true;
                 if (ex.pos == Pos.UNKNOWN)
@@ -244,6 +234,8 @@ final class SimpleReporter extends A4Reporter {
                 boolean chk = Boolean.TRUE.equals(array[1]);
                 int expects = (Integer) (array[2]);
                 String filename = (String) (array[3]), formula = (String) (array[4]);
+
+                String codefilename= array[6]+".als"; //colorful Alloy
                 results.add(filename);
                 (new File(filename)).deleteOnExit();
                 gui.doSetLatest(filename);
@@ -257,7 +249,9 @@ final class SimpleReporter extends A4Reporter {
                     span.log(", contrary to expectation");
                 else if (expects == 1)
                     span.log(", as expected");
-                span.log(". " + array[5] + "ms.\n\n");
+                span.log(". " + array[5] + "ms.\n");
+                span.logLink("  Please check the executed code here. ","als: "+codefilename);//colorfull Alloy
+                span.log("\r\n\r\n"); //colorful Alloy
             }
             if (array[0].equals("metamodel")) {
                 String outf = (String) (array[1]);
@@ -272,6 +266,8 @@ final class SimpleReporter extends A4Reporter {
                 int expects = (Integer) (array[2]);
                 span.setLength(len3);
                 span.log(chk ? "   No counterexample found." : "   No instance found.");
+
+
                 if (chk)
                     span.log(" Assertion may be valid");
                 else
@@ -282,6 +278,10 @@ final class SimpleReporter extends A4Reporter {
                     span.log(", as expected");
                 span.log(". " + array[4] + "ms.\n");
                 span.logBold("   Minimizing the unsat core of " + array[3] + " entries...\n");
+
+                String codefilename = (String) (array[5]); //colorfull Alloy
+                span.logLink("  Please check the executed code here. \n","als: "+codefilename);//colorfull Alloy
+                span.log("\r\n\r\n"); //colorful Alloy
             }
             if (array[0].equals("unsat")) {
                 boolean chk = Boolean.TRUE.equals(array[1]);
@@ -295,8 +295,12 @@ final class SimpleReporter extends A4Reporter {
                     span.log(", contrary to expectation");
                 else if (expects == 0)
                     span.log(", as expected");
-                if (array.length == 5) {
-                    span.log(". " + array[3] + "ms.\n\n");
+                //if (array.length == 5) {
+                if (array.length == 6) {  //colorfull Alloy
+                    span.log(". " + array[3] + "ms.\n");
+                    String codefilename = (String) (array[5]); //colorfull Alloy
+                    span.logLink("  Please check the executed code here. \n\n","als: "+codefilename);//colorfull Alloy
+                    span.log("\r\n\r\n"); //colorful Alloy
                     span.flush();
                     return;
                 }
@@ -306,6 +310,8 @@ final class SimpleReporter extends A4Reporter {
                 if (core.length() == 0) {
                     results.add("");
                     span.log("   No unsat core is available in this case. " + array[8] + "ms.\n\n");
+                    String codefilename=(String)(array[9]);//colorfull Alloy
+                    span.logLink(" Please check the executed code here. ","als: "+codefilename);//colorfull Alloy
                     span.flush();
                     return;
                 }
@@ -368,7 +374,8 @@ final class SimpleReporter extends A4Reporter {
     @Override
     public void solve(final int primaryVars, final int totalVars, final int clauses) {
         minimized = 0;
-        cb("solve", "" + totalVars + " vars. " + primaryVars + " primary vars. " + clauses + " clauses. " + (System.currentTimeMillis() - lastTime) + "ms.\n");
+        cb("solve", "" + totalVars + " vars. " + primaryVars + " primary vars. " + clauses + " clauses. " + (System.currentTimeMillis() - lastTime +getexecutecodeTime+parserTime) + "ms.\n");
+       // cb("solve", "" + totalVars + " vars. " + primaryVars + " primary vars. " + clauses + " clauses. " + (System.currentTimeMillis() - lastTime) + "ms.\n");
         lastTime = System.currentTimeMillis();
     }
 
@@ -381,6 +388,7 @@ final class SimpleReporter extends A4Reporter {
         Command cmd = (Command) command;
         String formula = recordKodkod ? sol.debugExtractKInput() : "";
         String filename = tempfile + ".xml";
+        String codefilename=tempfile.substring(0,tempfile.length()-4); //colorful Alloy
         synchronized (SimpleReporter.class) {
             try {
                 cb("R3", "   Writing the XML file...");
@@ -405,7 +413,8 @@ final class SimpleReporter extends A4Reporter {
                 formulafilename = "";
             }
         }
-        cb("sat", cmd.check, cmd.expects, filename, formulafilename, System.currentTimeMillis() - lastTime);
+        //cb("sat", cmd.check, cmd.expects, filename, formulafilename, System.currentTimeMillis() - lastTime);
+        cb("sat", cmd.check, cmd.expects, filename, formulafilename, System.currentTimeMillis() - lastTime,codefilename); //colorful Alloy
     }
 
     /** {@inheritDoc} */
@@ -415,7 +424,10 @@ final class SimpleReporter extends A4Reporter {
             return;
         Command cmd = (Command) command;
         minimized = System.currentTimeMillis();
-        cb("minimizing", cmd.check, cmd.expects, before, minimized - lastTime);
+
+        String filename = tempfile + ".als"; //colorful Alloy
+      //  cb("minimizing", cmd.check, cmd.expects, before, minimized - lastTime);
+        cb("minimizing", cmd.check, cmd.expects, before,minimized -lastTime,filename ); //colorful Alloy
     }
 
     /** {@inheritDoc} */
@@ -461,10 +473,14 @@ final class SimpleReporter extends A4Reporter {
                 Util.close(fs);
             }
         }
+
+        String codefilename = tempfile.substring(0,tempfile.length()-4) + ".als"; //colorful Alloy
         if (minimized == 0)
-            cb("unsat", cmd.check, cmd.expects, (System.currentTimeMillis() - lastTime), formulafilename);
+            cb("unsat", cmd.check, cmd.expects, (System.currentTimeMillis() - lastTime), formulafilename,codefilename);//colorful Alloy
+           // cb("unsat", cmd.check, cmd.expects, (System.currentTimeMillis() - lastTime), formulafilename);
         else
-            cb("unsat", cmd.check, cmd.expects, minimized - lastTime, formulafilename, corefilename, minimizedBefore, minimizedAfter, (System.currentTimeMillis() - minimized));
+            cb("unsat", cmd.check, cmd.expects, minimized - lastTime, formulafilename, corefilename, minimizedBefore, minimizedAfter, (System.currentTimeMillis() - minimized),codefilename);//colorful Alloy
+        //cb("unsat", cmd.check, cmd.expects, minimized - lastTime, formulafilename, corefilename, minimizedBefore, minimizedAfter, (System.currentTimeMillis() - minimized));
     }
 
     private final WorkerCallback cb;
@@ -480,6 +496,10 @@ final class SimpleReporter extends A4Reporter {
      * System.currentTimeMillis() to determine the elapsed time.
      */
     private long          lastTime  = 0;
+    // used to compute the time to generate new execute code
+    static private  long         getexecutecodeTime=0; //colorful Alloy
+    //used to compute code parser time.
+    static private  long         parserTime=0; //colorful Alloy
 
     /**
      * If we performed unsat core minimization, then this is the start of the
@@ -611,6 +631,7 @@ final class SimpleReporter extends A4Reporter {
                     // number of times; this at least allows the user to keep
                     // going
                     writeXML(null, mod, filename, sol, latestKodkodSRC);
+
                     latestKodkod = sol;
                 }
                 cb("declare", filename);
@@ -651,6 +672,11 @@ final class SimpleReporter extends A4Reporter {
             final Module world = CompUtil.parseEverything_fromFile(rep, map, options.originalFilename, resolutionMode);
             final List<Sig> sigs = world.getAllReachableSigs();
             final ConstList<Command> cmds = world.getAllCommands();
+
+            //uesed to record features appears in the original module
+            Set<Integer> allFeats = new HashSet<>();      //colorful Alloy
+            allFeats.addAll(CompModule.feats);           //colorful Alloy
+
             cb(out, "warnings", bundleWarningNonFatal);
             if (rep.warn > 0 && !bundleWarningNonFatal)
                 return;
@@ -676,21 +702,63 @@ final class SimpleReporter extends A4Reporter {
                             latestModule = world;
                             latestKodkodSRC = ConstMap.make(map);
                         }
+                        final String tempcode = tempdir + File.separatorChar + i + ".als"; //colorful Alloy
                         final String tempXML = tempdir + File.separatorChar + i + ".cnf.xml";
                         final String tempCNF = tempdir + File.separatorChar + i + ".cnf";
                         final Command cmd = cmds.get(i);
                         rep.tempfile = tempCNF;
                         cb(out, "bold", "Executing \"" + cmd + "\"\n");
-                        A4Solution ai = TranslateAlloyToKodkod.execute_commandFromBook(rep, world.getAllReachableSigs(), cmd, options);
+
+//----------------------------------------------colorful Alloy---------------------------------------------------------------
+
+                        A4Solution ai;
+                        long startTime = System.currentTimeMillis();
+                        StringBuilder print = new StringBuilder();
+                        if (cmd != null ) {
+                            if(cmd.feats == null){
+                                expressionProject.executefeats = new HashSet<>();
+                                printAmalgamatedModule(print, world, cmd, allFeats);
+
+                            }else {
+                                expressionProject.executefeats = new HashSet<>(cmd.feats.feats);
+                                //exactly
+                                if (cmd.feats.isExact) {
+                                    expressionProject reconstructExpr = new expressionProject();
+                                    generateModule(print, world, reconstructExpr, cmd, allFeats);
+
+                                    //amalgatmate
+                                } else {
+                                    printAmalgamatedModule(print, world, cmd, allFeats);
+                                }
+                            }
+                        }
+                        getexecutecodeTime=System.currentTimeMillis() - startTime;
+                        File Nmodule = new File(tempcode);
+                        String output = Nmodule.getAbsolutePath();
+
+                        if (print != null)
+                            Util.writeAll(output, print.toString());
+                        long afterprinttime = System.currentTimeMillis();
+
+                        Module worldNewExecute = CompUtil.parseEverything_fromFile(rep, null, output);
+                        parserTime=System.currentTimeMillis()-afterprinttime;
+
+                        ai = TranslateAlloyToKodkod.execute_commandFromBook(rep, worldNewExecute.getAllReachableSigs(), worldNewExecute.getAllCommands().get(0), options);
+
+//----------------------------------------------colorful Alloy---------------------------------------------------------------
+
                         if (ai == null)
                             result.add(null);
                         else if (ai.satisfiable())
                             result.add(tempXML);
+
                         else if (ai.highLevelCore().a.size() > 0)
                             result.add(tempCNF + ".core");
-                        else
-                            result.add("");
+                        else result.add("");
                     }
+
+
+
             (new File(tempdir)).delete(); // In case it was UNSAT, or
                                          // canceled...
             if (result.size() > 1) {
@@ -735,6 +803,949 @@ final class SimpleReporter extends A4Reporter {
                 rep.cb("bold", "Note: There were " + rep.warn + " compilation warnings. Please scroll up to see them.\n");
             if (rep.warn == 1)
                 rep.cb("bold", "Note: There was 1 compilation warning. Please scroll up to see it.\n");
+        }
+
+        //colorful Alloy
+        /**
+         * generate code for amalgamated method
+         * @param print used to store the generated code
+         * @param world original module(before print)
+         * @param cmd executed Command
+         * @param allFeats the features appear in the original module
+         */
+        public void printAmalgamatedModule(StringBuilder print, Module world, Command cmd,Set<Integer> allFeats){
+
+            AmalgamatedExprPrinterVisitor printAmalgamatedExpr=new AmalgamatedExprPrinterVisitor();
+            ExprPrinterVisitor printExprs=new ExprPrinterVisitor();
+
+            //print module keyword
+            if(!world.getModelName().equals("unknown")){
+                print.append("module "+world.getModelName()+"\r\n\r\n");
+            }
+
+            //print opens
+            printOpenLine((CompModule)world,print);
+            print.append("\r\n");
+
+            addAuxiliarySignatures(allFeats,print);
+
+            printAmalgamatedSigs(print,world,printExprs,printAmalgamatedExpr);
+
+            printAmalgamatedfact(print,world,printAmalgamatedExpr);
+
+            printAmalgamatedfuns(print,world,printAmalgamatedExpr);
+
+            printAmalgamatedAssert(print,world,printAmalgamatedExpr);
+
+            if(cmd!=null)
+                printAmalgamatedCommand(print,world,cmd,printAmalgamatedExpr,allFeats);
+        }
+
+        //colorful Alloy
+        /**
+         * convinent method, help to print the amalgamated executed command and feature selected facts.
+         *
+         * @param print used to store the generated code
+         * @param world original module(before print)
+         * @param cmd   executed Command
+         * @param printAmalgamatedExpr  Visitor, used to print the amalgamated expression
+         */
+        private void printAmalgamatedCommand(StringBuilder print, Module world,Command cmd, AmalgamatedExprPrinterVisitor printAmalgamatedExpr,Set<Integer>moudulefeats) {
+
+                if(!cmd.label.equals("Default")){
+
+                    if (cmd.check)
+                        print.append("\r\n\r\ncheck ");
+                    else print.append("\r\n\r\nrun ");
+
+                    if(cmd.label.startsWith("run$") || cmd.label.startsWith("check$")){
+                        print.append("{" );
+                        for( Func func: world.getAllFunc()){
+                            if(cmd.label.equals(func.label.substring(5))){
+                                if(!(func.getBody() instanceof ExprConstant))
+                                print.append(func.getBody().accept(printAmalgamatedExpr));
+                            }
+                        }
+                        print.append("}");
+                    }
+                    else
+                        print.append(cmd.label );
+
+                    print.append(" for ");
+                    print.append(cmd.overall>0? cmd.overall +" ":4+" ");
+
+                    if(cmd.scope.size()>=1)
+                        print.append(" but ");
+                    if(cmd.bitwidth!=-1){
+                        print.append(cmd.bitwidth+" Int ");
+                    }
+                    for(CommandScope cs:cmd.scope){
+                        if(cmd.bitwidth!=-1)
+                            print.append(",");
+                        if(cs.isExact)
+                            print.append(" exactly ");
+                        print.append(cs.startingScope+" ");
+                        print.append(cs.sig.label.substring(5)+",");
+                    }
+
+                    print.deleteCharAt(print.length()-1);
+
+                    if (cmd.expects >= 0)
+                        print.append(" expect ").append(cmd.expects);
+
+                    print.append(" \r\n\r\nfact selectedFeatures {\r\n        ");
+                    if(cmd.feats==null && cmd.feats.feats.isEmpty()){
+                        print.append(" no _Product_");
+
+                    }
+                    else{
+
+                        Set<Integer> NFeatures=new HashSet<>();
+                        Set<Integer> PFeatures=new HashSet<>();
+                        for(Integer i: cmd.feats.feats){
+                            if(i<0)
+                                NFeatures.add(-i);
+                            else PFeatures.add(i);
+                        }
+
+                        if(!PFeatures.isEmpty()){
+                            if(cmd.feats.feats.contains(1))
+                                print.append("_F1+");
+                            if(cmd.feats.feats.contains(2))
+                                print.append("_F2+");
+                            if(cmd.feats.feats.contains(3))
+                                print.append("_F3+");
+                            if(cmd.feats.feats.contains(4))
+                                print.append("_F4+");
+                            if(cmd.feats.feats.contains(5))
+                                print.append("_F5+");
+                            if(cmd.feats.feats.contains(6))
+                                print.append("_F6+");
+                            if(cmd.feats.feats.contains(7))
+                                print.append("_F7+");
+                            if(cmd.feats.feats.contains(8))
+                                print.append("_F8+");
+                            if(cmd.feats.feats.contains(9))
+                                print.append("_F9+");
+
+                            print.deleteCharAt(print.length()-1);
+                            print.append(" in _Product_  &&");
+                        }
+
+                        if(!NFeatures.isEmpty()){
+                            if(cmd.feats.feats.contains(-1))
+                                print.append("_F1 not in _Product_ &&");
+                            if(cmd.feats.feats.contains(-2))
+                                print.append("_F2 not in _Product_ &&");
+                            if(cmd.feats.feats.contains(-3))
+                                print.append("_F3 not in _Product_ &&");
+                            if(cmd.feats.feats.contains(-4))
+                                print.append("_F4 not in _Product_ &&");
+                            if(cmd.feats.feats.contains(-5))
+                                print.append("_F5 not in _Product_ &&");
+                            if(cmd.feats.feats.contains(-6))
+                                print.append("_F6 not in _Product_ &&");
+                            if(cmd.feats.feats.contains(-7))
+                                print.append("_F7 not in _Product_ &&");
+                            if(cmd.feats.feats.contains(-8))
+                                print.append("_F8 not in _Product_ &&");
+                            if(cmd.feats.feats.contains(9))
+                                print.append("_F9 not in _Product_ &&");
+                        }
+                        print.deleteCharAt(print.length()-1);
+                        print.deleteCharAt(print.length()-1);
+                        print.append("\r\n        }");
+                    }
+                }
+        }
+
+        //colorful Alloy
+        /**
+         * convenient method,help to print amalgamated assert
+         * @param print used to store the generated code
+         * @param world  original module (before print)
+         * @param printAmalgamatedExpr Visitor, used to print the amalgamated expression
+         */
+        private void printAmalgamatedAssert(StringBuilder print, Module world, AmalgamatedExprPrinterVisitor printAmalgamatedExpr) {
+            for(Pair<String,Expr> asser:world.getAllAssertions()){
+                if(asser.a.startsWith("check$"))
+                    continue;
+
+                print.append("\r\n\r\n");
+                print.append("assert ");
+                print.append(asser.a);
+
+                print.append("{\r\n");
+
+                if((asser.b instanceof ExprUnary) && !(((ExprUnary) asser.b).sub instanceof ExprConstant))
+                    print.append("        "+asser.b.accept(printAmalgamatedExpr));
+                print.append("\r\n        }");
+            }
+        }
+
+        //colorful Alloy
+        /**
+         * convenient method, help to print amalgamated fun and pred
+         * @param print used to store the generated code
+         * @param world original module(before print)
+         * @param printAmalgamatedExpr visitor, used to print the amalgamated expression
+         */
+        private void printAmalgamatedfuns(StringBuilder print, Module world, AmalgamatedExprPrinterVisitor printAmalgamatedExpr) {
+
+            for(Func func: world.getAllFunc()){
+
+                if(func.label.startsWith("this/run$"))
+                    continue;
+                if(!(func.label.equals("this/$$Default"))){
+
+                    print.append("\r\n");
+                    if (func.isPred )
+                        print.append("pred " +func.label.substring(5)+" ");
+                    else
+                        print.append("fun "+func.label.substring(5)+" ");
+
+                    if(func.decls.size()>0)
+                    {
+                        print.append("[");
+                        for (Decl decl :func.decls){
+                            if(decl.disjoint!=null)
+                                print.append( " disj "); //"disj" key word
+
+                            for (Expr expr: decl.names){
+                                print.append(expr.accept(printAmalgamatedExpr)+",");
+                            }
+                            print.deleteCharAt(print.length() - 1);
+                            print.append(": ");
+                            print.append(decl.expr.accept(printAmalgamatedExpr)+",");
+                        }
+                        print.deleteCharAt(print.length()-1);
+                        print.append("]");
+                    }
+
+
+                    if(!func.isPred && !func.returnDecl.equals(ExprConstant.Op.FALSE))
+                    {
+                        print.append(":");
+                        print.append(func.returnDecl.accept(printAmalgamatedExpr));
+                    }
+
+                    print.append("{\r\n        ");
+
+
+                    //filter cases such as pred show{}: pred show{true }
+                    if(!(func.getBody() instanceof ExprConstant)) {
+                        if (!func.color.isEmpty()) {
+                            addFeatureprefix(func.color, print);
+                        }
+
+                        print.append(func.getBody().accept(printAmalgamatedExpr));
+                    }
+                    print.append("\r\n        }\r\n");
+                }
+            }
+        }
+
+        //colorful Alloy
+        /**
+         * convenient method, help to print amalgamated fact
+         * @param print used to store the generated code
+         * @param world original module(before print)
+         * @param printAmalgamatedExpr visitor, used to print the amalgamated expression
+         */
+        private void printAmalgamatedfact(StringBuilder print, Module world, AmalgamatedExprPrinterVisitor printAmalgamatedExpr){
+
+            for (Pair<String, Expr> f: world.getAllFacts()){
+                print.append("\r\nfact ");
+                print.append(f.a.startsWith("fact$")? "{\r\n" : f.a+ "{\r\n");
+                print.append("        "+f.b.accept(printAmalgamatedExpr));
+                print.append(" \r\n        }\r\n ");
+            }
+        }
+
+        //colorful Alloy
+        /**
+         * convenient method, help to print facts of sig
+         * @param print
+         * @param s sig these facts belongs to
+         * @param facts
+         * @param printAmalgamatedExpr
+         */
+        private void printAmalgamatedfact(StringBuilder print, Sig s, SafeList<Expr> facts, AmalgamatedExprPrinterVisitor printAmalgamatedExpr) {
+            for (Expr f: facts){
+                print.append("{\r\n");
+                String temp =f.accept(printAmalgamatedExpr);
+                if(s.label.startsWith("this/"))
+                    temp=temp.replace(s.label.substring(5)+" .","");
+
+                temp=temp.replace("this  .","");
+                print.append("        "+temp);
+                print.append(" \r\n        } ");
+
+            }
+        }
+
+        //colorful Alloy
+        /**
+         * convenient method, help to print amalgamated sigs
+         * @param print used to store the generated code
+         * @param world original module(before print)
+         * @param printExprs visitor, used to print expression
+         */
+        private void printAmalgamatedSigs(StringBuilder print, Module world, ExprPrinterVisitor printExprs,AmalgamatedExprPrinterVisitor printAmalgamatedExpr) {
+            for(int i=0; i<world.getAllSigs().size();i++){
+                Sig s =world.getAllSigs().get(i);
+
+                if(s.isAbstract!=null)
+                    print.append("abstract ");
+                if(s.isLone !=null)
+                    print.append("lone ");
+
+                // if painted with features, change to "lone"
+                if (s.isOne!=null)
+                    print.append( s.color.isEmpty()?"one ":"lone ");
+
+                print.append("sig "+ s.label.substring(5));
+
+                if(s.isSubsig!=null ){
+                    if(((Sig.PrimSig) s).parent!=UNIV){
+                        print.append(" extends ");
+                        print.append( ((Sig.PrimSig) s).parent.label.substring(5));
+                    }
+                }
+
+                if(s.isSubset!=null){
+                    print.append(" in ");
+
+                    //add first parent sig
+                    print.append(((Sig.SubsetSig) s).parents.get(0).label.substring(5));
+                    // not one parent
+                    if(((Sig.SubsetSig) s).parents.size()>1){
+                        for (int j=1;j< ((Sig.SubsetSig) s).parents.size()-1;j ++){
+                            print.append(" + "+((Sig.SubsetSig) s).parents.get(j).label.substring(5));
+                        }
+                    }
+                }
+
+
+                //print fields
+                print.append("{");
+                    for (Sig.Field f:s.getFields()){
+                        print.append("\r\n        "+f.label +": ");
+
+                        if(f.decl().expr instanceof ExprUnary)
+                        {
+                            // one  ----> lone
+                            if(((ExprUnary) f.decl().expr).op.equals(ExprUnary.Op.ONEOF)) {
+                                    print.append( f.color.isEmpty()?"one ":"lone ");
+                                print.append( ((ExprUnary) f.decl().expr).sub.accept(printExprs)+",");
+                            }
+                            // some -----> set
+                            else if(((ExprUnary) f.decl().expr).op.equals(ExprUnary.Op.SOMEOF)) {
+                                print.append(f.color.isEmpty()? "some ":"set ");
+                                print.append( ((ExprUnary) f.decl().expr).sub.accept(printExprs)+",");
+                            }
+                            else {
+                                print.append( f.decl().expr.accept(printExprs)+",");
+                            }
+
+                        }else
+                            print.append( f.decl().expr.accept(printExprs)+",");
+                    }
+
+
+                if(!s.getFields().isEmpty()){
+                    print.deleteCharAt(print.length()-1);
+                    //} of Sig
+                    print.append("\r\n        }");
+                }else
+                //} of Sig
+                print.append("}");
+
+
+                // Add original facts to sig
+                printAmalgamatedfact(print,s,s.getFacts(), printAmalgamatedExpr);
+
+                // add feature facts to sig and field  ------------------------------
+                addFeatureFact(s, print);
+                // facts for Field
+                if(s.getFields().size()>0){
+
+                    for (Sig.Field f:s.getFields()){
+                        addFeatureFact(f,print);
+                    }
+                }
+                print.append("\r\n");
+            }
+        }
+
+        //colorful Alloy
+        /**
+         * convenient method, help to print feature facts for painted Sigs
+         * @param s Sig that painted with feature
+         * @param print used to store the generated code
+         */
+        private void addFeatureFact(Sig s, StringBuilder print) {
+
+            String label=s.label.substring(5);
+            Set<Integer> NFeatures=new HashSet<>();
+            Set<Integer> PFeatures=new HashSet<>();
+            for(Integer i: s.color){
+                if(i<0)
+                    NFeatures.add(-i);
+                else PFeatures.add(i);
+            }
+//marked with NF
+            if(!NFeatures.isEmpty()){
+                print.append("\r\nfact {\r\n        ");
+
+                // implies none
+                addFeatureprefix(NFeatures,print,"in","or");
+
+                print.append(" no "+ label);
+                if(s.isLone!=null)
+                print.append(" else (some  "+label + " or no "+label +")\r\n        }");
+
+                else
+                print.append( " else (some " +label +") \r\n        }" );
+            }
+
+            if(!PFeatures.isEmpty()){
+
+                print.append("\r\nfact{ \r\n        ");
+
+                if(s.isOne!=null){
+                    //F in P implies
+                    addFeatureprefix(PFeatures,print,"in","and");
+                    print.append(" (some  "+label + ") else no "+label+"\r\n        }");
+                }else{
+                    addFeatureprefix(PFeatures,print,"not in","and");
+                    print.append(" no  "+label +"\r\n        }");
+                }
+
+            }
+        }
+
+        //colorful Alloy
+        /**
+         * convenient method, help to print feature facts fot painted Fields
+         * @param f Field that painted with features
+         * @param print used to store the generated code
+         */
+        private void addFeatureFact(Sig.Field f, StringBuilder print){
+            AmalgamatedExprPrinterVisitor printUnionModule=new AmalgamatedExprPrinterVisitor();
+            Set<Integer> NFeatures=new HashSet<>();
+            Set<Integer> PFeatures=new HashSet<>();
+            for(Integer i: f.color){
+                if(i<0)
+                    NFeatures.add(-i);
+                else PFeatures.add(i);
+            }
+
+            if(NFeatures.size()>0){
+                print.append("\r\nfact {\r\n        ");
+
+                // F in P implies
+                addFeatureprefix(NFeatures,print,"in","or");
+                print.append( " no " + f.label);
+                print.append(" else ");
+
+                print.append(f.label+" in " +f.sig.label.substring(5) +" ->");
+                print.append(f.decl().expr.accept(printUnionModule));
+
+                print.append("\r\n\r\n        }");
+            }
+
+            if(PFeatures.size()>0){
+
+                print.append("\r\nfact {\r\n        ");
+
+                //F in P implies
+                addFeatureprefix(PFeatures,print,"in","and");
+
+                print.append( f.label +" in "+ f.sig.label.substring(5)+" ->" );
+                print.append(f.decl().expr.accept(printUnionModule));
+
+                print.append( " else no " + f.label);
+                print.append("\r\n        }");
+            }
+
+        }
+
+        //colorful Alloy
+        /**
+         * convenient method, help to print the prefix for feature facts (e.g.  "F1 in product implies ..." )
+         * @param PFeature set of positive features
+         * @param str  used to store the generated code
+         * @param inOrNot  "in" for positive features, while "not in " for negative features
+         * @param operator "and","or" operator
+         */
+        private void addFeatureprefix(Set<Integer> PFeature,StringBuilder str, String inOrNot,String operator) {
+            if(PFeature.size()>1)
+                str.append("(");
+            for (Integer i: PFeature){
+                str.append(" _F"+i + " "+inOrNot+" _Product_ "+operator);
+            }
+            if(str.length()>=2){
+                str.deleteCharAt(str.length()-1);
+                str.deleteCharAt(str.length()-1);
+                if(operator.equals("and"))
+                    str.deleteCharAt(str.length()-1);
+            }
+
+            if(PFeature.size()>1)
+                str.append(")");
+            str.append(" implies ");
+        }
+
+        private void addFeatureprefix(Set<Integer> PFeature,StringBuilder str) {
+            if(PFeature.size()>1)
+                str.append("(");
+            for (Integer i: PFeature){
+                if(i>0)
+                str.append(" _F"+i +  " in _Product_ and");
+                else
+                    str.append(" _F"+i +  " not in _Product_ and");
+            }
+            if(str.length()>3){
+                str.delete(str.length()-4,str.length());
+            }
+
+            if(PFeature.size()>1)
+                str.append(")");
+            str.append(" implies ");
+        }
+
+        //colorful Alloy
+        /**
+         * generate code for iterative method
+         * @param print used to store the generated code
+         * @param world original module(before print)
+         * @param reconstructExpr visitor, used to project feature code
+         * @param cmd executed Command
+         */
+        public void generateModule(StringBuilder print, Module world, expressionProject reconstructExpr, Command cmd,Set<Integer> Modulefeats) {
+
+            CompModule newModule = new CompModule(null, ((CompModule) world).span().filename, "");
+
+            if(!world.getModelName().equals("unknown")){
+                print.append("module "+world.getModelName()+"\r\n\r\n");
+            }
+
+            //print opens
+            printOpenLine((CompModule)world,print);
+            print.append("\r\n");
+
+            addAuxiliarySignatures(Modulefeats,print);
+
+            // project sigs------------------------------------------------------------------------------------------
+            SafeList<Sig> oldsigs = world.getAllSigs();
+            ConstList.TempList<Sig> sigsFinal=projectSigs(reconstructExpr,oldsigs);
+
+            //add sigs to module
+            for(Sig s: sigsFinal.makeConst()){
+                newModule.sigs.put(s.label,s);
+            }
+            //used to print expr
+            ExprPrinterVisitor printExprs =new ExprPrinterVisitor();
+
+
+            //print sigs
+            printSigs(print,sigsFinal.makeConst(),printExprs);
+
+            // add facts
+            SafeList<Pair<String, Expr>> facts = world.getAllFacts();
+            for (Pair<String, Expr> f : facts) {
+                Expr fact=(f.b).accept(reconstructExpr);
+                if(fact==null)
+                    continue;
+                newModule.addFact(f.b.pos, f.a, fact);
+            }
+
+            // print facts
+            printFacts(print,newModule,printExprs);
+
+            // add func/pred
+            SafeList<Func> funs =world.getAllFunc();
+            for(Func fun: funs) {
+                fun.getBody().color.addAll(fun.color);
+                Expr nbody = (fun.getBody()).accept(reconstructExpr);
+                if(nbody==null)
+                    continue;
+
+                //project decls-------------
+                ConstList.TempList<Decl> decls = new ConstList.TempList<Decl>(fun.decls.size());
+                for (Decl d : fun.decls) {
+                    ConstList.TempList<ExprVar> declsnames = new ConstList.TempList<ExprVar>(fun.decls.size());
+                    Expr exp = d.expr.accept(reconstructExpr);
+                    if (exp != null) {
+                        for (ExprHasName v : d.names) {
+                            Expr Exprout = v.accept(reconstructExpr);
+                            declsnames.add((ExprVar) Exprout);
+                        }
+                        if (declsnames.size() != 0) {
+
+                            Decl dd = new Decl(d.isPrivate, d.disjoint, d.disjoint2, declsnames.makeConst(), exp);
+                            decls.add(dd);
+                        }
+                    }
+                }
+
+                newModule.addFunc(fun.pos, fun.isPrivate, fun.label.substring(5), null, decls.makeConst(), fun.returnDecl, nbody);
+
+            }
+//print func/pred
+
+            printFunc(print,newModule,printExprs);
+            printAssert(print, printExprs,reconstructExpr,world);
+
+//print command ➀
+            printCommand(print,world,printExprs,cmd,Modulefeats);
+        }
+
+        //colorful Alloy
+        /**
+         * Add auxiliary signatures for new generated module
+         * @param allfeats all features appear in orginal Module
+         * @param print  store the generated code
+         */
+        private void addAuxiliarySignatures(Set<Integer> allfeats, StringBuilder print) {
+            if(!allfeats.isEmpty()) {
+                print.append("abstract sig _Feature_{}\r\n");
+                print.append("one sig ");
+                for (Integer i : allfeats) {
+                    if(i>0)
+                        print.append("_F"+i+",");
+                    else if(i<0) {
+                        if(! allfeats.contains(-i))
+                            print.append("_F"+ -i+ ",");
+                    }
+                }
+                print.deleteCharAt(print.length()-1);
+                print.append(" extends _Feature_{}\r\n");
+                print.append("sig _Product_ in _Feature_{}\r\n\r\n");
+            }
+        }
+
+        //colorful Alloy
+        /**
+         * convenient method, print execute command for iterative metod.
+         * @param print store generated code
+         * @param world original module
+         * @param printExprs expression print visitor
+         * @param cmd current execute command
+         * @param modulefeats features in the module,used when painted with negative features,for example, "check{} with ➊ for 3"
+         */
+        private void printCommand(StringBuilder print, Module world, ExprPrinterVisitor printExprs,Command cmd ,Set<Integer> modulefeats) {
+
+            print.append(cmd.check? "\r\n\r\ncheck ":"\r\nrun " );
+
+            if(cmd.label.startsWith("run$") || cmd.label.startsWith("check$")){
+                print.append("{" );
+                for(Func runFunc:world.getAllFunc()){
+                    if(cmd.label.equals(runFunc.label.substring(5)))
+                    if(!(runFunc.getBody() instanceof ExprConstant)){
+                        print.append(runFunc.getBody().accept(printExprs));
+                    }
+                }
+                print.append("}");
+            }
+            else
+                print.append(cmd.label);
+
+            print.append(" for ");
+            print.append(cmd.overall>0? cmd.overall +" ":4+" ");
+
+            if(cmd.scope.size()>=1)
+                print.append(" but ");
+            if(cmd.bitwidth!=-1){
+                print.append(cmd.bitwidth+" Int ");
+            }
+            for(CommandScope cs:cmd.scope){
+                if(cmd.bitwidth!=-1)
+                    print.append(",");
+                if(cs.isExact)
+                    print.append(" exactly ");
+                print.append(cs.startingScope+" ");
+                print.append(cs.sig.label.substring(5)+",");
+            }
+
+            print.deleteCharAt(print.length()-1);
+
+            if (cmd.expects >= 0)
+                print.append(" expect ").append(cmd.expects);
+
+            print.append(" \r\n\r\nfact selectedFeatures {\r\n        ");
+            if(cmd.feats==null || cmd.feats.feats.isEmpty()){
+                print.append("no _Product_");
+            }
+            //some features are selected
+            else{
+                Set<Integer> NFeatures=new HashSet<>();
+                Set<Integer> PFeatures=new HashSet<>();
+                for(Integer i: cmd.feats.feats){
+                    if(i<0)
+                        NFeatures.add(-i);
+                    else PFeatures.add(i);
+                }
+                print.append("_Product_=");
+                if(!PFeatures.isEmpty()){
+
+                    if(cmd.feats.feats.contains(1))
+                        print.append("_F1+");
+                    if(cmd.feats.feats.contains(2))
+                        print.append("_F2+");
+                    if(cmd.feats.feats.contains(3))
+                        print.append("_F3+");
+                    if(cmd.feats.feats.contains(4))
+                        print.append("_F4+");
+                    if(cmd.feats.feats.contains(5))
+                        print.append("_F5+");
+                    if(cmd.feats.feats.contains(6))
+                        print.append("_F6+");
+                    if(cmd.feats.feats.contains(7))
+                        print.append("_F7+");
+                    if(cmd.feats.feats.contains(8))
+                        print.append("_F8+");
+                    if(cmd.feats.feats.contains(9))
+                        print.append("_F9+");
+                }
+
+                if(!NFeatures.isEmpty() && PFeatures.isEmpty()){
+                    Set<Integer> retain=new HashSet<>();
+                    for(Integer integer:modulefeats){
+                            retain.add(integer>0? integer: -integer);
+                    }
+                    retain.removeAll(NFeatures);
+                    if(retain.isEmpty())
+                        print.append("none ");
+                    else
+                        for(Integer i: retain){
+                            print.append("_F"+i+"+");
+                        }
+                }
+
+                print.deleteCharAt(print.length()-1);
+            }
+            print.append("\r\n        }");
+        }
+
+        //colorful Alloy
+        /**
+         *convenient method,print assertation for iterative metod.
+         * @param print store generated code
+         * @param printExprs expression print visitor,used to print expressions after project
+         * @param reconstructExpr used to get project expressions
+         * @param world original module
+         */
+        private void printAssert(StringBuilder print, ExprPrinterVisitor printExprs, expressionProject reconstructExpr, Module world) {
+            for(Pair<String,Expr> asser:world.getAllAssertions()){
+                Expr temp=asser.b.accept(reconstructExpr);
+
+                if(temp==null){
+                    print.append("\r\nassert "+(asser.a.startsWith("check$")? " {}":asser.a )+" { }");
+                    continue;
+                }
+
+                if(asser.a.startsWith("check$"))
+                    continue;
+
+                print.append("\r\n"+"assert "+asser.a+" {\r\n");
+
+                if((temp instanceof ExprUnary) && !(((ExprUnary) temp).sub instanceof ExprConstant))
+                    print.append("        "+temp.accept(printExprs));
+                print.append("\r\n        }");
+            }
+        }
+
+        //colorful Alloy
+        /**
+         * convenient method, project Sigs according the select features
+         * @param reconstructExpr ,visitor, used to
+         * @param oldsigs  sigs before feature project
+         * @return new sigs after feature project
+         */
+        private ConstList.TempList<Sig> projectSigs(expressionProject reconstructExpr, SafeList<Sig> oldsigs) {
+            ConstList.TempList<Sig> sigsFinal=new ConstList.TempList<>();
+            // check every sig in the Module
+            for (Sig sig : oldsigs) {
+                Sig sigTemp = (Sig) sig.accept(reconstructExpr);
+                if (sigTemp != null) {
+
+                    SafeList<Expr> sigf = sig.getFacts();
+
+                    //project sig facts
+                    for (Expr factExpr : sigf) {
+                        //got sigs and fields are point to old sigs and fields
+                        sigTemp.addFact(factExpr.accept(reconstructExpr));
+                    }
+                    sigsFinal.add(sigTemp);
+                }
+            }
+            return sigsFinal;
+        }
+
+        //colorful Alloy
+        /**
+         * convinent method,used to print fun and pred for iterative method
+         * @param print used to store the generated code
+         * @param newModule new module store new facts
+         * @param printExprs visitor, used to print Expr
+         */
+        private void printFunc(StringBuilder print, CompModule newModule, ExprPrinterVisitor printExprs) {
+            for(Func f: newModule.getAllFunc()){
+                if (f.label.startsWith("run$"))
+                    continue;
+                if (f.label.startsWith("$$Default"))
+                    continue;
+
+                if(f.returnDecl.equals(ExprConstant.FALSE))
+                    print.append("pred "+f.label+" ");
+                else
+                     print.append("fun "+f.label+" ");
+
+
+                print.append("[");
+                for (Decl d : f.decls) {
+                    if(d.disjoint!=null)
+                        print.append( " disj "); //"disj" key word
+
+                    for (ExprHasName v : d.names) {
+                        print.append( v.accept(printExprs)+",");
+                    }
+
+                    print.deleteCharAt(print.length()-1);
+                    print.append(" :"+d.expr.accept(printExprs)+",");
+                }
+                print.deleteCharAt(print.length()-1);
+                if(!f.decls.isEmpty())
+                    print.append("]");
+//return
+                if(!(f.returnDecl.equals(ExprConstant.FALSE))){
+                    print.append(":");
+                    if(f.returnDecl instanceof Expr)
+                        print.append(f.returnDecl.accept(printExprs));
+                }
+
+                print.append(" { \r\n");
+
+                if(f.getBody() instanceof ExprConstant)
+                    print.append("\r\n}");
+                else
+                    print.append("        "+f.getBody().accept(printExprs)+" \r\n        }\r\n");
+            }
+        }
+
+        //colorful Alloy
+        /**
+         * convinent method,used to print fact for iterative method
+         * @param print used to store the generated code
+         * @param newModule new module store new facts
+         * @param printExprs visitor, used to print Expr
+         */
+        private void printFacts(StringBuilder print,Module newModule, ExprPrinterVisitor printExprs) {
+            for (Pair<String, Expr> f: newModule.getAllFacts()){
+                print.append("\r\nfact ");
+                print.append(f.a.startsWith("fact$")?" {\r\n":f.a+ " {\r\n" );
+                print.append("        "+f.b.accept(printExprs) +"\r\n        }\r\n");
+            }
+        }
+
+        //colorful Alloy
+        /**
+         * convinent method,used to print sigs for exactly method
+         * @param print used to store the generated code
+         * @param sigsFinal used to store project sigs
+         * @param printExprs visitor, used to print Field Expr
+         */
+        private void printSigs(StringBuilder print, ConstList<Sig>sigsFinal, ExprPrinterVisitor printExprs) {
+            for(int i=0; i<sigsFinal.size();i++){
+
+                Sig s =sigsFinal.get(i);
+                if(s.isAbstract!=null){
+                    print.append("abstract ");
+                }
+                if(s.isLone !=null){
+                    print.append("lone ");
+                }
+                if (s.isOne!=null){
+                    print.append("one ");
+                }
+                if(s.isSome != null){
+                    print.append("some ");
+                }
+
+                print.append("sig "+ s.label.substring(5));
+
+
+                if(s.isSubsig!=null ){
+                    if(((Sig.PrimSig) s).parent!=UNIV){
+                        print.append(" extends ");
+                        print.append( ((Sig.PrimSig) s).parent.label.substring(5));
+                    }
+                }
+
+                if(s.isSubset!=null){
+                    print.append(" in ");
+                    print.append(((Sig.SubsetSig) s).parents.get(0).label.substring(5));
+
+                    if(((Sig.SubsetSig) s).parents.size()>1){
+                        for (int j = 1; j< ((Sig.SubsetSig) s).parents.size()-1; j ++){
+                            print.append(" + "+((Sig.SubsetSig) s).parents.get(j).label.substring(5));
+                        }
+                    }
+                }
+                //print fields
+                print.append("{ ");
+                if(s.getFields().size()>0){
+                    for (Sig.Field f:s.getFields()){
+                        print.append("\r\n        "+f.label +": ");
+                        print.append( f.decl().expr.accept(printExprs)+",");
+                    }
+                }
+                print.deleteCharAt(print.length()-1);
+                print.append("\r\n        }");
+
+                //fact for sig
+                if(!s.getFacts().isEmpty()){
+                    print.append("{");
+                    for(Expr fact:s.getFacts()){
+                        String temp=fact.accept(printExprs);
+                        //replace "s.fileld" to field
+                        temp=temp.replace(s.label.substring(5)+" .","");
+                        print.append("\r\n        "+temp);
+                    }
+                    print.append("\r\n        }\r\n");
+                }
+                print.append("\r\n");
+            }
+
+
+        }
+
+        //colorful Alloy
+        /**
+         * used to print the code for import module,for example, "open util/ordering[Time]"
+         * @param root  original module
+         * @param print store the generated code
+         */
+        private void printOpenLine( CompModule root,StringBuilder print) {
+
+            for (CompModule.Open open:root.getOpens()){
+
+                if(!open.filename.equals("util/integer")){
+
+                    print.append("open "+open.filename+" ");
+                    if(open.args.size()!=0){
+                        print.append("[");
+                        for(String s:open.args) {
+                            print.append(s+",");
+                        }
+                        print.deleteCharAt(print.length()-1);
+                        print.append("] \r\n");
+                    }
+                }
+
+            }
         }
     }
 }

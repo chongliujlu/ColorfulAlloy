@@ -191,8 +191,13 @@ public final class ExprQt extends Expr {
         }
 
         /** The human readable label for this operator. */
+
         private final String label;
 
+        // colorful Alloy
+       public String getLabel(){
+            return this.label;
+        }
         /**
          * Constructs a quantification expression with "this" as the operator.
          *

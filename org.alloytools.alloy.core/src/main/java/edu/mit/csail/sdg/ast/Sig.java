@@ -335,6 +335,8 @@ public abstract class Sig extends Expr implements Clause {
             throw new ErrorSyntax(isAbstract, "Subset signature cannot be abstract.");
         if (isSubset != null && isSubsig != null)
             throw new ErrorSyntax(isAbstract, "Subset signature cannot be a regular subsignature.");
+        //colorful Alloy
+
     }
 
     /**

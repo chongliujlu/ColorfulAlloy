@@ -1338,14 +1338,10 @@ public final class A4Solution {
         kEnumerator = null;
         Solution sol = null;
         final Reporter oldReporter = solver.options().reporter();
-        final boolean solved[] = new boolean[] {
-                                                true
-        };
-        solver.options().setReporter(new AbstractReporter() { // Set up a
-                                                             // reporter to
-                                                             // catch the
-                                                             // type+pos of
-                                                             // skolems
+        final boolean solved[] = new boolean[] { true };
+
+
+        solver.options().setReporter(new AbstractReporter() { // Set up a reporter to catch the type+pos of skolems
 
             @Override
             public void skolemizing(Decl decl, Relation skolem, List<Decl> predecl) {
@@ -1374,6 +1370,7 @@ public final class A4Solution {
                     rep.solve(primaryVars, vars, clauses);
             }
         });
+
         if (!opt.solver.equals(SatSolver.CNF) && !opt.solver.equals(SatSolver.KK) && tryBookExamples) { // try
                                                                                                        // book
                                                                                                        // examples
@@ -1471,6 +1468,7 @@ public final class A4Solution {
         // report the result
         solved();
         time = System.currentTimeMillis() - time;
+
         if (inst != null)
             rep.resultSAT(cmd, time, this);
         else

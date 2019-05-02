@@ -274,7 +274,12 @@ public final class ExprBinary extends Expr {
         }
 
         /** The human readable label for this operator. */
+
         private final String label;
+        // colorful Alloy
+        public String getLabel(){
+         return this.label;
+        }
 
         /**
          * True if and only if this operator is the Cartesian product "->", a "seq"
