@@ -519,7 +519,7 @@ terminal Pos NFEAT6;           // 			 // [HASLab] colorful electrum
 terminal Pos NFEAT7;           // 			 // [HASLab] colorful electrum
 terminal Pos NFEAT8;           // 			 // [HASLab] colorful electrum
 terminal Pos NFEAT9;           // 			 // [HASLab] colorful electrum
-terminal Pos PFEAT0;              //colorful Alloy
+terminal Pos PFEAT0;           // 			 // [HASLab] colorful electrum
 terminal ExprVar ID;
 
 terminal ExprConstant NUMBER, STR;
@@ -678,7 +678,6 @@ Expects    ::= EXPECT NUMBER:a {: RESULT=a;    :};
 
 // [HASLab] colorful Alloy, feature scopes
 Product    ::= WITH:o EXACTLY:e Featscope:b {: RESULT=new FeatureScope(o,true,b);                      :};
-Product    ::= WITH:o EXACTLY:e PFEAT0		{: RESULT=new FeatureScope(o,true,new ArrayList<Integer>());    :};
 Product    ::= WITH:o           Featscope:b {: RESULT=new FeatureScope(o,false,b);                     :};
 Product    ::=                              {: RESULT=new FeatureScope(null,false,new ArrayList<Integer>()); :};
 
@@ -697,6 +696,7 @@ Featscope ::= PFEAT6                   {: RESULT=new ArrayList<Integer>(); RESUL
 Featscope ::= PFEAT7                   {: RESULT=new ArrayList<Integer>(); RESULT.add(7);  :};
 Featscope ::= PFEAT8                   {: RESULT=new ArrayList<Integer>(); RESULT.add(8);  :};
 Featscope ::= PFEAT9                   {: RESULT=new ArrayList<Integer>(); RESULT.add(9);  :};
+Featscope ::= PFEAT0                   {: RESULT=new ArrayList<Integer>(); 				   :};
 Featscope ::= NFEAT1                   {: RESULT=new ArrayList<Integer>(); RESULT.add(-1); :};
 Featscope ::= NFEAT2                   {: RESULT=new ArrayList<Integer>(); RESULT.add(-2); :};
 Featscope ::= NFEAT3                   {: RESULT=new ArrayList<Integer>(); RESULT.add(-3); :};
@@ -706,24 +706,25 @@ Featscope ::= NFEAT6                   {: RESULT=new ArrayList<Integer>(); RESUL
 Featscope ::= NFEAT7                   {: RESULT=new ArrayList<Integer>(); RESULT.add(-7); :};
 Featscope ::= NFEAT8                   {: RESULT=new ArrayList<Integer>(); RESULT.add(-8); :};
 Featscope ::= NFEAT9                   {: RESULT=new ArrayList<Integer>(); RESULT.add(-9); :};
-Featscope ::= Featscope:a COMMA:c PFEAT1 {: if(a.contains(-1)) throw new ErrorColor(c,"Feature selected error: no negative and positive of same feature "); RESULT=a; RESULT.add(1);  :};
-Featscope ::= Featscope:a COMMA:c PFEAT2 {: if(a.contains(-2)) throw new ErrorColor(c,"Feature selected error: no negative and positive of same feature "); RESULT=a; RESULT.add(2);  :};
-Featscope ::= Featscope:a COMMA:c PFEAT3 {: if(a.contains(-3)) throw new ErrorColor(c,"Feature selected error: no negative and positive of same feature "); RESULT=a; RESULT.add(3);  :};
-Featscope ::= Featscope:a COMMA:c PFEAT4 {: if(a.contains(-4)) throw new ErrorColor(c,"Feature selected error: no negative and positive of same feature "); RESULT=a; RESULT.add(4);  :};
-Featscope ::= Featscope:a COMMA:c PFEAT5 {: if(a.contains(-5)) throw new ErrorColor(c,"Feature selected error: no negative and positive of same feature "); RESULT=a; RESULT.add(5);  :};
-Featscope ::= Featscope:a COMMA:c PFEAT6 {: if(a.contains(-6)) throw new ErrorColor(c,"Feature selected error: no negative and positive of same feature "); RESULT=a; RESULT.add(6);  :};
-Featscope ::= Featscope:a COMMA:c PFEAT7 {: if(a.contains(-7)) throw new ErrorColor(c,"Feature selected error: no negative and positive of same feature "); RESULT=a; RESULT.add(7);  :};
-Featscope ::= Featscope:a COMMA:c PFEAT8 {: if(a.contains(-8)) throw new ErrorColor(c,"Feature selected error: no negative and positive of same feature "); RESULT=a; RESULT.add(8);  :};
-Featscope ::= Featscope:a COMMA:c PFEAT9 {: if(a.contains(-9)) throw new ErrorColor(c,"Feature selected error: no negative and positive of same feature "); RESULT=a; RESULT.add(9);  :};
-Featscope ::= Featscope:a COMMA:c NFEAT1 {: if(a.contains(1)) throw new ErrorColor(c,"Feature selected error: no negative and positive of same feature ");  RESULT=a; RESULT.add(-1); :};
-Featscope ::= Featscope:a COMMA:c NFEAT2 {: if(a.contains(2)) throw new ErrorColor(c,"Feature selected error: no negative and positive of same feature ");  RESULT=a; RESULT.add(-2); :};
-Featscope ::= Featscope:a COMMA:c NFEAT3 {: if(a.contains(3)) throw new ErrorColor(c,"Feature selected error: no negative and positive of same feature ");  RESULT=a; RESULT.add(-3); :};
-Featscope ::= Featscope:a COMMA:c NFEAT4 {: if(a.contains(4)) throw new ErrorColor(c,"Feature selected error: no negative and positive of same feature ");  RESULT=a; RESULT.add(-4); :};
-Featscope ::= Featscope:a COMMA:c NFEAT5 {: if(a.contains(5)) throw new ErrorColor(c,"Feature selected error: no negative and positive of same feature ");  RESULT=a; RESULT.add(-5); :};
-Featscope ::= Featscope:a COMMA:c NFEAT6 {: if(a.contains(6)) throw new ErrorColor(c,"Feature selected error: no negative and positive of same feature ");  RESULT=a; RESULT.add(-6); :};
-Featscope ::= Featscope:a COMMA:c NFEAT7 {: if(a.contains(7)) throw new ErrorColor(c,"Feature selected error: no negative and positive of same feature ");  RESULT=a; RESULT.add(-7); :};
-Featscope ::= Featscope:a COMMA:c NFEAT8 {: if(a.contains(8)) throw new ErrorColor(c,"Feature selected error: no negative and positive of same feature ");  RESULT=a; RESULT.add(-8); :};
-Featscope ::= Featscope:a COMMA:c NFEAT9 {: if(a.contains(9)) throw new ErrorColor(c,"Feature selected error: no negative and positive of same feature ");  RESULT=a; RESULT.add(-9); :};
+Featscope ::= Featscope:a COMMA:c PFEAT1 {: RESULT=a; RESULT.add(1);  :};
+Featscope ::= Featscope:a COMMA:c PFEAT2 {: RESULT=a; RESULT.add(2);  :};
+Featscope ::= Featscope:a COMMA:c PFEAT3 {: RESULT=a; RESULT.add(3);  :};
+Featscope ::= Featscope:a COMMA:c PFEAT4 {: RESULT=a; RESULT.add(4);  :};
+Featscope ::= Featscope:a COMMA:c PFEAT5 {: RESULT=a; RESULT.add(5);  :};
+Featscope ::= Featscope:a COMMA:c PFEAT6 {: RESULT=a; RESULT.add(6);  :};
+Featscope ::= Featscope:a COMMA:c PFEAT7 {: RESULT=a; RESULT.add(7);  :};
+Featscope ::= Featscope:a COMMA:c PFEAT8 {: RESULT=a; RESULT.add(8);  :};
+Featscope ::= Featscope:a COMMA:c PFEAT9 {: RESULT=a; RESULT.add(9);  :};
+Featscope ::= Featscope:a COMMA:c PFEAT0 {: RESULT=a; 				  :};
+Featscope ::= Featscope:a COMMA:c NFEAT1 {: RESULT=a; RESULT.add(-1); :};
+Featscope ::= Featscope:a COMMA:c NFEAT2 {: RESULT=a; RESULT.add(-2); :};
+Featscope ::= Featscope:a COMMA:c NFEAT3 {: RESULT=a; RESULT.add(-3); :};
+Featscope ::= Featscope:a COMMA:c NFEAT4 {: RESULT=a; RESULT.add(-4); :};
+Featscope ::= Featscope:a COMMA:c NFEAT5 {: RESULT=a; RESULT.add(-5); :};
+Featscope ::= Featscope:a COMMA:c NFEAT6 {: RESULT=a; RESULT.add(-6); :};
+Featscope ::= Featscope:a COMMA:c NFEAT7 {: RESULT=a; RESULT.add(-7); :};
+Featscope ::= Featscope:a COMMA:c NFEAT8 {: RESULT=a; RESULT.add(-8); :};
+Featscope ::= Featscope:a COMMA:c NFEAT9 {: RESULT=a; RESULT.add(-9); :};
 
 Typescopes ::= Typescope:a                    {: RESULT=new ArrayList<CommandScope>(); RESULT.add(a); :};
 Typescopes ::= Typescopes:a COMMA Typescope:b {: RESULT=a; a.add(b);                                  :};
