@@ -30,11 +30,7 @@ import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.border.EmptyBorder;
 
-import edu.mit.csail.sdg.alloy4.ConstList;
-import edu.mit.csail.sdg.alloy4.Listener;
-import edu.mit.csail.sdg.alloy4.OurTree;
-import edu.mit.csail.sdg.alloy4.Pos;
-import edu.mit.csail.sdg.alloy4.Util;
+import edu.mit.csail.sdg.alloy4.*;
 
 
 /**
@@ -46,9 +42,10 @@ public abstract class Browsable {
 
     // [HASLab] colorful Alloy
     public Set<Integer> color = new HashSet<Integer>();
-
     // [HASLab] colorful Alloy
-    public void paint(int c) {
+    public void paint(int c) throws ErrorColor {
+        if(color.contains(-c))
+            throw new ErrorSyntax(this.pos(), "Negative and positive of same feature: " + this);
         color.add(c);
     }
     // [HASLab] colorful Alloy

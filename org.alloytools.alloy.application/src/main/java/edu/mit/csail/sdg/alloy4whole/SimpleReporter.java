@@ -811,10 +811,11 @@ final class SimpleReporter extends A4Reporter {
          * @param print used to store the generated code
          * @param world original module(before print)
          * @param cmd executed Command
-         * @param allFeats the features appear in the original module
+         * @param allFeats features present in the original module
          */
         public void printAmalgamatedModule(StringBuilder print, Module world, Command cmd,Set<Integer> allFeats){
 
+            checkexecutedfeats(allFeats,cmd.feats);
             AmalgamatedExprPrinterVisitor printAmalgamatedExpr=new AmalgamatedExprPrinterVisitor();
             ExprPrinterVisitor printExprs=new ExprPrinterVisitor();
 
@@ -1322,8 +1323,12 @@ final class SimpleReporter extends A4Reporter {
          * @param world original module(before print)
          * @param reconstructExpr visitor, used to project feature code
          * @param cmd executed Command
+         * @param modulefeats features present in the original module
          */
-        public void generateModule(StringBuilder print, Module world, expressionProject reconstructExpr, Command cmd,Set<Integer> Modulefeats) {
+        public void generateModule(StringBuilder print, Module world, expressionProject reconstructExpr, Command cmd,Set<Integer> modulefeats) {
+
+
+            checkexecutedfeats(modulefeats,cmd.feats);
 
             CompModule newModule = new CompModule(null, ((CompModule) world).span().filename, "");
 
@@ -1335,7 +1340,7 @@ final class SimpleReporter extends A4Reporter {
             printOpenLine((CompModule)world,print);
             print.append("\r\n");
 
-            addAuxiliarySignatures(Modulefeats,print);
+            addAuxiliarySignatures(modulefeats,print);
 
             // project sigs------------------------------------------------------------------------------------------
             SafeList<Sig> oldsigs = world.getAllSigs();
@@ -1399,13 +1404,55 @@ final class SimpleReporter extends A4Reporter {
             printAssert(print, printExprs,reconstructExpr,world);
 
 //print command ➀
-            printCommand(print,world,printExprs,cmd,Modulefeats);
+            printCommand(print,newModule,printExprs,cmd,modulefeats);
+        }
+       // colorful Alloy
+        /**
+         * used to check if a feature not present in the model is selected in the scope of a command
+         * @param modulefeats features present in the model
+         * @param feats FeatureScope of the execute command
+         * @throws Err
+         */
+        private void checkexecutedfeats(Set<Integer> modulefeats, FeatureScope feats) throws Err{
+
+            if(feats!=null && ! modulefeats.containsAll(feats.feats)){
+                for(Integer feat:feats.feats){
+                    if(!modulefeats.contains(feat)&&! modulefeats.contains(-feat)){
+                        String fea=getFeature(feat);
+                      throw  new ErrorSyntax(feats.pos,"feature "+fea+" not defined");}
+                }
+
+            }
+        }
+
+        private String getFeature(Integer feat) {
+            String feature;
+            if(feat.equals(1)||feat.equals(-1))
+                feature= "\u2780" ;
+            else if(feat.equals(2)||feat.equals(-2))
+                feature= "\u2781" ;
+            else if(feat.equals(3)||feat.equals(-3))
+                feature= "\u2782" ;
+            else if(feat.equals(4)||feat.equals(-4))
+                feature= "\u2783" ;
+            else if(feat.equals(5)||feat.equals(-5))
+                feature= "\u2784" ;
+            else if(feat.equals(6)||feat.equals(-6))
+                feature= "\u2785" ;
+            else if(feat.equals(7)||feat.equals(-7))
+                feature= "\u2786" ;
+            else if(feat.equals(8)||feat.equals(-8))
+                feature= "\u2787" ;
+            else
+                feature="\u2788" ;
+
+            return  feature;
         }
 
         //colorful Alloy
         /**
          * Add auxiliary signatures for new generated module
-         * @param allfeats all features appear in orginal Module
+         * @param allfeats  features present in the orginal Module
          * @param print  store the generated code
          */
         private void addAuxiliarySignatures(Set<Integer> allfeats, StringBuilder print) {
@@ -1442,7 +1489,7 @@ final class SimpleReporter extends A4Reporter {
             if(cmd.label.startsWith("run$") || cmd.label.startsWith("check$")){
                 print.append("{" );
                 for(Func runFunc:world.getAllFunc()){
-                    if(cmd.label.equals(runFunc.label.substring(5)))
+                    if(cmd.label.equals(runFunc.label))
                     if(!(runFunc.getBody() instanceof ExprConstant)){
                         print.append(runFunc.getBody().accept(printExprs));
                     }
