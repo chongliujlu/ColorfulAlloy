@@ -853,110 +853,113 @@ final class SimpleReporter extends A4Reporter {
          */
         private void printAmalgamatedCommand(StringBuilder print, Module world,Command cmd, AmalgamatedExprPrinterVisitor printAmalgamatedExpr,Set<Integer>moudulefeats) {
 
-                if(!cmd.label.equals("Default")){
+                if(!cmd.label.equals("Default")) {
 
                     if (cmd.check)
                         print.append("\r\n\r\ncheck ");
                     else print.append("\r\n\r\nrun ");
 
-                    if(cmd.label.startsWith("run$") || cmd.label.startsWith("check$")){
-                        print.append("{" );
-                        for( Func func: world.getAllFunc()){
-                            if(cmd.label.equals(func.label.substring(5))){
-                                if(!(func.getBody() instanceof ExprConstant))
-                                print.append(func.getBody().accept(printAmalgamatedExpr));
+                    if (cmd.label.startsWith("run$") || cmd.label.startsWith("check$")) {
+                        print.append("{");
+                        for (Func func : world.getAllFunc()) {
+                            if (cmd.label.equals(func.label.substring(5))) {
+                                if (!(func.getBody() instanceof ExprConstant))
+                                    print.append(func.getBody().accept(printAmalgamatedExpr));
                             }
                         }
                         print.append("}");
-                    }
-                    else
-                        print.append(cmd.label );
+                    } else
+                        print.append(cmd.label);
 
                     print.append(" for ");
-                    print.append(cmd.overall>0? cmd.overall +" ":4+" ");
+                    print.append(cmd.overall > 0 ? cmd.overall + " " : 4 + " ");
 
-                    if(cmd.scope.size()>=1||cmd.bitwidth!=-1)
+                    if (cmd.scope.size() >= 1 || cmd.bitwidth != -1)
                         print.append(" but ");
-                    if(cmd.bitwidth!=-1){
-                        print.append(cmd.bitwidth+" Int ");
+                    if (cmd.bitwidth != -1) {
+                        print.append(cmd.bitwidth + " Int ");
                     }
-                    for(CommandScope cs:cmd.scope){
-                        if(cmd.bitwidth!=-1)
+                    for (CommandScope cs : cmd.scope) {
+                        if (cmd.bitwidth != -1)
                             print.append(",");
-                        if(cs.isExact)
+                        if (cs.isExact)
                             print.append(" exactly ");
-                        print.append(cs.startingScope+" ");
-                        print.append(cs.sig.label.substring(5)+",");
+                        print.append(cs.startingScope + " ");
+                        print.append(cs.sig.label.substring(5) + ",");
                     }
 
-                    print.deleteCharAt(print.length()-1);
+                    print.deleteCharAt(print.length() - 1);
 
                     if (cmd.expects >= 0)
                         print.append(" expect ").append(cmd.expects);
 
+                    //module with no feature
+                    if(!moudulefeats.isEmpty()){
                     print.append(" \r\n\r\nfact selectedFeatures {\r\n        ");
-                    if(cmd.feats==null && cmd.feats.feats.isEmpty()){
+                    if (cmd.feats == null && cmd.feats.feats.isEmpty()) {
                         print.append(" no _Product_");
 
-                    }
-                    else{
+                    } else {
 
-                        Set<Integer> NFeatures=new HashSet<>();
-                        Set<Integer> PFeatures=new HashSet<>();
-                        for(Integer i: cmd.feats.feats){
-                            if(i<0)
+                        Set<Integer> NFeatures = new HashSet<>();
+                        Set<Integer> PFeatures = new HashSet<>();
+                        for (Integer i : cmd.feats.feats) {
+                            if (i < 0)
                                 NFeatures.add(-i);
                             else PFeatures.add(i);
                         }
 
-                        if(!PFeatures.isEmpty()){
-                            if(cmd.feats.feats.contains(1))
+                        if (!PFeatures.isEmpty()) {
+                            if (cmd.feats.feats.contains(1))
                                 print.append("_F1+");
-                            if(cmd.feats.feats.contains(2))
+                            if (cmd.feats.feats.contains(2))
                                 print.append("_F2+");
-                            if(cmd.feats.feats.contains(3))
+                            if (cmd.feats.feats.contains(3))
                                 print.append("_F3+");
-                            if(cmd.feats.feats.contains(4))
+                            if (cmd.feats.feats.contains(4))
                                 print.append("_F4+");
-                            if(cmd.feats.feats.contains(5))
+                            if (cmd.feats.feats.contains(5))
                                 print.append("_F5+");
-                            if(cmd.feats.feats.contains(6))
+                            if (cmd.feats.feats.contains(6))
                                 print.append("_F6+");
-                            if(cmd.feats.feats.contains(7))
+                            if (cmd.feats.feats.contains(7))
                                 print.append("_F7+");
-                            if(cmd.feats.feats.contains(8))
+                            if (cmd.feats.feats.contains(8))
                                 print.append("_F8+");
-                            if(cmd.feats.feats.contains(9))
+                            if (cmd.feats.feats.contains(9))
                                 print.append("_F9+");
 
-                            print.deleteCharAt(print.length()-1);
+                            print.deleteCharAt(print.length() - 1);
                             print.append(" in _Product_  &&");
                         }
 
-                        if(!NFeatures.isEmpty()){
-                            if(cmd.feats.feats.contains(-1))
+                        if (!NFeatures.isEmpty()) {
+                            if (cmd.feats.feats.contains(-1))
                                 print.append("_F1 not in _Product_ &&");
-                            if(cmd.feats.feats.contains(-2))
+                            if (cmd.feats.feats.contains(-2))
                                 print.append("_F2 not in _Product_ &&");
-                            if(cmd.feats.feats.contains(-3))
+                            if (cmd.feats.feats.contains(-3))
                                 print.append("_F3 not in _Product_ &&");
-                            if(cmd.feats.feats.contains(-4))
+                            if (cmd.feats.feats.contains(-4))
                                 print.append("_F4 not in _Product_ &&");
-                            if(cmd.feats.feats.contains(-5))
+                            if (cmd.feats.feats.contains(-5))
                                 print.append("_F5 not in _Product_ &&");
-                            if(cmd.feats.feats.contains(-6))
+                            if (cmd.feats.feats.contains(-6))
                                 print.append("_F6 not in _Product_ &&");
-                            if(cmd.feats.feats.contains(-7))
+                            if (cmd.feats.feats.contains(-7))
                                 print.append("_F7 not in _Product_ &&");
-                            if(cmd.feats.feats.contains(-8))
+                            if (cmd.feats.feats.contains(-8))
                                 print.append("_F8 not in _Product_ &&");
-                            if(cmd.feats.feats.contains(9))
+                            if (cmd.feats.feats.contains(9))
                                 print.append("_F9 not in _Product_ &&");
                         }
-                        print.deleteCharAt(print.length()-1);
-                        print.deleteCharAt(print.length()-1);
+                        print.deleteCharAt(print.length() - 1);
+                        print.deleteCharAt(print.length() - 1);
                         print.append("\r\n        }");
                     }
+
+                }
+
                 }
         }
 
@@ -1484,96 +1487,96 @@ final class SimpleReporter extends A4Reporter {
          */
         private void printCommand(StringBuilder print, Module world, ExprPrinterVisitor printExprs,Command cmd ,Set<Integer> modulefeats) {
 
-            print.append(cmd.check? "\r\n\r\ncheck ":"\r\nrun " );
+            print.append(cmd.check ? "\r\n\r\ncheck " : "\r\nrun ");
 
-            if(cmd.label.startsWith("run$") || cmd.label.startsWith("check$")){
-                print.append("{" );
-                for(Func runFunc:world.getAllFunc()){
-                    if(cmd.label.equals(runFunc.label))
-                    if(!(runFunc.getBody() instanceof ExprConstant)){
-                        print.append(runFunc.getBody().accept(printExprs));
-                    }
+            if (cmd.label.startsWith("run$") || cmd.label.startsWith("check$")) {
+                print.append("{");
+                for (Func runFunc : world.getAllFunc()) {
+                    if (cmd.label.equals(runFunc.label))
+                        if (!(runFunc.getBody() instanceof ExprConstant)) {
+                            print.append(runFunc.getBody().accept(printExprs));
+                        }
                 }
                 print.append("}");
-            }
-            else
+            } else
                 print.append(cmd.label);
 
             print.append(" for ");
-            print.append(cmd.overall>0? cmd.overall +" ":4+" ");
+            print.append(cmd.overall > 0 ? cmd.overall + " " : 4 + " ");
 
-            if(cmd.scope.size()>=1 || cmd.bitwidth!=-1)
+            if (cmd.scope.size() >= 1 || cmd.bitwidth != -1)
                 print.append(" but ");
-            if(cmd.bitwidth!=-1){
-                print.append(cmd.bitwidth+" Int ");
+            if (cmd.bitwidth != -1) {
+                print.append(cmd.bitwidth + " Int ");
             }
-            for(CommandScope cs:cmd.scope){
-                if(cmd.bitwidth!=-1)
+            for (CommandScope cs : cmd.scope) {
+                if (cmd.bitwidth != -1)
                     print.append(",");
-                if(cs.isExact)
+                if (cs.isExact)
                     print.append(" exactly ");
-                print.append(cs.startingScope+" ");
-                print.append(cs.sig.label.substring(5)+",");
+                print.append(cs.startingScope + " ");
+                print.append(cs.sig.label.substring(5) + ",");
             }
 
-            print.deleteCharAt(print.length()-1);
+            print.deleteCharAt(print.length() - 1);
 
             if (cmd.expects >= 0)
                 print.append(" expect ").append(cmd.expects);
-
+            //module with no feature
+            if(!modulefeats.isEmpty()){
             print.append(" \r\n\r\nfact selectedFeatures {\r\n        ");
-            if(cmd.feats==null || cmd.feats.feats.isEmpty()){
+            if (cmd.feats == null || cmd.feats.feats.isEmpty()) {
                 print.append("no _Product_");
             }
             //some features are selected
-            else{
-                Set<Integer> NFeatures=new HashSet<>();
-                Set<Integer> PFeatures=new HashSet<>();
-                for(Integer i: cmd.feats.feats){
-                    if(i<0)
+            else {
+                Set<Integer> NFeatures = new HashSet<>();
+                Set<Integer> PFeatures = new HashSet<>();
+                for (Integer i : cmd.feats.feats) {
+                    if (i < 0)
                         NFeatures.add(-i);
                     else PFeatures.add(i);
                 }
                 print.append("_Product_=");
-                if(!PFeatures.isEmpty()){
+                if (!PFeatures.isEmpty()) {
 
-                    if(cmd.feats.feats.contains(1))
+                    if (cmd.feats.feats.contains(1))
                         print.append("_F1+");
-                    if(cmd.feats.feats.contains(2))
+                    if (cmd.feats.feats.contains(2))
                         print.append("_F2+");
-                    if(cmd.feats.feats.contains(3))
+                    if (cmd.feats.feats.contains(3))
                         print.append("_F3+");
-                    if(cmd.feats.feats.contains(4))
+                    if (cmd.feats.feats.contains(4))
                         print.append("_F4+");
-                    if(cmd.feats.feats.contains(5))
+                    if (cmd.feats.feats.contains(5))
                         print.append("_F5+");
-                    if(cmd.feats.feats.contains(6))
+                    if (cmd.feats.feats.contains(6))
                         print.append("_F6+");
-                    if(cmd.feats.feats.contains(7))
+                    if (cmd.feats.feats.contains(7))
                         print.append("_F7+");
-                    if(cmd.feats.feats.contains(8))
+                    if (cmd.feats.feats.contains(8))
                         print.append("_F8+");
-                    if(cmd.feats.feats.contains(9))
+                    if (cmd.feats.feats.contains(9))
                         print.append("_F9+");
                 }
 
-                if(!NFeatures.isEmpty() && PFeatures.isEmpty()){
-                    Set<Integer> retain=new HashSet<>();
-                    for(Integer integer:modulefeats){
-                            retain.add(integer>0? integer: -integer);
+                if (!NFeatures.isEmpty() && PFeatures.isEmpty()) {
+                    Set<Integer> retain = new HashSet<>();
+                    for (Integer integer : modulefeats) {
+                        retain.add(integer > 0 ? integer : -integer);
                     }
                     retain.removeAll(NFeatures);
-                    if(retain.isEmpty())
+                    if (retain.isEmpty())
                         print.append("none ");
                     else
-                        for(Integer i: retain){
-                            print.append("_F"+i+"+");
+                        for (Integer i : retain) {
+                            print.append("_F" + i + "+");
                         }
                 }
-
-                print.deleteCharAt(print.length()-1);
+                print.deleteCharAt(print.length() - 1);
             }
             print.append("\r\n        }");
+         }
         }
 
         //colorful Alloy
