@@ -93,12 +93,11 @@ public  class expressionProject extends VisitReturn<Expr> {
 
         if(executefeats.containsAll(PFeatures)|| executefeatsCointainOnlyNFeature()){
             for(Expr expr: x.args){
-                if(visitThis(expr)!=null){
-                    temp.add(visitThis(expr));
-                }
+                Expr exprnew=visitThis(expr);
+                if(exprnew!=null)
+                    temp.add(exprnew);
             }
-            return ExprList.make(x.pos, x.closingBracket, x.op, temp.makeConst());
-
+            return temp.size()==0 ? null: ExprList.make(x.pos, x.closingBracket, x.op, temp.makeConst());
         }
         return null;
     }

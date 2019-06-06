@@ -30,6 +30,7 @@ import static edu.mit.csail.sdg.ast.Sig.UNIV;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -425,7 +426,7 @@ public final class CompModule extends Browsable implements Module {
                         if (applicable(bc.fun, newargs)) {
                             contextFeats.addAll(color);//colorful Alloy
                             if(!contextFeats.containsAll(bc.fun.color))//colorful Alloy
-                                throw new ErrorColor(bc.pos, (bc.fun.isPred? "pred \"": "fun \"")+bc.fun.label.substring(5)+"\" marked with "+bc.fun.color.toString()); //colorful Alloy
+                                throw new ErrorSyntax(bc.pos, "Features are not compatible at line "+ bc.pos.y+" column "+bc.pos.x+".\r\n"+(bc.fun.isPred? "pred \"": "fun \"")+bc.fun.label.substring(5)+"\":"+bc.fun.color+"\r\n expression \""+bc.toString().substring(5)+"\":"+bc.color); //colorful Alloy
                             y = ExprCall.make(bc.pos, bc.closingBracket, bc.fun, newargs, bc.extraWeight, color);//colorful Alloy
                         }
                         else
@@ -446,6 +447,7 @@ public final class CompModule extends Browsable implements Module {
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprList x) throws Err {
+            contextFeats.addAll(x.color);
             TempList<Expr> temp = new TempList<Expr>(x.args.size());
             Set<Integer> tempfeats=new HashSet<>(); //colorful Alloy
             tempfeats.addAll(contextFeats);//colorful Alloy
@@ -696,22 +698,22 @@ public final class CompModule extends Browsable implements Module {
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprVar x) throws Err {
-            Expr obj = resolve(x.pos, x.label);
-            obj.paint(x.color); // [HASLab] colorful Alloy
             CompModule.feats.addAll(x.color); //colorful Alloy
             contextFeats.addAll(x.color);//colorful Alloy
 
+            Expr obj = resolve(x.pos, x.label);
+            obj.paint(x.color); // [HASLab] colorful Alloy
             if(obj instanceof ExprUnary)
             //colorful Alloy
             if(!contextFeats.containsAll(((ExprUnary) obj).sub.color)){
                 for(Integer i:((ExprUnary) obj).sub.color ) {
                     // parent marked -1,sub marked with 1 or parent marked with 1 sub marked with -1
                     if (contextFeats.contains(-i))
-                        throw new ErrorColor(obj.pos,"Expression "+obj.toString()+": "+
-                            contextFeats.toString()+"\r\nwhile "+(((ExprUnary) obj).sub instanceof Sig? "Sig ":"Field ") +((ExprUnary) obj).sub.toString()+": "+((ExprUnary) obj).sub.color.toString());
+                        throw new ErrorSyntax(obj.pos,"Features are not compatible.\r\n Expression "+obj.toString()+": "+
+                            contextFeats+"\r\n"+(((ExprUnary) obj).sub instanceof Sig? "sig "+((ExprUnary) obj).sub.toString().substring(5):"field ") +((ExprUnary) obj).sub.toString()+": "+((ExprUnary) obj).sub.color);
                     //sub must makred with all the positive features in parent
                     if(i>0 && (! (contextFeats.contains(i))))
-                        throw new ErrorColor(obj.pos,"Expression "+obj.toString()+": "+
+                        throw new ErrorSyntax(obj.pos,"Expression "+obj.toString()+": "+
                                 contextFeats.toString()+"\r\n"+(((ExprUnary) obj).sub instanceof Sig? "Sig ":"")  +((ExprUnary) obj).sub.toString() +": "+((ExprUnary) obj).sub.color.toString());
                 }
             }
@@ -1615,7 +1617,7 @@ public final class CompModule extends Browsable implements Module {
                     throw new ErrorSyntax(n.pos, "The sig \"" + n.label + "\" cannot be found.");
                 parents.add(resolveSig(res, topo, parentAST));
             }
-            for(Sig p: parents) checkFeatures(p,oldS); //colorful Alloy
+            for(Sig p: parents) featTypeCheck(p,oldS); //colorful Alloy
             realSig = new SubsetSig(fullname, parents, oldS.color, oldS.attributes.toArray(new Attr[0])); // [HASLab] colorful Alloy
         } else {
             Sig sup = ((PrimSig) oldS).parent;
@@ -1626,7 +1628,7 @@ public final class CompModule extends Browsable implements Module {
             if (!(parent instanceof PrimSig))
                 throw new ErrorSyntax(sup.pos, "Cannot extend the subset signature \"" + parent + "\".\n" + "A signature can only extend a toplevel signature or a subsignature.");
             PrimSig p = (PrimSig) parent;
-            checkFeatures(p,oldS); //colorful Alloy
+            featTypeCheck(p,oldS); //colorful Alloy
             realSig = new PrimSig(fullname, p, oldS.color, oldS.attributes.toArray(new Attr[0])); // [HASLab] colorful Alloy
         }
         res.new2old.put(realSig, oldS);
@@ -1646,19 +1648,20 @@ public final class CompModule extends Browsable implements Module {
     //colorful Alloy
 
     /**
-     * check if current sig marked with correct features
+     * check if current sig marked with correct features, (parent sig paint with N1,sub sig with P2 is ok)
      * @param p parent Sig
      * @param oldS Sig to be checked
-     * @throws Err
+     * @throws ErrorSyntax
      */
-    private static void checkFeatures(Sig p, Sig oldS) throws Err {
+    private static void featTypeCheck(Sig p, Sig oldS) throws ErrorSyntax {
         if(!(oldS.color.containsAll(p.color))){
-            for(Integer i: p.color) {
-                // parent marked -1,sub marked with 1 or parent marked with 1 sub marked with -1
-                if (oldS.color.contains(i)) throw new ErrorColor(oldS.pos,"Parent sig "+p.toString()+": "+p.color.toString()+"\r\nSig "+oldS.toString()+": "+oldS.color.toString());
+            for(Integer i:p.color ) {
+                // parent marked -i,sub marked with i or parent marked with i sub marked with -i
+                if (oldS.color.contains(-i))
+                    throw new ErrorSyntax(oldS.pos,"Features are not compatible. \r\nsig \""+p.label.substring(5)+"\": "+p.color+"\r\nsig \""+oldS.label.substring(5)+"\": "+oldS.color);
                 //sub must makred with all the positive features in parent
-                if(i>0 && (! (oldS.color.contains(i))))throw new ErrorColor(oldS.pos,
-                        "Parent sig "+p.toString()+": "+p.color.toString()+"\r\nSig "+oldS.toString()+": "+oldS.color.toString() );
+                if(i>0 && (! (oldS.color.contains(i))))
+                    throw new ErrorSyntax(oldS.pos,"Features are not compatible. \r\nsig \""+p.label.substring(5)+"\": "+p.color+"\r\nsig \""+oldS.label.substring(5)+"\": "+oldS.color);
             }
         }
     }
@@ -1732,6 +1735,8 @@ public final class CompModule extends Browsable implements Module {
         for (ArrayList<Func> list : funcs.values()) {
             for (int listi = 0; listi < list.size(); listi++) {
                 Func f = list.get(listi);
+                Context.contextFeats.clear(); //colorful Alloy
+                Context.contextFeats.addAll(f.color); //colorful Alloy
                 String fullname = (path.length() == 0 ? "this/" : (path + "/")) + f.label;
                 // Each PARAMETER can refer to earlier parameter in the same
                 // function, and any SIG or FIELD visible from here.
@@ -1743,7 +1748,7 @@ public final class CompModule extends Browsable implements Module {
                 boolean err = false;
                 for (Decl d : f.decls) {
                     TempList<ExprVar> tmpvars = new TempList<ExprVar>();
-                    Context.contextFeats.clear(); //colorful Alloy
+
                     Context.contextFeats.addAll(d.color); //colorful Alloy
                     Expr val = cx.check(d.expr).resolve_as_set(warns);
                     if (!val.errors.isEmpty()) {
@@ -1784,12 +1789,15 @@ public final class CompModule extends Browsable implements Module {
     private JoinableList<Err> resolveFuncBody(A4Reporter rep, JoinableList<Err> errors, List<ErrorWarning> warns) throws Err {
         for (ArrayList<Func> entry : funcs.values())
             for (Func ff : entry) {
+                Context.contextFeats.clear();//colorful Alloy
                 Context cx = new Context(this, warns);
                 cx.rootfunbody = ff;
                 for (Decl d : ff.decls)
-                    for (ExprHasName n : d.names)
+                    for (ExprHasName n : d.names){
                         cx.put(n.label, n);
-                    Context.contextFeats.clear();//colorful Alloy
+                        Context.contextFeats.addAll(d.color);//colorful Alloy
+                    }
+
                 Context.contextFeats.addAll(ff.color);//colorful Alloy
                 Expr newBody = cx.check(ff.getBody());
                 if (ff.isPred)
@@ -1851,7 +1859,7 @@ public final class CompModule extends Browsable implements Module {
 //    }
     
     /** Add an ASSERT declaration. */
-    String addAssertion(Pos pos, String name, Expr value) throws Err {
+     String addAssertion(Pos pos, String name, Expr value) throws Err {
         status = 3;
         if (name == null || name.length() == 0)
             name = "assert$" + (1 + asserts.size());
@@ -2066,6 +2074,13 @@ public final class CompModule extends Browsable implements Module {
                 throw new ErrorSyntax(cmd.pos, "The assertion \"" + cname + "\" cannot be found.");
 
             Expr expr = (Expr) (m.get(0));
+            if(expr instanceof ExprUnary){ //colorful Alloy
+                if(cmd.feats==null &&  !(((ExprUnary) expr).sub.color).isEmpty())
+                    throw new ErrorSyntax(cmd.pos,"features are not compatible. \r\nassert \""+cmd.label+"\": "+(((ExprUnary) expr).sub.color)+"\r\nCommand:[]");//colorful Alloy
+                if(cmd.feats!=null &&!(cmd.feats.feats.containsAll(((ExprUnary) expr).sub.color))) //colorful Alloy
+                throw new ErrorSyntax(cmd.pos,"features are not compatible. \r\nassert \""+cmd.label+"\": "+(((ExprUnary) expr).sub.color)+"\r\nCommand:"+cmd.feats.feats);//colorful Alloy
+
+            }
             e = expr.not();
         } else {
             List<Object> m = getRawQS(4, cname); // We prefer fun/pred in the
@@ -2077,6 +2092,12 @@ public final class CompModule extends Browsable implements Module {
             if (m.size() < 1)
                 throw new ErrorSyntax(cmd.pos, "The predicate/function \"" + cname + "\" cannot be found.");
             Func f = (Func) (m.get(0));
+            if(cmd.feats==null &&  !(f.color).isEmpty()) //colorful Alloy
+                throw new ErrorSyntax(cmd.pos,"features are not compatible. \r\npred \""+cmd.label+"\": "+f.color+"\r\nCommand: []");//colorful Alloy
+            if(cmd.feats!=null &&!(cmd.feats.feats.containsAll(f.color))){ //colorful Alloy
+                throw new ErrorSyntax(cmd.pos,"features are not compatible. \r\npred \""+cmd.label+"\": "+f.color+"\r\nCommand:"+cmd.feats.feats);//colorful Alloy
+            }
+
             declaringClause = f;
             e = f.getBody();
             if (!f.isPred)
@@ -2402,6 +2423,7 @@ public final class CompModule extends Browsable implements Module {
                 re.add("sig " + y.label);
             } else if (x instanceof Func) {
                 Func f = (Func) x;
+                if(!Context.contextFeats.containsAll(f.color)) throw new ErrorSyntax(pos,"features are not compatible. \r\n"+(f.isPred? "pred \"":"func \"")+f.label.substring(5)+"\":"+f.color+"\r\n Expression "+Context.contextFeats); //colorful Alloy
                 int fn = f.count();
                 int penalty = 0;
                 if (resolution == 1 && fn > 0 && rootsig != null && THIS != null && THIS.type().hasArity(1) && f.get(0).type().intersects(THIS.type())) {

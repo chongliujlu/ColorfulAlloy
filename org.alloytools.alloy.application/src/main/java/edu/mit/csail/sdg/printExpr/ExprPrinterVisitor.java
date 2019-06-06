@@ -39,11 +39,17 @@ public  class ExprPrinterVisitor extends VisitReturn<String> {
         }
         if(x.op.equals(ExprList.Op.AND) || x.op.equals(ExprList.Op.OR)){
             if(x.args.size()>0){
+                if(x.op.equals(ExprList.Op.OR )&&x.args.size()>1 )
+                    strtemp.append("(");
+
                 strtemp.append(visitThis( x.args.get(0)));
                 if(x.args.size()>1){
                     for (int i=1;i<x.args.size();i++){
                         strtemp.append(name +" \r\n        "+ visitThis(x.args.get(i)) );
                     }
+
+                    if(x.op.equals(ExprList.Op.OR ))
+                        strtemp.append(")");
                 }
             }
         }

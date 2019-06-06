@@ -22,6 +22,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
         StringBuilder str=new StringBuilder();
 
+        if(x.color.isEmpty() &&(! x.op.equals(ExprBinary.Op.JOIN)))
         str.append("(");
 
 
@@ -109,7 +110,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
 
 
-
+        if(x.color.isEmpty() &&(! x.op.equals(ExprBinary.Op.JOIN)))
         str.append(")");
         return str.toString();
     }
@@ -140,6 +141,8 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
                 NFeatures.add(-i);
             else PFeatures.add(i);
         }
+
+
         //x marked
         if(!x.color.isEmpty()){
             //Marked with NFeature
@@ -165,7 +168,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
                 addFeatureprefix(PFeatures,str, "in","and");
                 str.deleteCharAt(str.length()-1);
                 str.deleteCharAt(str.length()-1);
-                if(x.op.equals(ExprList.Op.AND))
+                //if(x.op.equals(ExprList.Op.AND))
                     str.deleteCharAt(str.length()-1);
                 str.append(")");
                 str.append(" implies ");
@@ -185,7 +188,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
         for(Expr arg: x.args){
             String subExpr= visitThis(arg);
             if(x.op.equals(ExprList.Op.OR)){
-                subExpr=subExpr.replaceAll("implies","and");
+                //subExpr=subExpr.replaceAll("implies","and");
                 str.append("("+subExpr+")");
             }
             else

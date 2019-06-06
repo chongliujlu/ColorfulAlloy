@@ -879,9 +879,10 @@ final class SimpleReporter extends A4Reporter {
                     if (cmd.bitwidth != -1) {
                         print.append(cmd.bitwidth + " Int ");
                     }
+                    if(!(cmd.scope.isEmpty() && cmd.bitwidth!=-1))
+                                    print.append(",");
+
                     for (CommandScope cs : cmd.scope) {
-                        if (cmd.bitwidth != -1)
-                            print.append(",");
                         if (cs.isExact)
                             print.append(" exactly ");
                         print.append(cs.startingScope + " ");
@@ -1081,7 +1082,7 @@ final class SimpleReporter extends A4Reporter {
                 if(s.label.startsWith("this/"))
                     temp=temp.replace(s.label.substring(5)+" .","");
 
-                temp=temp.replace("this  .","");
+                temp=temp.replace("this .","");
                 print.append("        "+temp);
                 print.append(" \r\n        } ");
 
@@ -1375,10 +1376,15 @@ final class SimpleReporter extends A4Reporter {
             // add func/pred
             SafeList<Func> funs =world.getAllFunc();
             for(Func fun: funs) {
+                if((cmd.feats==null && !fun.color.isEmpty())|| (!cmd.feats.feats .containsAll(fun.color)))
+                    continue;
+
+
                 fun.getBody().color.addAll(fun.color);
                 Expr nbody = (fun.getBody()).accept(reconstructExpr);
-                if(nbody==null)
-                    continue;
+                if(nbody==null){
+                    newModule.addFunc(fun.pos(),fun.isPrivate,fun.label.substring(5),null,new ArrayList<Decl>(),null,ExprConstant.TRUE);
+                    continue;}
 
                 //project decls-------------
                 ConstList.TempList<Decl> decls = new ConstList.TempList<Decl>(fun.decls.size());
@@ -1404,10 +1410,10 @@ final class SimpleReporter extends A4Reporter {
 //print func/pred
 
             printFunc(print,newModule,printExprs);
-            printAssert(print, printExprs,reconstructExpr,world);
+            printAssert(print, printExprs,reconstructExpr,world,newModule);
 
 //print command ➀
-            printCommand(print,newModule,printExprs,cmd,modulefeats);
+            printCommand(print,world,reconstructExpr,printExprs,cmd,modulefeats);
         }
        // colorful Alloy
         /**
@@ -1481,25 +1487,32 @@ final class SimpleReporter extends A4Reporter {
          * convenient method, print execute command for iterative metod.
          * @param print store generated code
          * @param world original module
+         * @param reconstructExpr used to get project expressions
          * @param printExprs expression print visitor
          * @param cmd current execute command
          * @param modulefeats features in the module,used when painted with negative features,for example, "check{} with ➊ for 3"
          */
-        private void printCommand(StringBuilder print, Module world, ExprPrinterVisitor printExprs,Command cmd ,Set<Integer> modulefeats) {
+        private void printCommand(StringBuilder print, Module world,expressionProject reconstructExpr, ExprPrinterVisitor printExprs,Command cmd ,Set<Integer> modulefeats) throws ErrorSyntax {
 
             print.append(cmd.check ? "\r\n\r\ncheck " : "\r\nrun ");
 
             if (cmd.label.startsWith("run$") || cmd.label.startsWith("check$")) {
                 print.append("{");
                 for (Func runFunc : world.getAllFunc()) {
-                    if (cmd.label.equals(runFunc.label))
+                    if (cmd.label.equals(runFunc.label.substring(5)))
                         if (!(runFunc.getBody() instanceof ExprConstant)) {
-                            print.append(runFunc.getBody().accept(printExprs));
+                            if((cmd.feats==null && !runFunc.color.isEmpty())|| (!cmd.feats.feats.containsAll(runFunc.color)))
+                                throw new ErrorSyntax(runFunc.pos,"");
+                            Expr bodyNew=runFunc.getBody().accept(reconstructExpr);
+                            if(bodyNew!=null)
+                                print.append(bodyNew.accept(printExprs));
+                            break;
                         }
                 }
                 print.append("}");
             } else
                 print.append(cmd.label);
+
 
             print.append(" for ");
             print.append(cmd.overall > 0 ? cmd.overall + " " : 4 + " ");
@@ -1509,9 +1522,11 @@ final class SimpleReporter extends A4Reporter {
             if (cmd.bitwidth != -1) {
                 print.append(cmd.bitwidth + " Int ");
             }
+
+            if(!(cmd.scope.isEmpty() && cmd.bitwidth!=-1))
+                print.append(",");
             for (CommandScope cs : cmd.scope) {
-                if (cmd.bitwidth != -1)
-                    print.append(",");
+
                 if (cs.isExact)
                     print.append(" exactly ");
                 print.append(cs.startingScope + " ");
@@ -1587,7 +1602,7 @@ final class SimpleReporter extends A4Reporter {
          * @param reconstructExpr used to get project expressions
          * @param world original module
          */
-        private void printAssert(StringBuilder print, ExprPrinterVisitor printExprs, expressionProject reconstructExpr, Module world) {
+        private void printAssert(StringBuilder print, ExprPrinterVisitor printExprs, expressionProject reconstructExpr, Module world,CompModule newModule) {
             for(Pair<String,Expr> asser:world.getAllAssertions()){
                 Expr temp=asser.b.accept(reconstructExpr);
 
@@ -1595,7 +1610,7 @@ final class SimpleReporter extends A4Reporter {
                     print.append("\r\nassert "+(asser.a.startsWith("check$")? " {}":asser.a )+" { }");
                     continue;
                 }
-
+               // newModule.addAssertion(asser.b.pos,asser.a,temp);
                 if(asser.a.startsWith("check$"))
                     continue;
 
