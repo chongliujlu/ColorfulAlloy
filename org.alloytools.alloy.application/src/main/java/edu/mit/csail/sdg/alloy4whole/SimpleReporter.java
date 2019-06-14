@@ -878,9 +878,9 @@ final class SimpleReporter extends A4Reporter {
                         print.append(" but ");
                     if (cmd.bitwidth != -1) {
                         print.append(cmd.bitwidth + " Int ");
+                        if(!cmd.scope.isEmpty())
+                            print.append(",");
                     }
-                    if(!(cmd.scope.isEmpty() && cmd.bitwidth!=-1))
-                                    print.append(",");
 
                     for (CommandScope cs : cmd.scope) {
                         if (cs.isExact)
@@ -1521,10 +1521,10 @@ final class SimpleReporter extends A4Reporter {
                 print.append(" but ");
             if (cmd.bitwidth != -1) {
                 print.append(cmd.bitwidth + " Int ");
+                if(!cmd.scope.isEmpty() )
+                    print.append(",");
             }
 
-            if(!(cmd.scope.isEmpty() && cmd.bitwidth!=-1))
-                print.append(",");
             for (CommandScope cs : cmd.scope) {
 
                 if (cs.isExact)

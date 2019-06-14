@@ -16,9 +16,12 @@ public  class ExprPrinterVisitor extends VisitReturn<String> {
             return right;
         else if(right.equals(""))
             return left;
-        else
-            return "("+visitThis(x.left) +" " +x.op.getLabel()+" "+visitThis(x.right)+")";
+      //  else
+       // return x.op.equals(ExprBinary.Op.JOIN)? (x.right instanceof ExprCall  || x.right instanceof ExprBinary ? ("("+visitThis(x.left) +"."+visitThis(x.right)+")"): visitThis(x.left) +"."+visitThis(x.right) ):
+                                              //  "("+visitThis(x.left) +" " +x.op.getLabel()+" "+visitThis(x.right)+")";
 
+            return "("+visitThis(x.left) +" " +x.op.getLabel()+" "+visitThis(x.right)+")";
+        //(x.right instanceof ExprCall ? ("("+visitThis(x.left) +"."+visitThis(x.right)+")"):visitThis(x.left) +"."+visitThis(x.right) )
     }
 
     @Override
@@ -59,6 +62,8 @@ public  class ExprPrinterVisitor extends VisitReturn<String> {
     @Override
     public String visit(ExprCall x) throws Err {
         StringBuilder temp=new StringBuilder();
+        if(x.args.size()>0)
+            temp.append("(");
         temp.append(x.fun.label.substring(x.fun.label.indexOf("/")+1));
         if(x.args.size()>0){
             temp.append("[");
@@ -67,6 +72,7 @@ public  class ExprPrinterVisitor extends VisitReturn<String> {
             }
             temp.deleteCharAt(temp.length()-1);
             temp.append("]");
+            temp.append(")");
         }
         return temp.toString();
 
@@ -137,25 +143,34 @@ public  class ExprPrinterVisitor extends VisitReturn<String> {
             s.append(visitThis(decl.expr)+",");
         }
         s.deleteCharAt(s.length()-1);
-        if(x.op.equals(ExprQt.Op.COMPREHENSION)){
-            s.append("}");
-        }
+
 
         s.append(" | ");
         s.append(visitThis(x.sub));
+
+        if(x.op.equals(ExprQt.Op.COMPREHENSION)){
+            s.append("}");
+        }
         s.append(")");
         return s.toString();
     }
 
     @Override
     public String visit(ExprUnary x) throws Err {
-        switch (x.op){
-            case NOOP:
-            case CAST2INT:
-            case CAST2SIGINT:
-                return visitThis(x.sub);
-            default:  return x.op.getOpLabel().replaceAll(" of"," ") +" "+ visitThis(x.sub);
-        }
+        if(x.op.equals(ExprUnary.Op.NOOP)||x.op.equals(ExprUnary.Op.CAST2SIGINT)||x.op.equals(ExprUnary.Op.CAST2INT))
+            return visitThis(x.sub);
+        else if(x.op.equals(ExprUnary.Op.RCLOSURE)|| x.op.equals(ExprUnary.Op.CLOSURE)||x.op.equals(ExprUnary.Op.CARDINALITY))
+            return x.op.getOpLabel() + "("+visitThis(x.sub)+")";
+        else
+            return x.op.getOpLabel().replaceAll(" of"," ") +" "+ visitThis(x.sub);
+
+        //switch (x.op){
+       //     case NOOP:
+        //    case CAST2INT:
+        //    case CAST2SIGINT:
+         //       return visitThis(x.sub);
+          //  default:  return x.op.getOpLabel().replaceAll(" of"," ") +" "+ visitThis(x.sub);
+        //}
     }
 
     @Override

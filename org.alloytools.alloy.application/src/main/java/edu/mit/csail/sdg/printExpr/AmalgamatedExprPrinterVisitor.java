@@ -21,9 +21,9 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
         }
 
         StringBuilder str=new StringBuilder();
-
-        if(x.color.isEmpty() &&(! x.op.equals(ExprBinary.Op.JOIN)))
-        str.append("(");
+        if (x.color.isEmpty())
+       // if(x.color.isEmpty() &&((! x.op.equals(ExprBinary.Op.JOIN)|| (x.op.equals(ExprBinary.Op.JOIN) && x.right instanceof ExprCall))))
+            str.append("(");
 
 
         if(!NFeatures.isEmpty()){
@@ -109,9 +109,9 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
 
 
-
-        if(x.color.isEmpty() &&(! x.op.equals(ExprBinary.Op.JOIN)))
-        str.append(")");
+        if(x.color.isEmpty())
+        //if(x.color.isEmpty() &&((! x.op.equals(ExprBinary.Op.JOIN)|| (x.op.equals(ExprBinary.Op.JOIN) && x.right instanceof ExprCall))))
+            str.append(")");
         return str.toString();
     }
 
@@ -215,6 +215,10 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
         StringBuilder str=new StringBuilder();
 
         StringBuilder tempExpr =new StringBuilder();
+
+        //if(x.args.size()>0)
+       // if(x.fun.label.substring(x.fun.label.indexOf("/")+1).equals("prev")||x.fun.label.substring(x.fun.label.indexOf("/")+1).equals("prevs"))
+        //    tempExpr.append("(");
         tempExpr.append(x.fun.label.substring(x.fun.label.indexOf("/")+1));
         if(x.args.size()>0) {
             tempExpr.append("[");
@@ -224,6 +228,8 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
             tempExpr.deleteCharAt(tempExpr.length() - 1);
             tempExpr.append("]");
+          //  if(x.fun.label.substring(x.fun.label.indexOf("/")+1).equals("prev")||x.fun.label.substring(x.fun.label.indexOf("/")+1).equals("prevs"))
+            //    tempExpr.append("(");
         }
 
         Set<Integer> NFeatures=new HashSet<>();
@@ -431,8 +437,8 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
         str.append(visitThis(x.sub));
         str.append(")");
 
-        if(!x.color.isEmpty())
-            str.append(" else none ");
+        //if(!x.color.isEmpty())
+         //   str.append(" else none ");
         return str.toString();
 
     }
@@ -529,21 +535,27 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
         StringBuilder tempExpr= new StringBuilder();
         if(x.op.equals(ExprUnary.Op.SETOF))
             tempExpr.append(" set ");
-        if(x.op.equals(ExprUnary.Op.SOMEOF))
+        else if(x.op.equals(ExprUnary.Op.SOMEOF))
             tempExpr.append(" some ");
-        if(x.op.equals(ExprUnary.Op.LONEOF))
+        else if(x.op.equals(ExprUnary.Op.LONEOF))
             tempExpr.append(" lone ");
-        if(x.op.equals(ExprUnary.Op.ONEOF))
+        else if(x.op.equals(ExprUnary.Op.ONEOF))
             tempExpr.append(" one ");
-        if(x.op.equals(ExprUnary.Op.EXACTLYOF))
+        else if(x.op.equals(ExprUnary.Op.EXACTLYOF))
             tempExpr.append(" exactly ");
-        if(x.op.equals(ExprUnary.Op.NOT)||x.op.equals(ExprUnary.Op.NO)||
-                x.op.equals(ExprUnary.Op.SOME)||x.op.equals(ExprUnary.Op.ONE)||
-                x.op.equals(ExprUnary.Op.LONE)||x.op.equals(ExprUnary.Op.TRANSPOSE)||
-                x.op.equals(ExprUnary.Op.RCLOSURE)||x.op.equals(ExprUnary.Op.CLOSURE)||
+        else if(x.op.equals(ExprUnary.Op.RCLOSURE)||x.op.equals(ExprUnary.Op.CLOSURE)||
                 x.op.equals(ExprUnary.Op.CARDINALITY))
+            tempExpr.append(" "+x.op.getOpLabel()+"("); // (
+
+        else if(x.op.equals(ExprUnary.Op.NOT)||x.op.equals(ExprUnary.Op.NO)||
+                x.op.equals(ExprUnary.Op.SOME)||x.op.equals(ExprUnary.Op.ONE)||
+                x.op.equals(ExprUnary.Op.LONE)||x.op.equals(ExprUnary.Op.TRANSPOSE))
             tempExpr.append(" "+x.op.getOpLabel()+" ");
         tempExpr.append(visitThis(x.sub));
+
+        if(x.op.equals(ExprUnary.Op.RCLOSURE)||x.op.equals(ExprUnary.Op.CLOSURE)||
+                x.op.equals(ExprUnary.Op.CARDINALITY))
+            tempExpr.append(")");  // )
 
         if(!x.color.isEmpty())
              str.append("(");
