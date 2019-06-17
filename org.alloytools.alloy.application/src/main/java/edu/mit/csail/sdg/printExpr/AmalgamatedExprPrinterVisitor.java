@@ -153,6 +153,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
                 for(Expr arg: x.args){
                    String subExpr= visitThis(arg);
                    if(x.op.equals(ExprList.Op.OR)){
+                       // marked with A or ➀B➀ , A and (F1 in Product and B)
                        subExpr=subExpr.replaceAll("implies","and");
                        str.append("("+subExpr+")");
                    }
@@ -176,7 +177,6 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
             }
         }
 
-
 //--------------------x.argi (i=0,1,2,3)----------------
         String name=x.op.name();
         if(name.equals("AND")) name=" and";
@@ -187,9 +187,10 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
         for(Expr arg: x.args){
             String subExpr= visitThis(arg);
-            if(x.op.equals(ExprList.Op.OR)){
+
+            if(x.op.equals(ExprList.Op.OR) && !(arg.color.isEmpty())){
                 //subExpr=subExpr.replaceAll("implies","and");
-                str.append("("+subExpr+")");
+                str.append("("+subExpr.substring(0,subExpr.length()-1) +" else some none))");
             }
             else
                 str.append("("+subExpr+")");

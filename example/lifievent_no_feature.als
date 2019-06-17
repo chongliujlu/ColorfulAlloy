@@ -26,7 +26,7 @@ sig openDoor extends liftTravelEvent{}{
 	post.door=Open
 	post.landingCall=pre.landingCall-pre.currentFloor
 	post.pressedButton=pre.pressedButton-pre.currentFloor
-	//最0层或5层换向
+	//0层或5层换向
 	(pre.currentDirection=Up && lt[pre.currentFloor,max[pre.(landingCall+pressedButton)]])implies 
 				post.currentDirection=Down 
 		else( (pre.currentDirection=Down && gt[pre.currentFloor,min[pre.(landingCall+pressedButton)]]) implies

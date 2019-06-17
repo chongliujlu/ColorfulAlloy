@@ -1062,7 +1062,9 @@ final class SimpleReporter extends A4Reporter {
             for (Pair<String, Expr> f: world.getAllFacts()){
                 print.append("\r\nfact ");
                 print.append(f.a.startsWith("fact$")? "{\r\n" : f.a+ "{\r\n");
-                print.append("        "+f.b.accept(printAmalgamatedExpr));
+                String temp=f.b.accept(printAmalgamatedExpr);
+                // include the case of "fact{}"
+                print.append("        "+(temp.equals(" true ")? "": temp));
                 print.append(" \r\n        }\r\n ");
             }
         }
@@ -1711,7 +1713,10 @@ final class SimpleReporter extends A4Reporter {
             for (Pair<String, Expr> f: newModule.getAllFacts()){
                 print.append("\r\nfact ");
                 print.append(f.a.startsWith("fact$")?" {\r\n":f.a+ " {\r\n" );
-                print.append("        "+f.b.accept(printExprs) +"\r\n        }\r\n");
+                String temp=f.b.accept(printExprs);
+                // include the case of "fact{}"
+                print.append("        "+(temp.equals(" true")? "": temp)+"\r\n        }\r\n");
+
             }
         }
 
