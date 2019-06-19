@@ -1136,31 +1136,41 @@ final class SimpleReporter extends A4Reporter {
 
                 //print fields
                 print.append("{");
-                    for (Sig.Field f:s.getFields()){
-                        print.append("\r\n        "+f.label +": ");
 
-                        if(f.decl().expr instanceof ExprUnary)
+                for (Decl f:s.getFieldDecls()){
+                    print.append(f.disjoint!=null? "\r\n        disj ": "\r\n        ");
+                    if(f.names.size()>=1){
+                        for(ExprHasName n:f.names){
+                            print.append(n.label+",");
+                        }
+                        print.deleteCharAt(print.length()-1);
+                        print.append(": ");
+
+                        //get the first Field
+                        Sig.Field n= (Sig.Field)f.names.get(0);
+
+                        if(n.decl().expr instanceof ExprUnary)
                         {
                             // one  ----> lone
-                            if(((ExprUnary) f.decl().expr).op.equals(ExprUnary.Op.ONEOF)) {
-                                    print.append( f.color.isEmpty()?"one ":"lone ");
-                                print.append( ((ExprUnary) f.decl().expr).sub.accept(printExprs)+",");
+                            if(((ExprUnary) n.decl().expr).op.equals(ExprUnary.Op.ONEOF)) {
+                                print.append( f.color.isEmpty()?"one ":"lone ");
+                                print.append( ((ExprUnary) n.decl().expr).sub.accept(printExprs)+",");
                             }
                             // some -----> set
-                            else if(((ExprUnary) f.decl().expr).op.equals(ExprUnary.Op.SOMEOF)) {
+                            else if(((ExprUnary) n.decl().expr).op.equals(ExprUnary.Op.SOMEOF)) {
                                 print.append(f.color.isEmpty()? "some ":"set ");
-                                print.append( ((ExprUnary) f.decl().expr).sub.accept(printExprs)+",");
+                                print.append( ((ExprUnary) n.decl().expr).sub.accept(printExprs)+",");
                             }
                             else {
-                                print.append( f.decl().expr.accept(printExprs)+",");
+                                print.append( n.decl().expr.accept(printExprs)+",");
                             }
 
                         }else
-                            print.append( f.decl().expr.accept(printExprs)+",");
+                            print.append( n.decl().expr.accept(printExprs)+",");}
                     }
 
 
-                if(!s.getFields().isEmpty()){
+                if(!s.getFieldDecls().isEmpty()){
                     print.deleteCharAt(print.length()-1);
                     //} of Sig
                     print.append("\r\n        }");
@@ -1766,14 +1776,41 @@ final class SimpleReporter extends A4Reporter {
                 }
                 //print fields
                 print.append("{ ");
+
+   /*
                 if(s.getFields().size()>0){
                     for (Sig.Field f:s.getFields()){
                         print.append("\r\n        "+f.label +": ");
                         print.append( f.decl().expr.accept(printExprs)+",");
                     }
                 }
-                print.deleteCharAt(print.length()-1);
-                print.append("\r\n        }");
+*/
+
+
+                for (Decl f:s.getFieldDecls()){
+                    print.append(f.disjoint!=null? "\r\n        disj ": "\r\n        ");
+                    if(f.names.size()>=1){
+                        for(ExprHasName n:f.names){
+                            print.append(n.label+",");
+                        }
+                        print.deleteCharAt(print.length()-1);
+                        print.append(": ");
+
+                        //get the first Field
+                        Sig.Field n= (Sig.Field)f.names.get(0);
+
+                            print.append( n.decl().expr.accept(printExprs)+",");
+                    }
+                }
+
+                if(!s.getFieldDecls().isEmpty()){
+                    print.deleteCharAt(print.length()-1);
+                    //} of Sig
+                    print.append("\r\n        }");
+                }else
+                    //} of Sig
+                    print.append("}");
+
 
                 //fact for sig
                 if(!s.getFacts().isEmpty()){

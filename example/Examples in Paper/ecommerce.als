@@ -15,10 +15,8 @@ fact FeatureModel {
 	➄➊some none➊➄ -- Thumbnails requires Categories
 }
 
--- It was called Product, but that did not work and changed to Item
--- Instead of Feature and Product you should use unconmmon identifiers in the translation
--- such as _Feature_ or _Product_
-sig Item {
+
+sig Product {
 	➊catalog : one Catalog➊,
 	➀category : some Category➀,
 	➃images : set Image➃
@@ -27,7 +25,7 @@ sig Item {
 ➃sig Image {}➃
 
 ➀➌fact OneCategory {
-	category in Item -> one Category
+	category in Product -> one Category
 }➌➀
 
 sig Catalog {}
@@ -46,10 +44,8 @@ fact Acyclic {
 	all c : Category | c.thumbnails in (category.((iden+➁^inside➁).c)).images
 }➄➃➀
 
-fun catalogs [i : Item] : set Catalog {
-	-- The following is not being handled correctly in the amalgamated: the neutral element of the
-	-- outside plus should be none and not univ
-	➊i.catalog➊+➀i.category.(➋inside➋+➁^inside➁) & ➁Catalog➁➀
+fun catalogs [p : Product] : set Catalog {
+	➊p.catalog➊+➀p.category.(➋inside➋+➁^inside➁) & ➁Catalog➁➀
 }
 
 run {} with exactly ➊,➋,➌,➍,➎
@@ -61,9 +57,7 @@ run {} with exactly ➀,➁,➂,➃
 run {} with exactly ➀,➁,➂,➃,➄
 
 assert AllCataloged {
-	all i : Item | some catalogs[i] and catalogs[i] in Catalog
+	all p : Product | some catalogs[p] and catalogs[p] in Catalog
 }
-
--- The following check is giving a counter-example because of the above bug
 -- It should not give counter-examples
 check AllCataloged for 10

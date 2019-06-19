@@ -260,13 +260,15 @@ public  class expressionProject extends VisitReturn<Expr> {
 
             signew.attributes=x.attributes;
 
-            for (Sig.Field f: x.getFields()){
-                f.sig=signew;
+            for (Decl d: x.getFieldDecls()){
 
-                Expr exprout = visitThis(f);
+                String[]labels = new String[d.names.size()];
+                for(int i=0; i< d.names.size();i++){
+                    labels[i]=d.names.get(i).label;
+                }
+                Expr exprout = visitThis(d.expr);
                 if (exprout!=null){
-
-                    signew.addField(f.label, exprout);
+                    signew.addTrickyField(d.span(),d.isPrivate,d.disjoint,d.disjoint2,null,labels,exprout,d.color);
                 }
             }
         }
