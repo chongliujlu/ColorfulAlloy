@@ -675,7 +675,7 @@ final class SimpleReporter extends A4Reporter {
 
             //uesed to record features appears in the original module
             Set<Integer> allFeats = new HashSet<>();      //colorful Alloy
-            allFeats.addAll(CompModule.feats);           //colorful Alloy
+            allFeats.addAll(CompModule.feats);           //colorful Alloy(e.g. ➊,➁,allFeats={-1,2})
 
             cb(out, "warnings", bundleWarningNonFatal);
             if (rep.warn > 0 && !bundleWarningNonFatal)
@@ -720,14 +720,21 @@ final class SimpleReporter extends A4Reporter {
                                 printAmalgamatedModule(print, world, cmd, allFeats);
 
                             }else {
-                                expressionProject.executefeats = new HashSet<>(cmd.feats.feats);
+
+
+                                //expressionProject.executefeats = new HashSet<>(cmd.feats.feats);
                                 //exactly
                                 if (cmd.feats.isExact) {
+                                    if(!cmd.feats.feats.isEmpty())
+                                        expressionProject.executefeats = new HashSet<>(addExecuteFeats(cmd.feats.feats,allFeats));
+                                    else
+                                        expressionProject.executefeats=new HashSet<>();
                                     expressionProject reconstructExpr = new expressionProject();
                                     generateModule(print, world, reconstructExpr, cmd, allFeats);
 
                                     //amalgatmate
                                 } else {
+                                    expressionProject.executefeats = new HashSet<>(cmd.feats.feats);
                                     printAmalgamatedModule(print, world, cmd, allFeats);
                                 }
                             }
@@ -803,6 +810,27 @@ final class SimpleReporter extends A4Reporter {
                 rep.cb("bold", "Note: There were " + rep.warn + " compilation warnings. Please scroll up to see them.\n");
             if (rep.warn == 1)
                 rep.cb("bold", "Note: There was 1 compilation warning. Please scroll up to see it.\n");
+        }
+
+        private Set<Integer> addExecuteFeats(List<Integer> feats, Set<Integer> allFeats) {
+            Set<Integer> commandfeats=new HashSet<>();
+            Set<Integer> remain=new HashSet<>();
+            for (Integer i: allFeats){
+                remain.add(i>0?i: -i);
+            }
+
+            for(Integer i: feats){
+                if(i>0)
+                    commandfeats.add(i);
+                else
+                    remain.remove(-i);
+            }
+            if(commandfeats.isEmpty())
+                commandfeats=remain;
+            else{
+                commandfeats.retainAll(remain);
+            }
+            return commandfeats;
         }
 
         //colorful Alloy
@@ -1711,12 +1739,11 @@ final class SimpleReporter extends A4Reporter {
                         print.append(f.returnDecl.accept(printExprs));
                 }
 
-                print.append(" {");
 
                 if(f.getBody() instanceof ExprConstant)
-                    print.append("}\r\n");
+                    print.append("{ }\r\n");
                 else{
-                    print.append(" \r\n");
+                    print.append("{ \r\n");
                     print.append("        "+f.getBody().accept(printExprs)+" \r\n        }\r\n");
                 }
             }
