@@ -1659,7 +1659,9 @@ final class SimpleReporter extends A4Reporter {
                     //project sig facts
                     for (Expr factExpr : sigf) {
                         //got sigs and fields are point to old sigs and fields
-                        sigTemp.addFact(factExpr.accept(reconstructExpr));
+                        Expr temp=factExpr.accept(reconstructExpr);
+                        if(temp!=null)
+                            sigTemp.addFact(temp);
                     }
                     sigsFinal.add(sigTemp);
                 }
