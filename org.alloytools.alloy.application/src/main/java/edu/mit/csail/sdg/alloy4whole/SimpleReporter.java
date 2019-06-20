@@ -1321,7 +1321,7 @@ final class SimpleReporter extends A4Reporter {
                 if(i>0)
                 str.append(" _F"+i +  " in _Product_ and");
                 else
-                    str.append(" _F"+i +  " not in _Product_ and");
+                    str.append(" _F"+ -i +  " not in _Product_ and");
             }
             if(str.length()>3){
                 str.delete(str.length()-4,str.length());
@@ -1388,9 +1388,15 @@ final class SimpleReporter extends A4Reporter {
             // add func/pred
             SafeList<Func> funs =world.getAllFunc();
             for(Func fun: funs) {
-                if((cmd.feats==null && !fun.color.isEmpty())|| (!cmd.feats.feats .containsAll(fun.color)))
-                    continue;
+                //if((cmd.feats==null && !fun.color.isEmpty())|| (!cmd.feats.feats .containsAll(fun.color)))
+                 //   continue;
+                //command contains no feature, fun marked with features
+                //if(cmd.feats==null&& !fun.color.isEmpty())
+                //    continue;
+               // if(cmd.feats!=null){
 
+
+               // }
 
                 fun.getBody().color.addAll(fun.color);
                 Expr nbody = (fun.getBody()).accept(reconstructExpr);
@@ -1703,12 +1709,14 @@ final class SimpleReporter extends A4Reporter {
                         print.append(f.returnDecl.accept(printExprs));
                 }
 
-                print.append(" { \r\n");
+                print.append(" {");
 
                 if(f.getBody() instanceof ExprConstant)
-                    print.append("\r\n}");
-                else
+                    print.append("}\r\n");
+                else{
+                    print.append(" \r\n");
                     print.append("        "+f.getBody().accept(printExprs)+" \r\n        }\r\n");
+                }
             }
         }
 
