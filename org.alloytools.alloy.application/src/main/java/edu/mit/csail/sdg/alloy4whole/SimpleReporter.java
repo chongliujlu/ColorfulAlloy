@@ -721,11 +721,11 @@ final class SimpleReporter extends A4Reporter {
 
                             }else {
 
-
                                 //expressionProject.executefeats = new HashSet<>(cmd.feats.feats);
                                 //exactly
                                 if (cmd.feats.isExact) {
                                     if(!cmd.feats.feats.isEmpty())
+                                        //executefeats contains no Negative features
                                         expressionProject.executefeats = new HashSet<>(addExecuteFeats(cmd.feats.feats,allFeats));
                                     else
                                         expressionProject.executefeats=new HashSet<>();
@@ -734,6 +734,7 @@ final class SimpleReporter extends A4Reporter {
 
                                     //amalgatmate
                                 } else {
+                                    //executefeats contains Negative Features
                                     expressionProject.executefeats = new HashSet<>(cmd.feats.feats);
                                     printAmalgamatedModule(print, world, cmd, allFeats);
                                 }

@@ -6,6 +6,9 @@ import edu.mit.csail.sdg.ast.*;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * This class implements a visitor that print the expressions for the Amalgamated approach.
+ */
 public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
     @Override
@@ -448,14 +451,11 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
     public String visit(ExprQt x) throws Err {
         StringBuilder str=new StringBuilder();
 
-
         StringBuilder tempExpr=new StringBuilder();
         tempExpr.append("{");
         if(!x.op.equals(ExprQt.Op.COMPREHENSION))
             //all，no
             tempExpr.append(x.op.getLabel() +" ");
-
-
 
         for (Decl decl :x.decls){
             if(decl.disjoint!=null)
@@ -467,10 +467,9 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
             tempExpr.append(": ");
             tempExpr.append(visitThis(decl.expr)+",");
         }
+
         tempExpr.deleteCharAt(tempExpr.length()-1);
-
         tempExpr.append(" | ");
-
         tempExpr.append(visitThis(x.sub));
         tempExpr.append("}");
 
@@ -599,9 +598,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
     @Override
     public String visit(ExprVar x) throws Err {
-
         return " "+x.label+ " ";
-
     }
 
     @Override
@@ -613,15 +610,13 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
     public String visit(Sig.Field x) throws Err {
         return x.label+" ";
     }
+
     /**
-     * for ExprList "and","or" operator
-     * @param str
-     * @param x
-     *
+     * help method, used to print the else clause for ExprList "and","or" operator
+     * @param str to add the else string
+     * @param x The binary expression marked with features
      */
-
     private void printElse(StringBuilder str, int arity,ExprBinary x) {
-
         //    + operator
         if(x.op.equals(ExprBinary.Op.PLUS))
             printElseString(str,arity," none ");
@@ -631,15 +626,24 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
         else
             //for example  .
             printElseString(str,arity," none ");
-
     }
 
+    /**
+     * help method, used to print the else clause
+     * @param str  to add the else string
+     * @param arity The arity of the expression
+     */
     private void printElse(StringBuilder str, int arity) {
             printElseString(str,arity," none ");
-
     }
 
-
+    /**
+     * help method, used to print the else clause
+     * @param str  to add the else string
+     * @param arity aritity of the expression marked with features
+     * @param string String to be printed
+     *         for example, arity =2, string =none, the string to be add to str will be "none->none"
+     */
     private void printElseString(StringBuilder str, int arity, String string) {
         StringBuilder elseString=new StringBuilder();
         for (int i=0; i< arity;i++){
@@ -653,18 +657,16 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
     }
 
     /**
+     *help methord, print the prefix for the expressions that marked with features
      *
-     *
-     * @param str
-     * @param
-     * @param
-     * @param
+     * @param PFeature the features marked,
+     * @param str to add the prifix
+     * @param inOrNot string "in " or "not in "
+     * @param operator "and" or "or"
+     *for examples, marked with ➊,➁
      */
-
     private void addFeatureprefix(Set<Integer> PFeature,StringBuilder str, String inOrNot,String operator) {
-
         for (Integer i: PFeature){
-
             str.append(" _F"+i + " "+inOrNot+" _Product_ "+operator);
         }
     }
