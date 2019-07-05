@@ -254,11 +254,12 @@ public  class expressionProject extends VisitReturn<Expr> {
             signew.attributes=x.attributes;
 
             for (Decl d: x.getFieldDecls()){
-
                 String[]labels = new String[d.names.size()];
                 for(int i=0; i< d.names.size();i++){
                     labels[i]=d.names.get(i).label;
                 }
+                //add features to its bounding expression
+                d.expr.color.addAll(d.color);
                 Expr exprout = visitThis(d.expr);
                 if (exprout!=null){
                     signew.addTrickyField(d.span(),d.isPrivate,d.disjoint,d.disjoint2,null,labels,exprout,d.color);

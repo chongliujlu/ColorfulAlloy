@@ -24,7 +24,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
         }
 
         StringBuilder str=new StringBuilder();
-        if (x.color.isEmpty())
+       // if (x.color.isEmpty())
        // if(x.color.isEmpty() &&((! x.op.equals(ExprBinary.Op.JOIN)|| (x.op.equals(ExprBinary.Op.JOIN) && x.right instanceof ExprCall))))
             str.append("(");
 
@@ -45,8 +45,8 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
         }
         if(!PFeatures.isEmpty()){
-            if(x.color.size()>1&& NFeatures.isEmpty())
-                str.append("(");
+           // if(x.color.size()>1&& NFeatures.isEmpty())
+            //    str.append("(");
             addFeatureprefix(PFeatures,str, "in","and");
             str.deleteCharAt(str.length()-1);
             str.deleteCharAt(str.length()-1);
@@ -107,7 +107,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
                 str.append(" else ");
                 printElse(str, x.type().arity());
             }
-           // str.append(")");
+            str.append(")");
         }
 
 
@@ -193,6 +193,9 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
             if(x.op.equals(ExprList.Op.OR) && !(arg.color.isEmpty())){
                 //subExpr=subExpr.replaceAll("implies","and");
+                if(subExpr.endsWith("]"))
+                    str.append("("+subExpr +" else some none)");
+                else
                 str.append("("+subExpr.substring(0,subExpr.length()-1) +" else some none))");
             }
             else

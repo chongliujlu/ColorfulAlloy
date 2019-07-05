@@ -1190,12 +1190,24 @@ final class SimpleReporter extends A4Reporter {
                                 print.append(f.color.isEmpty()? "some ":"set ");
                                 print.append( ((ExprUnary) n.decl().expr).sub.accept(printExprs)+",");
                             }
-                            else {
+                            else
                                 print.append( n.decl().expr.accept(printExprs)+",");
-                            }
 
                         }else
-                            print.append( n.decl().expr.accept(printExprs)+",");}
+                        {
+
+                            if(!f.color.isEmpty())
+                            {
+                                // one  ----> lone
+                                String temp=n.decl().expr.accept(printExprs).replace(" one"," lone");
+                                // some ----->
+                                String tempn=temp.replace("some","");
+                                print.append( tempn+",");
+                            }
+                            else
+                               print.append( n.decl().expr.accept(printExprs)+",");
+                        }
+                       }
                     }
 
 
@@ -1222,6 +1234,7 @@ final class SimpleReporter extends A4Reporter {
                 }
                 print.append("\r\n");
             }
+            print.append("\r\n");
         }
 
         //colorful Alloy
@@ -1278,7 +1291,8 @@ final class SimpleReporter extends A4Reporter {
          * @param print used to store the generated code
          */
         private void addFeatureFact(Sig.Field f, StringBuilder print){
-            AmalgamatedExprPrinterVisitor printUnionModule=new AmalgamatedExprPrinterVisitor();
+           // AmalgamatedExprPrinterVisitor printUnionModule=new AmalgamatedExprPrinterVisitor();
+            ExprPrinterVisitor printUnionModule=new ExprPrinterVisitor();
             Set<Integer> NFeatures=new HashSet<>();
             Set<Integer> PFeatures=new HashSet<>();
             for(Integer i: f.color){
@@ -1417,16 +1431,6 @@ final class SimpleReporter extends A4Reporter {
             // add func/pred
             SafeList<Func> funs =world.getAllFunc();
             for(Func fun: funs) {
-                //if((cmd.feats==null && !fun.color.isEmpty())|| (!cmd.feats.feats .containsAll(fun.color)))
-                 //   continue;
-                //command contains no feature, fun marked with features
-                //if(cmd.feats==null&& !fun.color.isEmpty())
-                //    continue;
-               // if(cmd.feats!=null){
-
-
-               // }
-
                 fun.getBody().color.addAll(fun.color);
                 Expr nbody = (fun.getBody()).accept(reconstructExpr);
                 if(nbody==null){
@@ -1728,7 +1732,7 @@ final class SimpleReporter extends A4Reporter {
                     }
 
                     print.deleteCharAt(print.length()-1);
-                    print.append(" :"+d.expr.accept(printExprs)+",");
+                    print.append(": "+d.expr.accept(printExprs)+",");
                 }
                 print.deleteCharAt(print.length()-1);
                 if(!f.decls.isEmpty())
@@ -1814,16 +1818,6 @@ final class SimpleReporter extends A4Reporter {
                 }
                 //print fields
                 print.append("{ ");
-
-   /*
-                if(s.getFields().size()>0){
-                    for (Sig.Field f:s.getFields()){
-                        print.append("\r\n        "+f.label +": ");
-                        print.append( f.decl().expr.accept(printExprs)+",");
-                    }
-                }
-*/
-
 
                 for (Decl f:s.getFieldDecls()){
                     print.append(f.disjoint!=null? "\r\n        disj ": "\r\n        ");
