@@ -50,7 +50,7 @@ one sig Free, Ready, Washing extends State{}
 pred lockdoor [t,t':Time]{
 	t.currentState=Free
 	t'.currentState=Ready
-
+	//lock door
 	t.doorState=Unlocking
 	t'.doorState=Locking
 
@@ -62,9 +62,8 @@ pred lockdoor [t,t':Time]{
 ➀pred heat [t,t':Time]{
 	t.currentState=Ready 
 	t'.currentState=Ready
-
 	t'.doorState=t.doorState
-
+	//water are heated to 30 degree
 	lt[t.temp,30] 
 	 t'.temp=30
 	➁t'.timer=t.timer➁
@@ -74,13 +73,10 @@ pred lockdoor [t,t':Time]{
 ➁pred wait [t,t':Time]{
 	t.currentState =Ready 
 	t'.currentState=Ready
-
 	t'.doorState=t.doorState
-
 	➀t'.temp=t.temp➀
-
+	//timer -1
 	gt[t.timer, 0]
-
 	t'.timer=minus[t.timer, 1]	
 
 	➂t'.drier=t.drier➂
@@ -91,12 +87,10 @@ pred wash [t,t':Time]{
 	t'.currentState=Washing
 
 	t'.doorState=t.doorState
-
 	➀t'.temp=t.temp➀
 
 	➁t.timer=0➁
 	➁t'.timer=t.timer➁
-
 	➂t'.drier=t.drier➂
 	}
 
@@ -106,6 +100,7 @@ pred wash [t,t':Time]{
 	t'.doorState=t.doorState
 	➀t'.temp=t.temp➀	
 	➁t'.timer=t.timer➁
+
 	t.drier=Off
 	t'.drier=On
 	}➂
@@ -117,7 +112,6 @@ pred unlock [t,t':Time]{
 	t.doorState=Locking
 	t'.doorState=Unlocking
 	➀t'.temp=t.temp➀
-
 	➁t'.timer=t.timer➁
 	
 	➂t.drier=On➂
@@ -127,7 +121,6 @@ pred unlock [t,t':Time]{
 pred init{
 	first.currentState=Free
 	first.doorState=Unlocking
-
 	➂first. drier=Off➂
 	}
 

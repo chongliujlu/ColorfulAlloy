@@ -8,9 +8,9 @@ module WashingMachine
 *
 *
 *                                                 ➀ heat()➀ or ➁wait()➁
-*                  nop()                                    _____
-*                   ____                                     |      |
-*                  |   \|/                                   /    \|/                
+*                                                             _____
+*                                                            |      |
+*                                 lockdoor()            /    \|/                
 *                  Free————————————> Ready  
 *                 /|\ /|\                                        |
 *                   |    \         unlock()                    |  wash()
@@ -52,7 +52,7 @@ one sig Free, Ready, Washing extends State{}
 pred lockdoor [w:WashingMachine,t,t':Time]{
 	w.currentState.t=Free
 	w.currentState.t'=Ready
-
+// lock door
 	w.doorState.t=Unlocking
 	w.doorState.t'=Locking
 
@@ -66,12 +66,11 @@ pred lockdoor [w:WashingMachine,t,t':Time]{
 	w.currentState.t'=Ready
 
 	w.doorState.t=w.doorState.t'
-
+	//heated to 30 degree
 	lt[w.temp.t,30] 
 	 w.temp.t'=30
 
 	➁w.timer.t'=w.timer.t➁
-
 	➂w.drier.t'=w.drier.t➂
 	}➀
 
@@ -80,36 +79,34 @@ pred lockdoor [w:WashingMachine,t,t':Time]{
 	w.currentState.t'=Ready
 
 	w.doorState.t'=w.doorState.t
-
 	➀w.temp.t'=w.temp.t➀
-
+	//timer-1
 	gt[w.timer.t, 0]
-
 	w.timer.t'=minus[w.timer.t, 1]	
 
 	➂w.drier.t'=w.drier.t➂
 	}➁
 
 pred wash [w:WashingMachine,t,t':Time]{
+	//move to state "Washing"
 	w.currentState.t = Ready
 	w.currentState.t'=Washing
 
 	w.doorState.t'=w.doorState.t
-
 	➀w.temp.t'=w.temp.t➀
-
 	➁w.timer.t=0➁
 	➁w.timer.t'=w.timer.t➁
-
 	➂w.drier.t'=w.drier.t➂
 	}
 
 ➂pred dry [w:WashingMachine,t,t':Time]{
 	w.currentState.t=Washing
 	w.currentState.t'=Drying
+
 	w.doorState.t'=w.doorState.t
 	➀w.temp.t'=w.temp.t➀	
 	➁w.timer.t'=w.timer.t➁
+	//drier start working
 	w.drier.t=Off
 	w.drier.t'=On
 	}➂
@@ -117,13 +114,13 @@ pred wash [w:WashingMachine,t,t':Time]{
 pred unlock [w:WashingMachine,t,t':Time]{
 	w.currentState.t in Washing+➂Drying➂
 	w.currentState.t'=Free
-
+	//unlock door
 	w.doorState.t=Locking
 	w.doorState.t'=Unlocking
 	➀w.temp.t'=w.temp.t➀
-
 	➁w.timer.t'=w.timer.t➁
 	
+	//driver stop working
 	➂w.drier.t=On➂
 	➂w.drier.t'=Off➂	
 	}
@@ -131,7 +128,6 @@ pred unlock [w:WashingMachine,t,t':Time]{
 pred init{
 	WashingMachine.currentState.first=Free
 	WashingMachine.doorState.first=Unlocking
-
 	➂WashingMachine.drier.first=Off➂
 	}
 
