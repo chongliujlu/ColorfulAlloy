@@ -1,0 +1,102 @@
+
+/*  -------------------------  The Structure Definition  -------------------------  */
+abstract sig Topic {}	
+one sig negation_topic, sensor_data extends Topic{} 
+
+
+abstract sig Node {	
+	subscribes: set Topic,
+	advertises: set Topic,
+	var inbox : set Message,
+	var outbox : set Message
+}
+
+/*
+	In this model, there are 3 distinct type of Nodes.
+	The Node_Not, is a simple node, whose behaviour will mimic the logical negation operation
+	The Sensor Node will not subscribe any topic, and will behave like a robotic sensor.
+	The Actuator  will act as a robotic actuator. Its behaviour is limited to the message consumption.
+*/
+
+one sig Node_Not extends Node{}{
+	advertises = negation_topic
+	subscribes = sensor_data
+}									
+one sig Sensor extends Node{}{						
+	advertises = sensor_data
+	subscribes = none
+}
+one sig Actuator extends Node{}{					
+	advertises = none
+	subscribes = negation_topic
+}
+
+sig Message {										-- Each Message is associated to a static given topic, and has some static given value
+	topic : one Topic,	
+	value : one  Value
+}
+
+abstract sig Value {}								-- The Value is one of those: 'One or Zero'
+one sig One, Zero extends Value{}
+
+
+/* ------------------------- The Behaviour Definition -------------------------- */
+
+/* 
+	These set of facts were stated to describe the constraints concerning the message flow between nodes.
+*/
+fact Messages {
+	all n : Node | always {			
+		n.inbox.topic in n.subscribes
+		n.outbox.topic in n.advertises
+	}
+	all m : Message | always {
+		m in Node.outbox implies (all n : subscribes.(m.topic) | eventually m in n.inbox)
+	}
+	always {					
+		all m : Node.outbox | eventually m not in Node.outbox
+	}
+	all m : Message | always{	
+		m in Node.inbox implies (some n : advertises.(m.topic) | previous once m in n.outbox) 
+	}	
+}
+
+/*
+	On the initial states, there are no messages, both in inbox as outbox.
+*/
+fact init {
+	no (outbox + inbox)
+}
+
+fact Sensor_Behaviour{									
+	always {
+		eventually some Sensor.outbox
+	}
+}
+
+fact Node_Not_Behaviour{									-- The Node_Not will always have the same 'Safety' behaviour (logical NOT function).
+	always {
+		
+	(some m1: Node_Not.outbox & topic.negation_topic | m1.value in Zero)
+				implies previous once (some m0: Node_Not.inbox & topic.sensor_data | m0.value in One)
+		
+		
+
+	(some m1: Node_Not.outbox & topic.negation_topic | m1.value in One)
+				implies previous once (some m0: Node_Not.inbox & topic.sensor_data | m0.value in Zero)
+	}	
+	
+}
+
+check safety_property{
+	always{
+		(some m1: Actuator.inbox & topic.negation_topic | m1.value in Zero)
+			implies previous once (some m0: Sensor.outbox & topic.sensor_data | m0.value in One)
+	}
+} for 4 but 10 Time
+
+run show_instance{
+	eventually{
+		 some Actuator.inbox
+	}
+} for 4 but 10 Time

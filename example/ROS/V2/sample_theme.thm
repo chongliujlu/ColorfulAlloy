@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<alloy>
+
+<view nodetheme="Martha" hidePrivate="no" hideMeta="no">
+
+<defaultnode/>
+
+<defaultedge/>
+
+<node>
+   <type name="Int"/>
+   <type name="Message"/>
+   <type name="Node_Not"/>
+   <type name="One"/>
+   <type name="String"/>
+   <type name="Zero"/>
+   <type name="seq/Int"/>
+</node>
+
+<node color="Green">
+   <type name="Producer"/>
+</node>
+
+<node color="Red">
+   <type name="Consumer"/>
+</node>
+
+<node hideunconnected="no">
+   <type name="univ"/>
+</node>
+
+<node shape="Circle" color="Blue">
+   <type name="Node"/>
+</node>
+
+<node shape="Hexagon" color="Gray">
+   <type name="Topic"/>
+</node>
+
+<node visible="no">
+   <type name="Value"/>
+</node>
+
+<edge layout="yes">
+   <relation name="advertises"> <type name="Node"/> <type name="Topic"/> </relation>
+</edge>
+
+<edge visible="no" attribute="yes">
+   <relation name="topic"> <type name="Message"/> <type name="Topic"/> </relation>
+   <relation name="value"> <type name="Message"/> <type name="Value"/> </relation>
+</edge>
+
+</view>
+
+</alloy>

@@ -1,0 +1,155 @@
+/*
+	Model Notes:
+			This model was divided in 2 fundamental parts.
+			The first one, depicts the strutural part of a simple ROS architecture, that can be seen as 
+		a group of nodes organized in a linear structure.
+			The last one, depicts the behavioural part of the system. Since the flow of the messages within the system, up to
+		the behaviour of each individual node.
+*/
+
+
+/*  -------------------------  The Structure Definition  -------------------------  */
+
+
+-- Abstract Node
+/* Each node subscribes and advertises some set of Topics */
+/* Each node has an inbox and outbox,  respectively representing the messages that will be processed,
+    and the ones that already had been. */
+abstract sig Node {	
+	subscribes: set Topic,
+	advertises: set Topic,
+	var inbox : set Message,
+	var outbox : set Message
+}
+
+/*
+	In this model, there are 3 distinct type of Nodes.
+	The Node_Not, is a simple node, whose behaviour will mimic the logical negation operation
+	The Producer Node will not subscribe any topic, and will behave like a robotic sensor.
+	On the other hand, the consumer will act as a robotic actuator. Its behaviour is limited to message consumption.
+*/
+sig Node_Not extends Node{}							-- Node that mimics the logical negation Behaviour.
+one sig Producer extends Node{}{						-- Sensor Behaviour. 
+	subscribes = none
+}
+one sig Consumer extends Node{}{						-- Actuator Behaviour.
+	advertises = none
+}
+
+sig Topic {}										-- In this model, the distinct Topics and distinct message types are not considered 
+
+sig Message {										-- Each Message is associated to a given topic, and has some given value
+	topic : one Topic,	
+	value : one  Value
+}
+
+abstract sig Value {}								-- The Value is one of those: 'One or Zero'
+one sig One, Zero extends Value{}
+
+
+/*
+	These describe the architecture structure, which in this particular case, will represent a set of nodes organized in a linear form.
+	i.e : Producer -> Node -> Node -> Node -> Node -> ... -> Consumer 
+*/
+fact Linear_Structure {
+	Node = Node_Not + Producer + Consumer
+	all n: Node | 
+		(n.advertises = none) implies (n in Consumer)			-- The only Node that doesn't publishes, is the last one.
+	all n:Node| 									-- The only Node that doesn't subscribes any topic, is the first one.
+		(n.subscribes = none) implies (n in Producer)
+	all n:Node | 									-- Each Node only subscribes and advertises, at most, one topic.
+		(lone n.subscribes) and (lone n.advertises) and (n.advertises != n.subscribes) 
+	subscribes.~subscribes in id[Node]					-- 'subscribes' is injective.
+	advertises.~advertises in id[Node] 					-- 'advertises' is injective.
+	Topic in (Node.subscribes & Node.advertises)					-- Each topic will be used.
+	no id[Node] & ^(subscribes.~advertises)				-- There are no cycles 
+}
+
+
+/* ------------------------- The Behaviour Definition -------------------------- */
+
+/* 
+	These set of facts were stated to describe the constraints concerning the message flow between nodes.
+*/
+fact Messages {
+	all n : Node | always {			
+		n.inbox.topic in n.subscribes
+		n.outbox.topic in n.advertises
+	}
+	all m : Message | always {
+		m in Node.outbox implies (all n : subscribes.(m.topic) | eventually m in n.inbox)
+	}
+	always {					
+		all m : Node.outbox | eventually m not in Node.outbox
+	}
+	all m : Message | always{	
+		m in Node.inbox implies (some n : advertises.(m.topic) | previous once m in n.outbox) 
+	}	
+}
+
+/*
+	On the initial states, there are no messages, both in inbox as outbox.
+*/
+fact init {
+	no (outbox + inbox)
+}
+
+fact Producer_As_Sensor{									-- The Sensor only produces Zero values	
+	always {
+		eventually some Producer.outbox
+	}
+}
+
+fact Producer_Constraints {									-- In this particular case, the Sensor will only produce values equals to Zero
+	always{
+		all m: Producer.outbox | m.value = Zero
+	}
+}
+
+fact Node_Not_Behaviour{									-- The Node_Not will always have the same 'Safety' behaviour (logical NOT function).
+	always {
+		all n: Node_Not {
+			(some m1: n.outbox | m1.value in Zero)
+				implies previous once (some m0: n.inbox | m0.value in One)
+		}
+		
+	}
+	always {
+		all n: Node_Not {
+			(some m1: n.outbox | m1.value in One)
+				implies previous once (some m0: n.inbox | m0.value in Zero)
+		}	
+	}
+}
+
+--- Aux Function
+fun id[S: univ] : univ -> univ {								-- id definition.
+	(S -> S) & iden
+}
+
+/* If you want to use arbitrary scopes for check some property, take these following rules into account.
+/* Scope rules:
+	Exactly 'x' Node_Not , 'x' must be an odd number
+	Exactly 1 Zero
+	Exactly 1 One
+	Exactly 1 Producer
+	Exactly 1 Consumer
+	Exactly 'x'+1 Topic
+	Exactly 'x' +1 Message			
+	Exactly ('x'+2)*2 - 1  Time
+*/
+
+-- An instance Vizualization
+run show_instance {
+	eventually some Consumer.inbox
+} for 3 but exactly 1 Zero, exactly 1 One, exactly 1 Producer, exactly 1 Consumer, exactly 3 Node_Not, exactly 4 Topic,  exactly 4 Message, exactly 10 Time	
+
+
+-- check properties:
+check property {
+	always{
+		some Consumer.inbox 
+			implies (all m: Consumer.inbox | m.value in One)
+	}
+} for 3 but exactly 1 Zero, exactly 1 One, exactly 1 Producer, exactly 1 Consumer, exactly 3 Node_Not, exactly 4 Topic,  exactly 4 Message, exactly 10 Time	
+
