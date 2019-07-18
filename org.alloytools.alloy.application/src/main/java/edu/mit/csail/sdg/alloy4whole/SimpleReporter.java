@@ -1111,7 +1111,7 @@ final class SimpleReporter extends A4Reporter {
                 print.append("{\r\n");
                 String temp =f.accept(printAmalgamatedExpr);
                 if(s.label.startsWith("this/"))
-                    temp=temp.replace(s.label.substring(5)+" .","");
+                    temp=temp.replace(s.label.substring(5)+".","");
 
                 temp=temp.replace("this .","");
                 print.append("        "+temp);
