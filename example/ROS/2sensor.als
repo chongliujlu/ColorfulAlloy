@@ -1,9 +1,14 @@
-module ROSArchitectureV3
+/**
+  ➀: add a sensor node to the map
+*/
+module ROSArchitecturev3
 open util/ordering [Time]
 sig Time{}
 
 abstract sig Topic {}	
-one sig negation_topic, sensor_data extends Topic{} 
+one sig negation_l, sensor_data_l extends Topic{} 
+➀one sig sensor_data_v extends Topic{}➀
+➀one sig negation_v extends Topic{}➀
 
 abstract sig Node {	
 	subscribes: set Topic,
@@ -13,18 +18,23 @@ abstract sig Node {
 	}
 //The Node_Not, is a simple node, whose behaviour will mimic the logical negation operation
 one sig Node_Not extends Node{}{
-	advertises = negation_topic
-	subscribes = sensor_data
+	advertises = negation_l+➀negation_v➀
+	subscribes = sensor_data_l+➀sensor_data_v➀
 	}	
 // The Sensor Node will not subscribe any topic, and will behave like a robotic sensor.								
-one sig Sensor extends Node{}{						
-	advertises = sensor_data
+abstract sig Sensor extends Node{}{						
 	subscribes = none
 	}
+one sig Sensor_L extends Sensor{}{
+	advertises = sensor_data_l
+	}
+➀one sig Sensor_V extends Sensor{}{
+	➀advertises = sensor_data_v➀
+	}➀
 //The Actuator  will act as a robotic actuator. Its behaviour is limited to the message consumption.
 one sig Actuator extends Node{}{					
 	advertises = none
-	subscribes = negation_topic
+	subscribes = negation_l+➀negation_v➀
 	}
 
 //Each Message is associated to a static given topic, and has some static given value
@@ -47,17 +57,18 @@ fact Messages {
 		}
 
 	all t: Time-last| some t': t.nexts| all m : Node.outbox.t{ 
-			 m not in Node.outbox.t'
+			 (m not in Node.outbox.t')
 			}
+
 	all m : Message, t: Time-first| some t': t.prevs | 	
 		m in Node.inbox.t implies 
 			(some n : advertises.(m.topic) | m in n.outbox.t') 
 	}
 
 
-//On the initial states, there are no messages, both in inbox and outbox.
+//On the initial states, there are no messages, both in inbox as outbox.
 fact init {
-	no (outbox + inbox).first
+	no (inbox+outbox). first
 	}
 
 fact Sensor_Behaviour{									
@@ -67,21 +78,22 @@ fact Sensor_Behaviour{
 // The Node_Not will always have the same 'Safety' behaviour (logical NOT function).
 fact Node_Not_Behaviour{
 	all t: Time-first | some t':t.prevs{ 
-		(some m1: Node_Not.outbox.t & topic.negation_topic | m1.value in Zero)
-				implies (some m0: Node_Not.inbox.t' & topic.sensor_data | m0.value in One)
+		(some m1: Node_Not.outbox.t & topic.negation_l | m1.value in Zero)
+				implies (some m0: Node_Not.inbox.t' & topic.(sensor_data_l) | m0.value in One)
+		➀(some m1: Node_Not.outbox.t & topic.negation_v | m1.value in Zero)
+				implies (some m0: Node_Not.inbox.t' & topic.(sensor_data_v) | m0.value in One)➀
 
-		(some m1: Node_Not.outbox.t & topic.negation_topic | m1.value in One)
-				implies(some m0: Node_Not.inbox.t' & topic.sensor_data | m0.value in Zero)
+		(some m1: Node_Not.outbox.t & topic.negation_l | m1.value in One)
+				implies(some m0: Node_Not.inbox.t' & topic.sensor_data_l | m0.value in Zero)
+	➀(some m1: Node_Not.outbox.t & topic.negation_v | m1.value in One)
+				implies(some m0: Node_Not.inbox.t' & topic.sensor_data_v | m0.value in Zero)➀
 	}		
 }
 
-run { some t:Time-first| some Actuator.inbox.t} for 3 but exactly 5 Time
 
-check safety_property{
-	all t: Time-first|  some t' : t.prevs| { 
-		(some m1: Actuator.inbox.t & topic.negation_topic | m1.value in Zero)
-			implies (some m0: Sensor.outbox.t' & topic.sensor_data | m0.value in One)
-		}
-	} for 4 but 10 Time
+run { some t:Time-first| some Actuator.inbox.t} for 3 but exactly 5 Time
+run { some t:Time-first| some Actuator.inbox.t} with exactly ➀ for 3 but exactly 5 Time
+
+
 
 
