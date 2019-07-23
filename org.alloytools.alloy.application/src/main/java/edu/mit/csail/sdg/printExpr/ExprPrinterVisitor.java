@@ -64,7 +64,11 @@ public  class ExprPrinterVisitor extends VisitReturn<String> {
         StringBuilder temp=new StringBuilder();
         if(x.args.size()>0)
             temp.append("(");
-        temp.append(x.fun.label.substring(x.fun.label.indexOf("/")+1));
+        String name=x.fun.label;
+        while(name.contains("/")){
+            name=name.substring(name.indexOf("/")+1);
+        }
+        temp.append(name);
         if(x.args.size()>0){
             temp.append("[");
             for(Expr arg :x.args){

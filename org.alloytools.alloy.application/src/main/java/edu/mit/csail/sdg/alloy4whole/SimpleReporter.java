@@ -710,18 +710,22 @@ final class SimpleReporter extends A4Reporter {
                         cb(out, "bold", "Executing \"" + cmd + "\"\n");
 
 //----------------------------------------------colorful Alloy---------------------------------------------------------------
-
+                       // for (CompModule.Open open: ((CompModule) world).getOpens()){
+                      //      if(!open.filename.startsWith("util/")){
+                      ////          Util.writeAll(tempdir + File.separatorChar+open.filename+".als", Util.readAll(open.getRealModule().span().filename));
+                      //      }
+                      //  }
                         A4Solution ai;
                         long startTime = System.currentTimeMillis();
                         StringBuilder print = new StringBuilder();
+                        //store the execute appraoch, true: iterative, otherwise, Amalgamate
+                        boolean iterativeApproach =true;
+
                         if (cmd != null ) {
                             if(cmd.feats == null){
                                 expressionProject.executefeats = new HashSet<>();
-                                printAmalgamatedModule(print, world, cmd, allFeats);
-
+                                iterativeApproach=false;
                             }else {
-
-                                //expressionProject.executefeats = new HashSet<>(cmd.feats.feats);
                                 //exactly
                                 if (cmd.feats.isExact) {
                                     if(!cmd.feats.feats.isEmpty())
@@ -729,23 +733,42 @@ final class SimpleReporter extends A4Reporter {
                                         expressionProject.executefeats = new HashSet<>(addExecuteFeats(cmd.feats.feats,allFeats));
                                     else
                                         expressionProject.executefeats=new HashSet<>();
-                                    expressionProject reconstructExpr = new expressionProject();
-                                    generateModule(print, world, reconstructExpr, cmd, allFeats);
-
-                                    //amalgatmate
+                                //amalgatmate
                                 } else {
                                     //executefeats contains Negative Features
                                     expressionProject.executefeats = new HashSet<>(cmd.feats.feats);
-                                    printAmalgamatedModule(print, world, cmd, allFeats);
+                                    iterativeApproach=false;
                                 }
                             }
                         }
-                        getexecutecodeTime=System.currentTimeMillis() - startTime;
-                        File Nmodule = new File(tempcode);
-                        String output = Nmodule.getAbsolutePath();
 
-                        if (print != null)
-                            Util.writeAll(output, print.toString());
+                        for (CompModule.Open open: ((CompModule) world).getOpens()){
+                            if(!open.filename.startsWith("util/")){
+                                if(open.filename.contains("/")){
+                                   File directory = new File(tempdir + File.separatorChar+open.filename.substring(0,open.filename.lastIndexOf("/")));
+                                    directory.mkdirs();
+                                }
+                                printexecutedCode(iterativeApproach,open.getRealModule(),null,allFeats,tempdir + File.separatorChar+open.filename+".als");
+                            }
+                        }
+                       String output= printexecutedCode(iterativeApproach,world,cmd,allFeats,tempcode);
+
+                        // generate executed code, and write to variable "print"
+                       // if(iterativeApproach)
+                        //    generateIterativeModule(print, world, cmd, allFeats);
+                       // else
+                      //      generateAmalgamatedModule(print, world, cmd, allFeats);
+
+
+                        getexecutecodeTime=System.currentTimeMillis() - startTime;
+                       // File Nmodule = new File(tempcode);
+                       // String output = Nmodule.getAbsolutePath();
+
+                       // if (print != null)
+                       //     Util.writeAll(output, print.toString());
+
+
+
                         long afterprinttime = System.currentTimeMillis();
 
                         Module worldNewExecute = CompUtil.parseEverything_fromFile(rep, null, output);
@@ -813,6 +836,23 @@ final class SimpleReporter extends A4Reporter {
                 rep.cb("bold", "Note: There was 1 compilation warning. Please scroll up to see it.\n");
         }
 
+        private String printexecutedCode(boolean iterativeApproach, Module realModule,Command command, Set<Integer> allFeats,String filename) {
+            StringBuilder print = new StringBuilder();
+            // generate executed code, and write to variable "print"
+            if(iterativeApproach)
+                generateIterativeModule(print, realModule, command, allFeats);
+            else
+                generateAmalgamatedModule(print, realModule, command , allFeats);
+
+            File Nmodule = new File(filename);
+            String output = Nmodule.getAbsolutePath();
+
+            if (print != null)
+                Util.writeAll(output, print.toString());
+            return output;
+
+        }
+
         private Set<Integer> addExecuteFeats(List<Integer> feats, Set<Integer> allFeats) {
             Set<Integer> commandfeats=new HashSet<>();
             Set<Integer> remain=new HashSet<>();
@@ -842,7 +882,7 @@ final class SimpleReporter extends A4Reporter {
          * @param cmd executed Command
          * @param allFeats features present in the original module
          */
-        public void printAmalgamatedModule(StringBuilder print, Module world, Command cmd,Set<Integer> allFeats){
+        public void generateAmalgamatedModule(StringBuilder print, Module world, Command cmd, Set<Integer> allFeats){
 
             checkexecutedfeats(allFeats,cmd.feats);
             AmalgamatedExprPrinterVisitor printAmalgamatedExpr=new AmalgamatedExprPrinterVisitor();
@@ -1380,13 +1420,14 @@ final class SimpleReporter extends A4Reporter {
          * generate code for iterative method
          * @param print used to store the generated code
          * @param world original module(before print)
-         * @param reconstructExpr visitor, used to project feature code
          * @param cmd executed Command
          * @param modulefeats features present in the original module
          */
-        public void generateModule(StringBuilder print, Module world, expressionProject reconstructExpr, Command cmd,Set<Integer> modulefeats) {
+        public void generateIterativeModule(StringBuilder print, Module world, Command cmd, Set<Integer> modulefeats) {
 
+            expressionProject reconstructExpr = new expressionProject();
 
+            if(cmd!=null)
             checkexecutedfeats(modulefeats,cmd.feats);
 
             CompModule newModule = new CompModule(null, ((CompModule) world).span().filename, "");
@@ -1454,16 +1495,14 @@ final class SimpleReporter extends A4Reporter {
                         }
                     }
                 }
-
                 newModule.addFunc(fun.pos, fun.isPrivate, fun.label.substring(5), null, decls.makeConst(), fun.returnDecl, nbody);
-
             }
-//print func/pred
 
+            //print func/pred
             printFunc(print,newModule,printExprs);
             printAssert(print, printExprs,reconstructExpr,world,newModule);
 
-//print command ➀
+            if(cmd!=null)
             printCommand(print,world,reconstructExpr,printExprs,cmd,modulefeats);
         }
        // colorful Alloy
@@ -1874,6 +1913,10 @@ final class SimpleReporter extends A4Reporter {
                 if(!open.filename.equals("util/integer")){
 
                     print.append("open "+open.filename+" ");
+                  //  String openpath=open.getRealModule().pos().filename;
+
+                    //print.append("open " + openpath.substring(1,openpath.length()-4)+" ");
+
                     if(open.args.size()!=0){
                         print.append("[");
                         for(String s:open.args) {

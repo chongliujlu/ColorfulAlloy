@@ -1948,6 +1948,7 @@ public final class CompModule extends Browsable implements Module {
             Context.contextFeats.clear();//colorful Alloy
             Context.contextFeats.addAll(s.color);//colorful Alloy
             Expr f = res.old2appendedfacts.get(res.new2old.get(s));
+            f.color.addAll(s.color); //colorful Alloy
             if (f == null)
                 continue;
             if (f instanceof ExprConstant && ((ExprConstant) f).op == ExprConstant.Op.TRUE)

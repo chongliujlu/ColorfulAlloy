@@ -226,7 +226,12 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
         //if(x.args.size()>0)
        // if(x.fun.label.substring(x.fun.label.indexOf("/")+1).equals("prev")||x.fun.label.substring(x.fun.label.indexOf("/")+1).equals("prevs"))
         //    tempExpr.append("(");
-        tempExpr.append(x.fun.label.substring(x.fun.label.indexOf("/")+1));
+        String name= x.fun.label;
+        while (name.contains("/")){
+            name=name.substring(name.indexOf("/")+1);
+        }
+        tempExpr.append(name);
+       // tempExpr.append(x.fun.label.substring(x.fun.label.indexOf("/")+1));
         if(x.args.size()>0) {
             tempExpr.append("[");
             for (Expr arg : x.args) {
@@ -606,7 +611,10 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
     @Override
     public String visit(Sig x) throws Err {
-        return x.label.startsWith("this/")? x.label.substring(5):x.label;
+        if(x.label.contains("/")){
+           return x.label.substring(x.label.indexOf("/")+1);
+        }
+        return x.label;
     }
 
     @Override

@@ -1,0 +1,155 @@
+module models/vorteX
+open meta/meta
+
+------  Values	--------
+abstract sig TS extends Value {} 	-- TwistStamped
+abstract sig PC extends Value {} 	-- PointCloud2
+abstract sig SIMU extends Value {} 	-- Sensor_msgs/Imu
+abstract sig NF extends Value {} 	-- Nav_Fix
+abstract sig Img extends Value {}	-- Sensor/Image
+
+abstract sig IndxTrack extends Value {}
+abstract sig MA extends Value {} 	-- MultiArray
+
+
+
+------ Topic List ------
+one sig GPS_Vel, 			
+	GPS_Fix,
+	PointCloud,
+	Image,
+	Imu,					
+	Ind_GPS_Vel,			
+	Ind_GPS_Fix,		
+	Ind_PointCloud,
+	Ind_Image,
+	Ind_Imu,
+	Ind_Tracklets,		
+	Transf_Tracklets,	
+	Transf_PointCloud,
+	Compressed_PointCloud		     
+extends Topic {}
+
+fact topic_values {
+	all m:topic.GPS_Vel | m.value in TS
+	all m:topic.GPS_Fix | m.value in NF
+	all m:topic.PointCloud | m.value in PC
+	all m:topic.Image | m.value in Img
+	all m:topic.Imu | m.value in SIMU
+	all m:topic.Ind_GPS_Vel | m.value in TS
+	all m:topic.Ind_GPS_Fix | m.value in NF
+	all m:topic.Ind_PointCloud | m.value in PC
+	all m:topic.Ind_Image| m.value in Img
+	all m:topic.Ind_Imu | m.value in SIMU
+	all m:topic.Ind_Tracklets | m.value in IndxTrack
+	all m:topic.Transf_Tracklets | m.value in IndxTrack
+	all m:topic.Transf_PointCloud | m.value in PC
+	all m:topic.Compressed_PointCloud| m.value in MA
+}
+
+
+------ Node List ------
+one sig Reader extends Sensor{}{
+	advertises = GPS_Vel + GPS_Fix + PointCloud + Image + Imu
+}
+one sig Perception_Thrust extends Node {}{
+	subscribes = GPS_Vel + GPS_Fix + PointCloud + Image + Imu
+	advertises = Ind_Imu + Ind_GPS_Fix + Ind_GPS_Vel + Ind_PointCloud + Ind_Image + Ind_Tracklets
+}
+
+one sig Transform extends Node {}{
+	subscribes = Ind_Imu + Ind_PointCloud + Ind_Tracklets
+	advertises = Transf_Tracklets + Transf_PointCloud
+}
+
+one sig Compressor extends Node{}{
+	subscribes = Transf_Tracklets + Transf_PointCloud
+	advertises = Compressed_PointCloud
+}
+
+one sig Mem_Writter extends Actuator{}{
+	subscribes = Ind_Imu + Ind_GPS_Vel + Ind_GPS_Fix + Ind_Image + Transf_Tracklets + Compressed_PointCloud
+}
+
+
+------ Behaviour ------
+fact Perception_Thrust_Behaviour {
+ always{
+	all m1: Perception_Thrust.outbox & topic.Ind_Imu |
+			previous once (some m0: Perception_Thrust.inbox & topic.Imu | m0.value = m1.value)
+
+	all m0: Perception_Thrust.inbox & topic.Imu |
+			eventually (some m1: Perception_Thrust.outbox & topic.Ind_Imu | m0.value = m1.value)
+	
+
+	all m1: Perception_Thrust.outbox & topic.Ind_GPS_Vel |
+			previous once (some m0: Perception_Thrust.inbox & topic.GPS_Vel | m0.value = m1.value)
+	
+	all m0: Perception_Thrust.inbox & topic.GPS_Vel |
+			eventually (some m1: Perception_Thrust.outbox & topic.Ind_GPS_Vel | m0.value = m1.value)
+
+
+	all m1: Perception_Thrust.outbox & topic.Ind_GPS_Fix |
+			previous once (some m0: Perception_Thrust.inbox & topic.GPS_Fix | m0.value = m1.value)
+	
+	all m0: Perception_Thrust.inbox & topic.GPS_Fix |
+			eventually (some m1: Perception_Thrust.outbox & topic.Ind_GPS_Fix | m0.value = m1.value )
+	
+
+	all m1: Perception_Thrust.outbox & topic.Ind_PointCloud |
+			previous once (some m0: Perception_Thrust.inbox & topic.PointCloud | m0.value = m1.value)
+
+	all m0: Perception_Thrust.inbox & topic.PointCloud |
+			eventually (some m1: Perception_Thrust.outbox & topic.Ind_PointCloud  | m0.value = m1.value)
+
+
+	
+	all m0: Perception_Thrust.outbox & topic.Ind_Image |
+			previous once (some m1: Perception_Thrust.inbox & topic.Image| m0.value = m1.value)
+
+	all m0: Perception_Thrust.inbox & topic.Image |
+			eventually (some m1: Perception_Thrust.outbox & topic.Ind_Image | m0.value = m1.value)
+
+	
+	all m1: Perception_Thrust.outbox & topic.Ind_Tracklets | (some m1)
+			implies previous once ( (some Perception_Thrust.inbox &  topic.PointCloud  ))
+						   	  
+
+	all m0: Perception_Thrust.inbox & (topic.GPS_Vel +  topic.GPS_Fix + topic.PointCloud + topic.Image + topic.Imu) | (some m0)
+			implies eventually (some Perception_Thrust.outbox & topic.Ind_Tracklets)
+ }
+}
+
+
+fact Transform_Behaviour{
+ always{
+	all m1:  Transform.outbox & topic.Transf_Tracklets | 
+		previous once (some m0: Transform.inbox & topic.Ind_Tracklets | m0.value = m1.value)
+	
+	all m0: Transform.inbox & topic.Ind_Tracklets|
+		eventually (some m1: Transform.outbox & topic.Transf_Tracklets | m0.value = m1.value)
+	
+	all m1: Transform.outbox & topic.Transf_PointCloud | 
+		previous once (some  m0: Transform.inbox & topic.Ind_PointCloud | m0.value = m1.value)
+
+	all m0: Transform.inbox & topic.Ind_PointCloud |
+		eventually (some m1: Transform.outbox & topic.Transf_PointCloud | m0.value = m1.value)
+ }	
+}
+
+fact Compressor_Behaviour {
+	always{
+		(some Compressor.outbox & topic.Compressed_PointCloud) implies previous once (some Compressor.inbox & topic.Transf_PointCloud)
+		(some Compressor.inbox & topic.Transf_PointCloud) implies eventually (some Compressor.outbox & topic.Compressed_PointCloud)
+	}
+}
+
+
+
+
+check writter_PC_safety{
+	always {
+		all m1: Mem_Writter.inbox & topic.Compressed_PointCloud |
+			previous once (some m0 : Reader.outbox & topic.PointCloud| m0.value = m1.value)
+	}
+} for 7 Value, 10 Message, 10 Time

@@ -1,0 +1,60 @@
+module meta/meta
+
+abstract sig Node {
+	subscribes: set Topic,
+	advertises: set Topic,
+	var inbox : set Message,
+	var outbox : set Message
+}
+
+abstract sig Topic {}
+
+fact Node_Liveness{ 
+--	all n: Node | (some n.advertises) implies always (some n.inbox implies eventually some n.outbox)
+}
+
+sig Message {
+	topic : one Topic,	
+	value : one  Value
+}
+
+abstract sig Value {}
+
+fact Messages {
+	all n : Node | always {			
+		n.inbox.topic in n.subscribes
+		n.outbox.topic in n.advertises
+	}
+	all m : Message | always {
+		m in Node.outbox implies (all n : subscribes.(m.topic) | eventually m in n.inbox)
+	}
+	always {					
+		all m : Node.outbox | eventually m not in Node.outbox
+	}
+	all m : Message | always{	
+		m in Node.inbox implies (some n : advertises.(m.topic) | previous once m in n.outbox) 
+	}	
+}
+
+fact init {
+	no (outbox + inbox)
+}
+
+
+abstract sig Sensor extends Node {}{
+	subscribes = none
+}
+
+abstract sig Actuator extends Node{}{
+	advertises = none
+}
+
+fact Sensor_Behaviour {
+	always {
+		all s:Sensor | eventually some s.outbox
+	}
+}
+
+fun channel : Node -> Topic -> Node {
+	{a : Node, t : Topic, b : Node | a->t in advertises and b->t in subscribes}
+}
