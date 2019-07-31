@@ -925,9 +925,14 @@ final class SimpleReporter extends A4Reporter {
 
                 if(!cmd.label.equals("Default")) {
 
-                    if (cmd.check)
-                        print.append("\r\n\r\ncheck ");
-                    else print.append("\r\n\r\nrun ");
+                    //print assert/pred(with name) writing inside the command line. For example, "check a {no r1&r2} for 3"
+                    if(!(cmd.nameExpr instanceof ExprVar) && cmd.nameExpr!=null) {
+                            print.append(cmd.check==true? "\r\nassert ":"\r\npred ");
+                            print.append(cmd.label +"{\r\n        "+cmd.nameExpr.accept(printAmalgamatedExpr)+"\r\n        }");
+                    }
+
+                    print.append(cmd.check==true ? "\r\n\r\ncheck " : "\r\n\r\nrun ");
+
 
                     if (cmd.label.startsWith("run$") || cmd.label.startsWith("check$")) {
                         print.append("{");
