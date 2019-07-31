@@ -230,7 +230,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
         while (name.contains("/")){
             name=name.substring(name.indexOf("/")+1);
         }
-        tempExpr.append(name);
+        tempExpr.append("("+name);
        // tempExpr.append(x.fun.label.substring(x.fun.label.indexOf("/")+1));
         if(x.args.size()>0) {
             tempExpr.append("[");
@@ -243,7 +243,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
           //  if(x.fun.label.substring(x.fun.label.indexOf("/")+1).equals("prev")||x.fun.label.substring(x.fun.label.indexOf("/")+1).equals("prevs"))
             //    tempExpr.append("(");
         }
-
+        tempExpr.append(")");
         Set<Integer> NFeatures=new HashSet<>();
         Set<Integer> PFeatures=new HashSet<>();
         for(Integer i: x.color){

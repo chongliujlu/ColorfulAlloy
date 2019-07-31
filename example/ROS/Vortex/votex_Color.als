@@ -151,12 +151,11 @@ fact Transform_Behaviour{
 }➀
 
  assert writter_PC_safety{
-➊all t:Time-first,  m1: Mem_Writter.inbox.t & topic.Transf_PointCloud | some t': t.prevs {
-			 some m0 : Reader.outbox.t' & topic.PointCloud |  m0.value = m1.value
-	}➊
-➀	all t: Time-first , m1: Mem_Writter.inbox.t & topic.Compressed_PointCloud | some t': t.prevs|{
+	all t: Time-first , m1: Mem_Writter.inbox.t & ➀topic.Compressed_PointCloud ➀ &➊ topic.Transf_PointCloud ➊ | some t': t.prevs|{
 			 (some m0 : Reader.outbox.t' & topic.PointCloud| m0.value = m1.value)
-	}➀
+	}
 } 
-check writter_PC_safety with  exactly ➊ for 6 Value, 10 Message, 10 Time
-check writter_PC_safety with  exactly ➀ for 6 Value, 10 Message, 10 Time
+//no counterexample
+check writter_PC_safety with  exactly ➊ for 7 Value, 10 Message, 15 Time 
+//this should generate a counterexample
+check writter_PC_safety with  exactly ➀ for 7 Value, 10 Message, 15 Time

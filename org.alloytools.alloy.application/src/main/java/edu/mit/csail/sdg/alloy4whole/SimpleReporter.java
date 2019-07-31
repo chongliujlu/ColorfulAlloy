@@ -836,7 +836,7 @@ final class SimpleReporter extends A4Reporter {
                 rep.cb("bold", "Note: There was 1 compilation warning. Please scroll up to see it.\n");
         }
 
-        private String printexecutedCode(boolean iterativeApproach, Module realModule,Command command, Set<Integer> allFeats,String filename) {
+         String printexecutedCode(boolean iterativeApproach, Module realModule,Command command, Set<Integer> allFeats,String filename) {
             StringBuilder print = new StringBuilder();
             // generate executed code, and write to variable "print"
             if(iterativeApproach)
@@ -883,8 +883,8 @@ final class SimpleReporter extends A4Reporter {
          * @param allFeats features present in the original module
          */
         public void generateAmalgamatedModule(StringBuilder print, Module world, Command cmd, Set<Integer> allFeats){
-
-            checkexecutedfeats(allFeats,cmd.feats);
+            if(cmd!=null)
+                checkexecutedfeats(allFeats,cmd.feats);
             AmalgamatedExprPrinterVisitor printAmalgamatedExpr=new AmalgamatedExprPrinterVisitor();
             ExprPrinterVisitor printExprs=new ExprPrinterVisitor();
 
@@ -897,7 +897,8 @@ final class SimpleReporter extends A4Reporter {
             printOpenLine((CompModule)world,print);
             print.append("\r\n");
 
-            addAuxiliarySignatures(allFeats,print);
+            if(cmd!=null)
+                addAuxiliarySignatures(allFeats,print);
 
             printAmalgamatedSigs(print,world,printExprs,printAmalgamatedExpr);
 
@@ -1070,7 +1071,7 @@ final class SimpleReporter extends A4Reporter {
 
                 if(func.label.startsWith("this/run$"))
                     continue;
-                if(!(func.label.equals("this/$$Default"))){
+                if(!(func.label.contains("/$$Default"))){
 
                     print.append("\r\n");
                     if (func.isPred )
@@ -1440,6 +1441,7 @@ final class SimpleReporter extends A4Reporter {
             printOpenLine((CompModule)world,print);
             print.append("\r\n");
 
+            if(cmd!=null)
             addAuxiliarySignatures(modulefeats,print);
 
             // project sigs------------------------------------------------------------------------------------------
@@ -1913,9 +1915,6 @@ final class SimpleReporter extends A4Reporter {
                 if(!open.filename.equals("util/integer")){
 
                     print.append("open "+open.filename+" ");
-                  //  String openpath=open.getRealModule().pos().filename;
-
-                    //print.append("open " + openpath.substring(1,openpath.length()-4)+" ");
 
                     if(open.args.size()!=0){
                         print.append("[");
