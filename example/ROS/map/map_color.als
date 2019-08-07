@@ -497,15 +497,15 @@ assert  prop8_octo{
 	 danger_range_liveness
 	} 
 
-check  prop8_octo for 15 Value, 10 Message, 10 Time-- counterexample
-check  prop8_octo  with exactly ➊,➋ for 15 Value, 10 Message, 10 Time  -- counterexample
+check  prop8_octo for 15 Value, 10 Message, 10 Time
+check  prop8_octo  with exactly ➊,➋ for 15 Value, 10 Message, 10 Time  
 check  prop8_octo  with  ➊,➋ for 15 Value, 10 Message, 10 Time
-check  prop8_octo  with exactly ➀ for 15 Value, 10 Message, 10 Time-- counterexample
+check  prop8_octo  with exactly ➀ for 15 Value, 10 Message, 10 Time
 check  prop8_octo  with  ➀,➋ for 15 Value, 10 Message, 10 Time
-check  prop8_octo  with exactly ➁ for 15 Value, 10 Message, 10 Time-- counterexample
+check  prop8_octo  with exactly ➁ for 15 Value, 10 Message, 10 Time
 check  prop8_octo  with  ➊,➁ for 15 Value, 10 Message, 10 Time
-check  prop8_octo  with exactly ➀,➁ for 15 Value, 10 Message, 10 Time -- no  counterexample
-check  prop8_octo  with  ➀,➁ for 15 Value, 10 Message, 10 Time--no -- counterexample
+check  prop8_octo  with exactly ➀,➁ for 15 Value, 10 Message, 10 Time 
+check  prop8_octo  with  ➀,➁ for 15 Value, 10 Message, 10 Time
 
 pred testInstance {	
 	some t: Time-last |  some Husky_Base.inbox.(t.nexts)
