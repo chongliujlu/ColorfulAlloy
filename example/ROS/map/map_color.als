@@ -1,9 +1,10 @@
+module Map
+open meta
 /**
-* ➀  Add "RViz", "Map_server",  "Location_perfect_Match" sensor node and 1 a "Node Agrob_Planner" node
+* ➀  Add "RViz", "Map_server",  "Location_perfect_Match" sensor node and a "Node Agrob_Planner" node
 * ➁  Add safe control (add "Node Safety_controller_Filter" node)
 */
-module octo
-open meta
+
 fact FM{
 	➁➀some none➀➁
 }
@@ -23,7 +24,8 @@ fact VL_constraints {
 	}
 
 abstract sig JC extends Value{}	
-sig RB, LB, GLB, WB in JC{}-- Joystick Control Buttons
+-- Joystick Control Buttons
+sig RB, LB, GLB, WB in JC{}
 
 fact JC_constraints {
 	JC in (RB + LB + GLB + WB) -- dealing with abstract hierarchy problem
@@ -39,7 +41,8 @@ fact JC_constraints {
 	}
 
 abstract sig LS extends Value{}
-sig SR, DR in LS {}	-- Laser Scan Values		
+-- Laser Scan Values	
+sig SR, DR in LS {} 	
 
 fact LS_constraints {
 	LS in (SR + DR)
@@ -47,7 +50,8 @@ fact LS_constraints {
 	}
 
 abstract sig S extends Value{}
-sig IS, WS, GLS in S {}				-- State Values
+-- State Values
+sig IS, WS, GLS in S {}
 
 fact S_constraints {
 	S in (IS + WS + GLS)
@@ -59,10 +63,10 @@ fact S_constraints {
 	lone GLS
 	}	
 --for feature ➀ or ➁
-abstract sig Pose extends Value{}		-- Pose Values
+abstract sig Pose extends Value{} -- Pose Values
 --for feature ➀ or ➁
-abstract sig OG extends Value {}		-- Occupancy Grid Values
-sig Unknown, SC, UC in OG {}			-- Unknown, Safe Cell, Unsafe Cell
+abstract sig OG extends Value {} -- Occupancy Grid Values
+sig Unknown, SC, UC in OG {}	-- Unknown, Safe Cell, Unsafe Cell
 --for feature ➀ or ➁
 fact OG_constraints {
 	OG in (Unknown + SC + UC)
@@ -91,14 +95,14 @@ one sig Goal_Pose,
 		External_Vel_Linear
 extends Topic{}
 
-➁one sig 	Joystick_Commands_Filtered extends Topic{}➁
+➁one sig Joystick_Commands_Filtered extends Topic{}➁
 
 -- Topic message type constraints
 fact topic_predicates {	 
 	all m: topic.Horizontal_PointCloud | m.value in(➋➊ LS➊➋+➀DR➀+➁DR➁) 
 
 	all m: topic.Vertical_PointCloud | m.value in (➋➊LS➊➋+➀DR➀+➁DR➁)
-	all m: topic.Joystick_Commands | m.value in JC or m.value in PL
+	all m: topic.Joystick_Commands | m.value in (JC + PL)
 	all m: topic.Joystick_Vel_Linear | m.value in (➋➊VL➊➋+➀JC➀+➁JC➁)
 	--for feature ➀ or ➁
 	all m: topic.Goal_Pose | m.value in Pose
@@ -122,19 +126,20 @@ one sig Vertical_Laser extends  Sensor {}{
 one sig Controller extends  Sensor {}{
 	advertises = Joystick_Commands 
 	}
-one sig Rviz extends Sensor {}{-- Map only	
+-- Map only, ➀ or ➁
+one sig Rviz extends Sensor {}{	
 	advertises = Goal_Pose	
 	}
-
-one sig Map_Server extends Sensor {}{-- Map only
+-- Map only,➀ or ➁
+one sig Map_Server extends Sensor {}{
 	advertises = Map	
 	}
-
-one sig Localization_Perfect_Match extends Sensor {}{	-- Map only (abstracted to a sensor)
+-- Map only (abstracted to a sensor), ➀ or ➁
+one sig Localization_Perfect_Match extends Sensor {}{	
 	advertises = Current_Pose
 	}
-
-one sig Agrob_Planner extends Node {}{-- Map only
+-- Map only
+one sig Agrob_Planner extends Node {}{
 	subscribes = Goal_Pose + Map + Current_Pose + Vertical_PointCloud 
 	advertises = External_Vel_Linear
 	}
@@ -164,57 +169,78 @@ one sig Husky_Base extends Actuator{}{
 
 
 fact Translator_Behaviour {
-	all t: Time-first, m1: Translator.outbox.t & topic.Joystick_Vel_Linear | some t': t.prevs {
-			(some m0: Translator.inbox.t' & topic.Joystick_Commands |  m0.value in VL and m0.value = m1.value)}
+	all t: Time-first, m1: Translator.outbox.t & topic.Joystick_Vel_Linear | 
+		some t': t.prevs, m0: Translator.inbox.t' & topic.Joystick_Commands |  m0.value in VL and m0.value = m1.value
 	
-	all t: Time-last,  m0 : Translator.inbox.t & topic.Joystick_Commands | some t': t.nexts| { m0.value in VL 
-				implies (some m1: Translator.outbox.t' & topic.Joystick_Vel_Linear| m0.value = m1.value ) }
+	all t: Time-last,  m0 : Translator.inbox.t & topic.Joystick_Commands | { m0.value in VL 
+				implies (some t': t.nexts, m1: Translator.outbox.t' & topic.Joystick_Vel_Linear| m0.value = m1.value ) }
 	}
 
 
 ➀fact Agrob_Planner_Behaviour {	
-	
-	all t: Time | lone (Agrob_Planner.inbox.t & topic.Goal_Pose)	--1 queue size for Goal_Pose, Current_Pose topic
+	--1 queue size for Goal_Pose, Current_Pose topic
+	all t: Time | lone (Agrob_Planner.inbox.t & topic.Goal_Pose)	
 	all t: Time | lone (Agrob_Planner.inbox.t & topic.Current_Pose)
 	
-	all t: Time-first|  some t': t.prevs | {(some Agrob_Planner.outbox.t)
-			implies (some goal: (Agrob_Planner.inbox.t' & topic.Goal_Pose), c_pose : (Agrob_Planner.inbox.t' & topic.Current_Pose) | goal.value != c_pose.value)}
+	all t: Time-first| {(some Agrob_Planner.outbox.t)
+			implies (some t': t.prevs, goal: (Agrob_Planner.inbox.t' & topic.Goal_Pose), 
+					c_pose : (Agrob_Planner.inbox.t' & topic.Current_Pose) | goal.value != c_pose.value)}
 		
-	all t: Time-last |some t': t.nexts| 
-			 {(some goal: (Agrob_Planner.inbox.t & topic.Goal_Pose), c_pose : (Agrob_Planner.inbox.t & topic.Current_Pose) |goal.value != c_pose.value)
-				implies  some Agrob_Planner.outbox.t'}
+	all t: Time-last | (some goal: (Agrob_Planner.inbox.t & topic.Goal_Pose), c_pose : (Agrob_Planner.inbox.t & topic.Current_Pose) |goal.value != c_pose.value)
+				implies (some t': t.nexts|some Agrob_Planner.outbox.t')
 	
 		
-	all t: Time-first|some  t': t.prevs |{ (some m: Agrob_Planner.outbox.t| m.value in Zero)
-			implies (some m: Agrob_Planner.inbox.t' & (topic.Vertical_PointCloud + topic.Map) | m.value in (DR + UC + Unknown))}
+	all t: Time-first| (some m: Agrob_Planner.outbox.t| m.value in Zero)
+			implies (some t': t.prevs, m: Agrob_Planner.inbox.t' & (topic.Vertical_PointCloud + topic.Map) | m.value in (DR + UC + Unknown))
 	
-	all t: Time-last |some t': t.nexts|{ (some m: Agrob_Planner.inbox.t & (topic.Vertical_PointCloud + topic.Map)  | 
-			 m.value in (DR + UC + Unknown))
-			implies  (some m: Agrob_Planner.outbox.t' | m.value in Zero)}
+	all t: Time-last | (some m: Agrob_Planner.inbox.t & (topic.Vertical_PointCloud + topic.Map)  |  m.value in (DR + UC + Unknown))
+			implies  ( some t': t.nexts, m: Agrob_Planner.outbox.t' | m.value in Zero)
 		
-	all t: Time-first| some  t': t.prevs| {(some m: Agrob_Planner.outbox.t | m.value in (VL - Zero) )
-			implies ( (some m: Agrob_Planner.inbox.t' & topic.Vertical_PointCloud | m.value in SR) and 
-								(some m: Agrob_Planner.inbox.t' & topic.Map | m.value in SC) )}
+	all t: Time-first| (some m: Agrob_Planner.outbox.t | m.value in (VL - Zero) )
+			implies ( some t': t.prevs| {(some m: Agrob_Planner.inbox.t' & topic.Vertical_PointCloud | m.value in SR) and 
+								(some m: Agrob_Planner.inbox.t' & topic.Map | m.value in SC) })
+	}➀
+➁fact Agrob_Planner_Behaviour {	
+	--1 queue size for Goal_Pose, Current_Pose topic
+	all t: Time | lone (Agrob_Planner.inbox.t & topic.Goal_Pose)	
+	all t: Time | lone (Agrob_Planner.inbox.t & topic.Current_Pose)
+	
+	all t: Time-first| {(some Agrob_Planner.outbox.t)
+			implies (some t': t.prevs, goal: (Agrob_Planner.inbox.t' & topic.Goal_Pose), 
+					c_pose : (Agrob_Planner.inbox.t' & topic.Current_Pose) | goal.value != c_pose.value)}
+		
+	all t: Time-last | (some goal: (Agrob_Planner.inbox.t & topic.Goal_Pose), c_pose : (Agrob_Planner.inbox.t & topic.Current_Pose) |goal.value != c_pose.value)
+				implies (some t': t.nexts|some Agrob_Planner.outbox.t')
+	
+		
+	all t: Time-first| (some m: Agrob_Planner.outbox.t| m.value in Zero)
+			implies (some t': t.prevs, m: Agrob_Planner.inbox.t' & (topic.Vertical_PointCloud + topic.Map) | m.value in (DR + UC + Unknown))
+	
+	all t: Time-last | (some m: Agrob_Planner.inbox.t & (topic.Vertical_PointCloud + topic.Map)  |  m.value in (DR + UC + Unknown))
+			implies  ( some t': t.nexts, m: Agrob_Planner.outbox.t' | m.value in Zero)
+		
+	all t: Time-first| (some m: Agrob_Planner.outbox.t | m.value in (VL - Zero) )
+			implies ( some t': t.prevs| {(some m: Agrob_Planner.inbox.t' & topic.Vertical_PointCloud | m.value in SR) and 
+								(some m: Agrob_Planner.inbox.t' & topic.Map | m.value in SC) })
+	}➁
 
-}➀
-
-➁fact Safety_Controller_Filter_Behaviour_Control_Buttons { ----
+➁fact Safety_Controller_Filter_Behaviour_Control_Buttons { 
 	
-	all t: Time-first, m1: Safety_Controller_Filter.outbox.t & topic.Joystick_Commands_Filtered |some t': t.prevs| {
+	all t: Time-first, m1: Safety_Controller_Filter.outbox.t & topic.Joystick_Commands_Filtered |{
 		m1.value in (LB + RB) 
-			implies ( (some m0: Safety_Controller_Filter.inbox.t' & topic.Joystick_Commands | m0.value = m1.value ) and preconditions_side_buttons_filter)	}
+			implies ( (some  t': t.prevs, m0: Safety_Controller_Filter.inbox.t' & topic.Joystick_Commands | m0.value = m1.value ) and preconditions_side_buttons_filter)	}
 									
-	all t: Time-first, m1: Safety_Controller_Filter.outbox.t & topic.Joystick_Commands_Filtered | some t': t.prevs|{
+	all t: Time-first, m1: Safety_Controller_Filter.outbox.t & topic.Joystick_Commands_Filtered |
 		 not (m1.value in (LB + RB) )
-			implies (some m0 : Safety_Controller_Filter.inbox.t' & topic.Joystick_Commands | m0.value = m1.value) }	
+			implies (some t': t.prevs, m0 : Safety_Controller_Filter.inbox.t' & topic.Joystick_Commands | m0.value = m1.value) 	
 	
-	all t: Time-last, m0 : Safety_Controller_Filter.inbox.t & topic.Joystick_Commands| some t':t.nexts |{ 
+	all t: Time-last, m0 : Safety_Controller_Filter.inbox.t & topic.Joystick_Commands|
 		(m0.value in (LB + RB)  and preconditions_side_buttons_filter)
-			implies  (some m1: Safety_Controller_Filter.outbox.t' & topic.Joystick_Commands_Filtered | m0.value = m1.value)}
+			implies  (some  t':t.nexts,  m1: Safety_Controller_Filter.outbox.t' & topic.Joystick_Commands_Filtered | m0.value = m1.value)
 		
-	all t: Time-last, m0 : Safety_Controller_Filter.inbox.t & topic.Joystick_Commands | some t': t.nexts|{
+	all t: Time-last, m0 : Safety_Controller_Filter.inbox.t & topic.Joystick_Commands | 
 		 not (m0.value in (LB + RB)) 
-			implies  (some m1: Safety_Controller_Filter.outbox.t' & topic.Joystick_Commands_Filtered | m0.value = m1.value)}
+			implies  (some t': t.nexts, m1: Safety_Controller_Filter.outbox.t' & topic.Joystick_Commands_Filtered | m0.value = m1.value)
 	}➁
 -- Controller Filter aux preds
 ➁pred preconditions_side_buttons_filter {---
@@ -231,78 +257,77 @@ fact Translator_Behaviour {
 
 fact Supervisor_Behaviour {	
 		
-	all t: Time-first | some t':t.prevs| {(some m1: (Supervisor.outbox.t & topic.Supervisor_Vel_Linear) | m1.value in PL)
-			implies (some m0:Supervisor.inbox.t' & topic.(➋Joystick_Commands➋+ ➁Joystick_Commands_Filtered➁) | m0.value in (RB + LB + GLB))}
+	all t: Time-first | (some m1: (Supervisor.outbox.t & topic.Supervisor_Vel_Linear) | m1.value in PL)
+			implies (some t':t.prevs, m0:Supervisor.inbox.t' & topic.(➋Joystick_Commands➋+ ➁Joystick_Commands_Filtered➁) | m0.value in (RB + LB + GLB))
 	
+	all t: Time-first| (  some m1: (Supervisor.outbox.t & topic.Supervisor_Vel_Linear)|  m1.value in GL and m1.value not in (RL + LL))
+			 implies (some t' :t.prevs, m0:Supervisor.inbox.t' & topic.(➋Joystick_Commands➋+ ➁Joystick_Commands_Filtered➁)  | m0.value in GLB) 
 	
-	all t: Time-first|some t' :t.prevs|{ (  some m1: (Supervisor.outbox.t & topic.Supervisor_Vel_Linear)|  m1.value in GL and m1.value not in (RL + LL))
-			 implies (some m0:Supervisor.inbox.t' & topic.(➋Joystick_Commands➋+ ➁Joystick_Commands_Filtered➁)  | m0.value in GLB) }
+	all t: Time-first| (some m1: (Supervisor.outbox.t & topic.Supervisor_Vel_Linear) | m1.value in (RL + LL) )
+			implies (some  t': t.prevs, m0:Supervisor.inbox.t' & topic.(➋Joystick_Commands➋+ ➁Joystick_Commands_Filtered➁)  | m0.value in GLB or m0.value in (RB + LB))
 	
-	all t: Time-first| some t': t.prevs| {(some m1: (Supervisor.outbox.t & topic.Supervisor_Vel_Linear) | m1.value in (RL + LL) )
-			implies (some m0:Supervisor.inbox.t' & topic.(➋Joystick_Commands➋+ ➁Joystick_Commands_Filtered➁)  | m0.value in GLB or m0.value in (RB + LB))}
-	
-	all t: Time-last | some t': t.next| {( some m0:Supervisor.inbox.t & topic.(➋Joystick_Commands➋+ ➁Joystick_Commands_Filtered➁)  | m0.value in GLB)
-			 implies  some m1: (Supervisor.outbox.t' & topic.Supervisor_Vel_Linear) | m1.value in GL}
+	all t: Time-last | ( some m0:Supervisor.inbox.t & topic.(➋Joystick_Commands➋+ ➁Joystick_Commands_Filtered➁)  | m0.value in GLB)
+			 implies  some  t': t.next, m1: (Supervisor.outbox.t' & topic.Supervisor_Vel_Linear) | m1.value in GL
 
-	all t: Time -last |some t': t.next| { (some m0:Supervisor.inbox.t & topic.(➋Joystick_Commands➋+ ➁Joystick_Commands_Filtered➁) |  m0.value in (RB + LB)  )
-			implies  some m1: (Supervisor.outbox.t' & topic.Supervisor_Vel_Linear) | m1.value in (RL + LL)}	
+	all t: Time -last | (some m0:Supervisor.inbox.t & topic.(➋Joystick_Commands➋+ ➁Joystick_Commands_Filtered➁) |  m0.value in (RB + LB)  )
+			implies  some t': t.next, m1: (Supervisor.outbox.t' & topic.Supervisor_Vel_Linear) | m1.value in (RL + LL)	
 
 		
 
-	all t: Time-first |some t':t.prevs |{ (some m1: Supervisor.outbox.t & topic.Current_State | m1.value in GLS)
-			implies  (some m0: (Supervisor.inbox.t' & topic.(➋Joystick_Commands➋+ ➁Joystick_Commands_Filtered➁) ) | m0.value in GLB)}
+	all t: Time-first | (some m1: Supervisor.outbox.t & topic.Current_State | m1.value in GLS)
+			implies  (some t':t.prevs , m0: (Supervisor.inbox.t' & topic.(➋Joystick_Commands➋+ ➁Joystick_Commands_Filtered➁) ) | m0.value in GLB)
 
-	all t: Time-first|some t':t.prevs| {( some m1: Supervisor.outbox.t & topic.Current_State | m1.value in WS  )
-			implies  (some m0: (Supervisor.inbox.t' & topic.(➋Joystick_Commands➋+ ➁Joystick_Commands_Filtered➁) ) | m0.value in WB)}
+	all t: Time-first| ( some m1: Supervisor.outbox.t & topic.Current_State | m1.value in WS  )
+			implies  (some t':t.prevs, m0: (Supervisor.inbox.t' & topic.(➋Joystick_Commands➋+ ➁Joystick_Commands_Filtered➁) ) | m0.value in WB)
 
-	all t: Time-first|some t':t.prevs | {(some m1: Supervisor.outbox.t & topic.Current_State |m1.value in IS)
-			implies some m0: (Supervisor.inbox.t' & topic.(➋Joystick_Commands➋+ ➁Joystick_Commands_Filtered➁) ) | (m0.value not in GLB) and  (m0.value not in WB) and (m0.value in (VL + JC))}
+	all t: Time-first|(some m1: Supervisor.outbox.t & topic.Current_State |m1.value in IS)
+			implies some t':t.prevs , m0: (Supervisor.inbox.t' & topic.(➋Joystick_Commands➋+ ➁Joystick_Commands_Filtered➁) ) | (m0.value not in GLB) and  (m0.value not in WB) and (m0.value in (VL + JC))
 
 		
-	all t: Time -last|some t': t.nexts| {( some m0: (Supervisor.inbox.t & topic.(➋Joystick_Commands➋+ ➁Joystick_Commands_Filtered➁) )  | m0.value in GLB)
-			implies  (some m1: Supervisor.outbox.t' & topic.Current_State | m1.value in GLS)  }	
+	all t: Time -last|( some m0: (Supervisor.inbox.t & topic.(➋Joystick_Commands➋+ ➁Joystick_Commands_Filtered➁) )  | m0.value in GLB)
+			implies  (some t': t.nexts, m1: Supervisor.outbox.t' & topic.Current_State | m1.value in GLS)  
 		
-	all t: Time -last|some t': t.nexts |{(some m0: (Supervisor.inbox.t & topic.(➋Joystick_Commands➋+ ➁Joystick_Commands_Filtered➁) )  | m0.value in WB)
-		 	implies  some m1: Supervisor.outbox.t' & topic.Current_State | m1.value in WS}
+	all t: Time -last|(some m0: (Supervisor.inbox.t & topic.(➋Joystick_Commands➋+ ➁Joystick_Commands_Filtered➁) )  | m0.value in WB)
+		 	implies  some t': t.nexts, m1: Supervisor.outbox.t' & topic.Current_State | m1.value in WS
 		
 	all t: Time -last|some t': t.nexts| {(some m0: (Supervisor.inbox.t & topic.(➋Joystick_Commands➋+ ➁Joystick_Commands_Filtered➁) ) | (m0.value not in (GLB + WB)) and (m0.value in (VL + JC)))
 			implies  (some m1: Supervisor.outbox.t' & topic.Current_State | m1.value in IS)}				
 	
 	
-	all t: Time-first|some t': t.prevs|{ (some m1: (Supervisor.outbox.t & (topic.Max_Vel_Linear + topic.Supervisor_Vel_Linear)) | ( m1.value in Zero)) 
-			implies (some m0:Supervisor.inbox.t' & (topic.Vertical_PointCloud + topic.Horizontal_PointCloud) | m0.value in DR) }	
+	all t: Time-first|(some m1: (Supervisor.outbox.t & (topic.Max_Vel_Linear + topic.Supervisor_Vel_Linear)) | ( m1.value in Zero)) 
+			implies (some t': t.prevs, m0:Supervisor.inbox.t' & (topic.Vertical_PointCloud + topic.Horizontal_PointCloud) | m0.value in DR) 	
 	
-	all t: Time -last| some t': t.nexts| {(some m0:Supervisor.inbox.t & (topic.Vertical_PointCloud + topic.Horizontal_PointCloud)| m0.value in DR )
-			implies  ( (some m1: (Supervisor.outbox.t' & topic.Max_Vel_Linear) | m1.value in Zero) and
-							 (some m2: (Supervisor.outbox.t'& topic.Supervisor_Vel_Linear) | m2.value in Zero)) }		
+	all t: Time -last| (some m0:Supervisor.inbox.t & (topic.Vertical_PointCloud + topic.Horizontal_PointCloud)| m0.value in DR )
+			implies  (some t': t.nexts| {(some m1: (Supervisor.outbox.t' & topic.Max_Vel_Linear) | m1.value in Zero) and
+							 (some m2: (Supervisor.outbox.t'& topic.Supervisor_Vel_Linear) | m2.value in Zero)} ) 	
 	-- Refactored
 	-- Extra property. Constraints the publication on Max_Vel_Linear topic to Zero value only.
 		all t: Time, m1: (Supervisor.outbox.t & topic.Max_Vel_Linear) | m1.value in (Zero + PL) 
 	
 	}
 
-fact Multiplexer_Behaviour_Map {	
+fact Multiplexer_Behaviour {	
 	--1 queue size for Max_Vel_Linear topic
 	all t: Time|   lone (Multiplexer.inbox.t & topic.Max_Vel_Linear) 
 		-- For non-Zero values
 	all t:Time-first| some t': t.prevs| { all m1: (Multiplexer.outbox.t & topic.Husky_Vel_Linear) | {➋(m1.value not in Zero)  implies 
-			  (all max : (Multiplexer.inbox.t' & topic.Max_Vel_Linear) | max.value != Zero)➋ and ➁(all max : (Multiplexer.inbox.t' & topic.Max_Vel_Linear) | max.value != Zero)➁ and
-			  (some (Multiplexer.inbox.t' & (topic.Supervisor_Vel_Linear+➀ topic.External_Vel_Linear➀))
-							 implies (some m0: (Multiplexer.inbox.t' & topic.Supervisor_Vel_Linear) | m0.value = m1.value)
+			 (all max : (Multiplexer.inbox.t' & topic.Max_Vel_Linear) | max.value != Zero)➋ and ➁(all max : (Multiplexer.inbox.t' & topic.Max_Vel_Linear) | max.value != Zero)➁ and
+			 (some (Multiplexer.inbox.t' & (topic.Supervisor_Vel_Linear+➀ topic.External_Vel_Linear➀))
+							 implies (some m0: (Multiplexer.inbox.t' & topic.Supervisor_Vel_Linear+ ➀topic.External_Vel_Linear➀) | m0.value = m1.value)
 							else (some m0 : (Multiplexer.inbox.t' & topic.Joystick_Vel_Linear) | m0.value = m1.value)) }}
 
-	all t:Time-last,m0: (Multiplexer.inbox.t & (topic.Supervisor_Vel_Linear  +topic. Joystick_Vel_Linear+➀topic.External_Vel_Linear➀)) | some t': t.nexts|
+	all t:Time-last,m0: (Multiplexer.inbox.t & (topic.Supervisor_Vel_Linear  +topic. Joystick_Vel_Linear+➀topic.External_Vel_Linear➀)) |
 			{ (Zero not in (Multiplexer.inbox.t & topic.Max_Vel_Linear).value)
-				 implies (some m1: Multiplexer.outbox.t' & topic.Husky_Vel_Linear | m1.value = m0.value)}
+				 implies (some t': t.nexts, m1: Multiplexer.outbox.t' & topic.Husky_Vel_Linear | m1.value = m0.value)}
 																										 	
 		-- For Zero values
-	all t: Time-first |some t':t.prevs| {( some m1: (Multiplexer.outbox.t & topic.Husky_Vel_Linear)| (m1.value in Zero))
-			implies (some m0: (Multiplexer.inbox.t' & (➊topic.Max_Vel_Linear➊+topic.Supervisor_Vel_Linear +➀topic.External_Vel_Linear➀+ topic.Joystick_Vel_Linear)) | m0.value in Zero)}
+	all t: Time-first | ( some m1: (Multiplexer.outbox.t & topic.Husky_Vel_Linear)| (m1.value in Zero))
+			implies (some t':t.prevs, m0: (Multiplexer.inbox.t' & (➊topic.Max_Vel_Linear➊+topic.Supervisor_Vel_Linear +➀topic.External_Vel_Linear➀+ topic.Joystick_Vel_Linear)) | m0.value in Zero)
 			-- Required additional condition ( Refactored_map)
 
 	
-	all t: Time-last |some t': t.nexts | {( some m0: (Multiplexer.inbox.t & topic.Max_Vel_Linear)|  m0.value in Zero)
-						implies  some m1: (Multiplexer.outbox.t' & topic.Husky_Vel_Linear) | (m1.value in Zero)} 
+	all t: Time-last | ( some m0: (Multiplexer.inbox.t & topic.Max_Vel_Linear)|  m0.value in Zero)
+						implies  some t': t.nexts, m1: (Multiplexer.outbox.t' & topic.Husky_Vel_Linear) | (m1.value in Zero)
 	
 	}
 
@@ -314,36 +339,35 @@ pred limited_control_assumption {
 
 -- Properties
 pred goline_state_safe{	
-	all t: Time-first| some t': t.prevs |{(some m1: Supervisor_GUI.inbox.t | m1.value in GLS)
-		 	implies (some m0: Controller.outbox.t' | m0.value in GLB) 
+	all t: Time-first |{(some m1: Supervisor_GUI.inbox.t | m1.value in GLS)
+		 	implies ( some t': t.prevs, m0: Controller.outbox.t' | m0.value in GLB) 
 		    }
 	}
 
 pred wall_state_safe{	
-	all t: Time-first| some t':t.prevs| (some m1: Supervisor_GUI.inbox.t | m1.value in WS)
-			 implies  (some m0: Controller.outbox.t' | m0.value in WB) 
+	all t: Time-first| (some m1: Supervisor_GUI.inbox.t | m1.value in WS)
+			 implies  (some t':t.prevs, m0: Controller.outbox.t' | m0.value in WB) 
 	
 	}
 
 pred idle_state_safe{
-	all t: Time-first| some t': t.prevs |{
+	all t: Time-first |{
 		(some m0: Supervisor_GUI.inbox.t | m0.value in IS)
-			implies (some m1: Controller.outbox.t' | m1.value not in (GLB + WB))
+			implies (some t': t.prevs, m1: Controller.outbox.t' | m1.value not in (GLB + WB))
 	}
 	}
 
 pred danger_range_safe{
-	all t: Time-first| some t': t.prevs |{
+	all t: Time-first |
 		(some m1: Husky_Base.inbox.t | m1.value in Zero) 
-			implies (some m0: (Horizontal_Laser + Vertical_Laser).outbox.t' | m0.value in DR)	
-		}
+			implies ( some t': t.prevs, m0: (Horizontal_Laser + Vertical_Laser).outbox.t' | m0.value in DR)	
 	}
 
 
 pred base_linear_safe{
-	all t: Time-first| some t': t.prevs |{
+	all t: Time-first|{
 		(some m1: Husky_Base.inbox.t | m1.value in PL)
-			implies (some m0: Controller.outbox.t' | m0.value in (WB + GLB + PL))
+			implies (some t': t.prevs,  m0: Controller.outbox.t' | m0.value in (WB + GLB + PL))
 		}
 	}
 
@@ -356,9 +380,9 @@ pred base_linear_safe2 {
 	}
 
 pred actuators_safe{
-	all t: Time-last| some t': t.nexts|( some m1: Husky_Base.inbox.t' | m1.value in PL) 
-			implies (all t: Time-last| some t': t.nexts| 
-					some m2: Supervisor_GUI.inbox.t' | m2.value in (WS + GLS))
+	all t: Time-last| ( some t': t.nexts, m1: Husky_Base.inbox.t' | m1.value in PL) 
+			implies (all t'': Time-last| 
+					some  t''': t''.nexts, m2: Supervisor_GUI.inbox.t''' | m2.value in (WS + GLS))
 	}
 
 pred danger_range_liveness{
@@ -385,8 +409,7 @@ check prop1_octo with  ➀,➁ for 15 Value, 10 Message, 10 Time
 
 check prop1_octo with exactly ➀ for 11 Value, 10 Message, 10 Time
 -- No counterexample found
--- time : 581543 ms
--- time after refactoring : 76547 ms
+
 
 assert prop2_octo {
 	wall_state_safe
@@ -394,8 +417,7 @@ assert prop2_octo {
 
  check prop2_octo for 11 Value, 10 Message, 10 Time
 -- No counterexample found
--- time : 568742 ms
--- time after refactoring : 77536 ms
+
 
 assert  prop3_octo {
 	 idle_state_safe
@@ -409,10 +431,11 @@ check  prop3_octo with exactly ➀ for 11 Value, 10 Message, 10 Time
 assert prop4_octo{
 	danger_range_safe
 	}
-
+--counterexample found
 check prop4_octo for 15 Value, 10 Message, 10 Time
 check prop4_octo with exactly ➊,➋ for 15 Value, 10 Message, 10 Time
 check prop4_octo with  ➊,➋ for 15 Value, 10 Message, 10 Time
+--counterexample found
 check prop4_octo with exactly ➀,➋ for 15 Value, 10 Message, 10 Time
 check prop4_octo with  ➀,➋ for 15 Value, 10 Message, 10 Time
 check prop4_octo with exactly ➊,➁ for 15 Value, 10 Message, 10 Time
@@ -424,11 +447,34 @@ check prop4_octo with  ➀,➁ for 15 Value, 10 Message, 10 Time
 check prop5_octo {							
 	base_linear_safe
 } for 11 Value, 10 Message, 10 Time
+assert prop5_octo {							
+	base_linear_safe
+	} 
+
+check prop5_octo for 11 Value, 10 Message, 10 Time
+-- Counterexample was found
+check prop5_octo with exactly ➊,➋ for 11 Value, 10 Message, 10 Time
+check prop5_octo with exactly ➀ for 11 Value, 10 Message, 10 Time
+check prop5_octo with exactly ➁ for 11 Value, 10 Message, 10 Time
+check prop5_octo with exactly ➀,➁ for 11 Value, 10 Message, 10 Time
 
 
-check prop6_octo{									-- this property is badly expressed due to the intervals abstraction	
+
+check prop6_octo{-- this property is badly expressed due to the intervals abstraction	
 	limited_control_assumption implies base_linear_safe2
 } for 12 Value, 10 Message, 10 Time						
+
+
+assert prop6_octo{-- this property is badly expressed due to the intervals abstraction	
+	limited_control_assumption implies base_linear_safe2
+	}
+
+check prop6_octo  for 12 Value, 10 Message, 10 Time	
+check prop6_octo with exactly ➊,➋ for 12 Value, 10 Message, 10 Time
+check prop6_octo with exactly ➀    for 12 Value, 10 Message, 10 Time	
+check prop6_octo with exactly ➁    for 12 Value, 10 Message, 10 Time	
+check prop6_octo with exactly ➀,➁ for 12 Value, 10 Message, 10 Time		
+
 
 assert  prop7_octo{
 	 limited_control_assumption and ➁(no Rviz)➁ implies actuators_safe	
@@ -441,7 +487,6 @@ check  prop7_octo with  ➊,➋ for 15 Value, 10 Message, 10 Time
 -- Counterexample was found
 check  prop7_octo with exactly ➀ for 15 Value, 10 Message, 10 Time
 check  prop7_octo with  ➀,➋ for 15 Value, 10 Message, 10 Time
---no counterexample found
 check  prop7_octo with exactly ➁ for 15 Value, 10 Message, 10 Time
 check  prop7_octo with  ➊,➁ for 15 Value, 10 Message, 10 Time
 
