@@ -943,8 +943,14 @@ final class SimpleReporter extends A4Reporter {
                         if(cmd.nameExpr!=null){
                             if (cmd.nameExpr.isSame(ExprConstant.TRUE))
                                 print.append("{}");
-                            else
-                                print.append("{ " + cmd.nameExpr.accept(printAmalgamatedExpr) + " }");
+                            else {
+                                print.append("{ ");
+                                if(!(cmd.nameExpr instanceof ExprVar))
+                                    print.append(cmd.nameExpr.accept(printAmalgamatedExpr));
+                                print.append(" }");
+
+                            }
+                               // print.append("{ " + cmd.nameExpr.accept(printAmalgamatedExpr) + " }");
                         }
                     }
 
@@ -1616,9 +1622,12 @@ final class SimpleReporter extends A4Reporter {
                     if (cmd.nameExpr.isSame(ExprConstant.TRUE))
                         print.append("{}");
                     else{
-                        Expr e=cmd.nameExpr.accept(reconstructExpr);
+                        Expr e =null;
+                        if(!(cmd.nameExpr instanceof ExprVar))
+                            e=cmd.nameExpr.accept(reconstructExpr);
 
-                        print.append(e==null? "{}":"{ " +e.accept(printExprs)  + " }");}
+                        print.append(e==null? "{}":"{ " +e.accept(printExprs)  + " }");
+                    }
                 }
             }
 
