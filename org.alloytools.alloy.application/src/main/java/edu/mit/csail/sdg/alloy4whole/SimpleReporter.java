@@ -925,12 +925,6 @@ final class SimpleReporter extends A4Reporter {
 
                 if(!cmd.label.equals("Default")) {
 
-                    //print assert/pred(with name) writing inside the command line. For example, "check a {no r1&r2} for 3"
-                    if(!(cmd.nameExpr instanceof ExprVar) && cmd.nameExpr!=null) {
-                            print.append(cmd.check==true? "\r\nassert ":"\r\npred ");
-                            print.append(cmd.label +"{\r\n        "+cmd.nameExpr.accept(printAmalgamatedExpr)+"\r\n        }");
-                    }
-
                     print.append(cmd.check==true ? "\r\n\r\ncheck " : "\r\n\r\nrun ");
 
 
@@ -943,8 +937,16 @@ final class SimpleReporter extends A4Reporter {
                             }
                         }
                         print.append("}");
-                    } else
+                    } else{
                         print.append(cmd.label);
+                        //print assert or pred in command
+                        if(cmd.nameExpr!=null){
+                            if (cmd.nameExpr.isSame(ExprConstant.TRUE))
+                                print.append("{}");
+                            else
+                                print.append("{ " + cmd.nameExpr.accept(printAmalgamatedExpr) + " }");
+                        }
+                    }
 
                     print.append(" for ");
                     print.append(cmd.overall > 0 ? cmd.overall + " " : 4 + " ");
@@ -1607,8 +1609,19 @@ final class SimpleReporter extends A4Reporter {
                         }
                 }
                 print.append("}");
-            } else
+            } else{
                 print.append(cmd.label);
+                //print assert or pred in command
+                if(cmd.nameExpr!=null){
+                    if (cmd.nameExpr.isSame(ExprConstant.TRUE))
+                        print.append("{}");
+                    else{
+                        Expr e=cmd.nameExpr.accept(reconstructExpr);
+
+                        print.append(e==null? "{}":"{ " +e.accept(printExprs)  + " }");}
+                }
+            }
+
 
 
             print.append(" for ");

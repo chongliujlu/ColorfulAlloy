@@ -45,8 +45,8 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
         }
         if(!PFeatures.isEmpty()){
-           // if(x.color.size()>1&& NFeatures.isEmpty())
-            //    str.append("(");
+            if(x.color.size()>1&& NFeatures.isEmpty())
+                str.append("(");
             addFeatureprefix(PFeatures,str, "in","and");
             str.deleteCharAt(str.length()-1);
             str.deleteCharAt(str.length()-1);
@@ -548,7 +548,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
         else if(x.op.equals(ExprUnary.Op.LONEOF))
             tempExpr.append(" lone ");
         else if(x.op.equals(ExprUnary.Op.ONEOF))
-            tempExpr.append(" one ");
+            tempExpr.append(" ");
         else if(x.op.equals(ExprUnary.Op.EXACTLYOF))
             tempExpr.append(" exactly ");
         else if(x.op.equals(ExprUnary.Op.RCLOSURE)||x.op.equals(ExprUnary.Op.CLOSURE)||
