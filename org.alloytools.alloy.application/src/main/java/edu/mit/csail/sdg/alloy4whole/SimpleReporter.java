@@ -930,12 +930,23 @@ final class SimpleReporter extends A4Reporter {
 
                     if (cmd.label.startsWith("run$") || cmd.label.startsWith("check$")) {
                         print.append("{");
-                        for (Func func : world.getAllFunc()) {
-                            if (cmd.label.equals(func.label.substring(5))) {
-                                if (!(func.getBody() instanceof ExprConstant))
-                                    print.append(func.getBody().accept(printAmalgamatedExpr));
+                        if(cmd.check){
+                            for (Pair<String, Expr> ass : world.getAllAssertions()) {
+                                if (cmd.label.equals(ass.a)) {
+                                    if(!(ass.b instanceof ExprUnary && ((ExprUnary) ass.b).sub.isSame(ExprConstant.TRUE)))
+                                        print.append(ass.b.accept(printAmalgamatedExpr));
+                                }
+                            }
+
+                        }else{
+                            for (Func func : world.getAllFunc()) {
+                                if (cmd.label.equals(func.label.substring(5))) {
+                                    if (!(func.getBody() instanceof ExprConstant))
+                                        print.append(func.getBody().accept(printAmalgamatedExpr));
+                                }
                             }
                         }
+
                         print.append("}");
                     } else{
                         print.append(cmd.label);
@@ -944,13 +955,13 @@ final class SimpleReporter extends A4Reporter {
                             if (cmd.nameExpr.isSame(ExprConstant.TRUE))
                                 print.append("{}");
                             else {
-                                print.append("{ ");
-                                if(!(cmd.nameExpr instanceof ExprVar))
+                                if(!(cmd.nameExpr instanceof ExprVar)){
+                                    print.append("{ ");
                                     print.append(cmd.nameExpr.accept(printAmalgamatedExpr));
-                                print.append(" }");
-
+                                    print.append(" }");
+                                }
                             }
-                               // print.append("{ " + cmd.nameExpr.accept(printAmalgamatedExpr) + " }");
+
                         }
                     }
 
@@ -1603,19 +1614,38 @@ final class SimpleReporter extends A4Reporter {
 
             if (cmd.label.startsWith("run$") || cmd.label.startsWith("check$")) {
                 print.append("{");
-                for (Func runFunc : world.getAllFunc()) {
-                    if (cmd.label.equals(runFunc.label.substring(5)))
-                        if (!(runFunc.getBody() instanceof ExprConstant)) {
-                            if((cmd.feats==null && !runFunc.color.isEmpty())|| (!cmd.feats.feats.containsAll(runFunc.color)))
-                                throw new ErrorSyntax(runFunc.pos,"");
-                            Expr bodyNew=runFunc.getBody().accept(reconstructExpr);
-                            if(bodyNew!=null)
-                                print.append(bodyNew.accept(printExprs));
-                            break;
+                if(cmd.check){
+                    for (Pair<String, Expr> ass : world.getAllAssertions()) {
+                        if (cmd.label.equals(ass.a)) {
+                            if(!(ass.b instanceof ExprUnary && ((ExprUnary) ass.b).sub.isSame(ExprConstant.TRUE))){
+                                Expr bodyNew=ass.b.accept(reconstructExpr);
+                                if(bodyNew!=null)
+                                    print.append(bodyNew.accept(printExprs));
+                                break;
+                            }
+
+                                //print.append(ass.b.accept(printAmalgamatedExpr));
+
+
                         }
+                    }
+
+                }else{
+                    for (Func runFunc : world.getAllFunc()) {
+                        if (cmd.label.equals(runFunc.label.substring(5)))
+                            if (!(runFunc.getBody() instanceof ExprConstant)) {
+                               // if((cmd.feats==null && !runFunc.color.isEmpty())|| (!cmd.feats.feats.containsAll(runFunc.color)))
+                                 //   throw new ErrorSyntax(runFunc.pos,"");
+                                Expr bodyNew=runFunc.getBody().accept(reconstructExpr);
+                                if(bodyNew!=null)
+                                    print.append(bodyNew.accept(printExprs));
+                                break;
+                            }
+                    }
                 }
                 print.append("}");
             } else{
+
                 print.append(cmd.label);
                 //print assert or pred in command
                 if(cmd.nameExpr!=null){
@@ -1623,10 +1653,10 @@ final class SimpleReporter extends A4Reporter {
                         print.append("{}");
                     else{
                         Expr e =null;
-                        if(!(cmd.nameExpr instanceof ExprVar))
+                        if(!(cmd.nameExpr instanceof ExprVar)){
                             e=cmd.nameExpr.accept(reconstructExpr);
-
-                        print.append(e==null? "{}":"{ " +e.accept(printExprs)  + " }");
+                            print.append(e==null? "{}":("{ " +e.accept(printExprs)  + " }"));
+                        }
                     }
                 }
             }
@@ -1726,18 +1756,19 @@ final class SimpleReporter extends A4Reporter {
                 Expr temp=asser.b.accept(reconstructExpr);
 
                 if(temp==null){
-                    print.append("\r\nassert "+(asser.a.startsWith("check$")? " {}":asser.a )+" { }");
+                    System.out.println(asser.a.startsWith("check$"));
+                    print.append((asser.a.startsWith("check$")? "": ("\r\nassert "+ asser.a )+" { }"));
                     continue;
                 }
                // newModule.addAssertion(asser.b.pos,asser.a,temp);
                 if(asser.a.startsWith("check$"))
                     continue;
 
-                print.append("\r\n"+"assert "+asser.a+" {\r\n");
+                print.append("\r\n"+"assert "+asser.a+" {");
 
                 if((temp instanceof ExprUnary) && !(((ExprUnary) temp).sub instanceof ExprConstant))
-                    print.append("        "+temp.accept(printExprs));
-                print.append("\r\n        }");
+                    print.append("\r\n        "+temp.accept(printExprs)+"\r\n        ");
+                print.append("}");
             }
         }
 
