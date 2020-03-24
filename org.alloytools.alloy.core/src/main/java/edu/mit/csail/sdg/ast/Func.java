@@ -17,7 +17,11 @@ package edu.mit.csail.sdg.ast;
 
 import static edu.mit.csail.sdg.alloy4.TableView.clean;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
 
 import org.alloytools.util.table.Table;
 
@@ -169,10 +173,11 @@ public final class Func extends Browsable implements Clause {
      *             predicate/function call
      */
     //colorful Alloy
-    public Func(Pos pos, Pos isPrivate, String label, List<Decl> decls, Expr returnDecl, Expr body) throws Err{
-        this(pos,isPrivate,label,decls,returnDecl,body,new HashSet<Integer>());
+    public Func(Pos pos, Pos isPrivate, String label, List<Decl> decls, Expr returnDecl, Expr body) throws Err {
+        this(pos, isPrivate, label, decls, returnDecl, body, new HashMap<Integer,Pos>());
     }
-    public Func(Pos pos, Pos isPrivate, String label, List<Decl> decls, Expr returnDecl, Expr body, Set<Integer> color) throws Err {
+
+    public Func(Pos pos, Pos isPrivate, String label, List<Decl> decls, Expr returnDecl, Expr body, Map<Integer,Pos> color) throws Err {
         if (pos == null)
             pos = Pos.UNKNOWN;
         this.pos = pos;
@@ -185,7 +190,7 @@ public final class Func extends Browsable implements Clause {
             returnDecl = ExprUnary.Op.ONEOF.make(null, returnDecl);
         this.returnDecl = returnDecl;
         this.body = body;
-        this.color=color; //colorful Alloy
+        this.color = color; //colorful Alloy
         if (body.mult != 0)
             throw new ErrorSyntax(body.span(), "Multiplicity expression not allowed here.");
         this.decls = ConstList.make(decls);

@@ -17,7 +17,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
         Set<Integer> NFeatures=new HashSet<>();
         Set<Integer> PFeatures=new HashSet<>();
-        for(Integer i: x.color){
+        for(Integer i: x.color.keySet()){
             if(i<0)
                 NFeatures.add(-i);
             else PFeatures.add(i);
@@ -139,7 +139,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
         Set<Integer> NFeatures=new HashSet<>();
         Set<Integer> PFeatures=new HashSet<>();
-        for(Integer i: x.color){
+        for(Integer i: x.color.keySet()){
             if(i<0)
                 NFeatures.add(-i);
             else PFeatures.add(i);
@@ -246,7 +246,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
         tempExpr.append(")");
         Set<Integer> NFeatures=new HashSet<>();
         Set<Integer> PFeatures=new HashSet<>();
-        for(Integer i: x.color){
+        for(Integer i: x.color.keySet()){
             if(i<0)
                 NFeatures.add(-i);
             else PFeatures.add(i);
@@ -313,7 +313,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
         Set<Integer> NFeatures=new HashSet<>();
         Set<Integer> PFeatures=new HashSet<>();
-        for(Integer i: x.color){
+        for(Integer i: x.color.keySet()){
             if(i<0)
                 NFeatures.add(-i);
             else PFeatures.add(i);
@@ -357,7 +357,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
         Set<Integer> NFeatures=new HashSet<>();
         Set<Integer> PFeatures=new HashSet<>();
-        for(Integer i: x.color){
+        for(Integer i: x.color.keySet()){
             if(i<0)
                 NFeatures.add(-i);
             else PFeatures.add(i);
@@ -407,7 +407,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
         Set<Integer> NFeatures=new HashSet<>();
         Set<Integer> PFeatures=new HashSet<>();
-        for(Integer i: x.color){
+        for(Integer i: x.color.keySet()){
             if(i<0)
                 NFeatures.add(-i);
             else PFeatures.add(i);
@@ -484,7 +484,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
         Set<Integer> NFeatures=new HashSet<>();
         Set<Integer> PFeatures=new HashSet<>();
-        for(Integer i: x.color){
+        for(Integer i: x.color.keySet()){
             if(i<0)
                 NFeatures.add(-i);
             else PFeatures.add(i);
@@ -532,7 +532,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
     public String visit(ExprUnary x) throws Err {
         Set<Integer> NFeatures=new HashSet<>();
         Set<Integer> PFeatures=new HashSet<>();
-        for(Integer i: x.color){
+        for(Integer i : x.color.keySet()){
             if(i<0)
                 NFeatures.add(-i);
             else PFeatures.add(i);

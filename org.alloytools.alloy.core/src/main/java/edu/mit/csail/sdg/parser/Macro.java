@@ -16,7 +16,7 @@
 package edu.mit.csail.sdg.parser;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 
 import edu.mit.csail.sdg.alloy4.ConstList;
@@ -60,7 +60,7 @@ final class Macro extends ExprCustom {
 
     /** Construct a new Macro object. */
     private Macro(Pos pos, Pos isPrivate, CompModule realModule, String name, List<ExprVar> params, List<Expr> args, Expr body) {
-        super(pos, new ErrorFatal(pos, "Incomplete call on the macro \"" + name + "\""), new HashSet<Integer>()); // [HASLab] colorful Alloy
+        super(pos, new ErrorFatal(pos, "Incomplete call on the macro \"" + name + "\""), new HashMap<Integer,Pos>()); // [HASLab] colorful Alloy
         this.realModule = realModule;
         this.isPrivate = isPrivate;
         this.name = name;

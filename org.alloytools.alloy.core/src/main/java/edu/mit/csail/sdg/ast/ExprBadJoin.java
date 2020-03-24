@@ -19,7 +19,7 @@ import static edu.mit.csail.sdg.ast.Type.EMPTY;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 
 import edu.mit.csail.sdg.alloy4.Err;
@@ -73,7 +73,7 @@ public final class ExprBadJoin extends Expr {
 
     /** Constructs an ExprBadJoin node. */
     private ExprBadJoin(Pos pos, Pos closingBracket, Expr left, Expr right, JoinableList<Err> errors) {
-        super(pos, closingBracket, (left.ambiguous || right.ambiguous), EMPTY, 0, 0, errors, new HashSet<Integer>()); // [HASLab] colorful Alloy
+        super(pos, closingBracket, (left.ambiguous || right.ambiguous), EMPTY, 0, 0, errors, new HashMap<Integer,Pos>()); // [HASLab] colorful Alloy
         this.left = left;
         this.right = right;
     }

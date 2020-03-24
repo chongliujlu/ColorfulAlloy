@@ -1134,7 +1134,7 @@ final class SimpleReporter extends A4Reporter {
                     //filter cases such as pred show{}: pred show{true }
                     if(!(func.getBody() instanceof ExprConstant)) {
                         if (!func.color.isEmpty()) {
-                            addFeatureprefix(func.color, print);
+                            addFeatureprefix(func.color.keySet(), print);
                         }
 
                         print.append(func.getBody().accept(printAmalgamatedExpr));
@@ -1313,7 +1313,7 @@ final class SimpleReporter extends A4Reporter {
             String label=s.label.substring(5);
             Set<Integer> NFeatures=new HashSet<>();
             Set<Integer> PFeatures=new HashSet<>();
-            for(Integer i: s.color){
+            for(Integer i: s.color.keySet()){
                 if(i<0)
                     NFeatures.add(-i);
                 else PFeatures.add(i);
@@ -1360,7 +1360,7 @@ final class SimpleReporter extends A4Reporter {
             ExprPrinterVisitor printUnionModule=new ExprPrinterVisitor();
             Set<Integer> NFeatures=new HashSet<>();
             Set<Integer> PFeatures=new HashSet<>();
-            for(Integer i: f.color){
+            for(Integer i: f.color.keySet()){
                 if(i<0)
                     NFeatures.add(-i);
                 else PFeatures.add(i);
@@ -1498,7 +1498,7 @@ final class SimpleReporter extends A4Reporter {
             // add func/pred
             SafeList<Func> funs =world.getAllFunc();
             for(Func fun: funs) {
-                fun.getBody().color.addAll(fun.color);
+                fun.getBody().color.putAll(fun.color);
                 Expr nbody = (fun.getBody()).accept(reconstructExpr);
                 if(nbody==null){
                     newModule.addFunc(fun.pos(),fun.isPrivate,fun.label.substring(5),null,new ArrayList<Decl>(),null,ExprConstant.TRUE);

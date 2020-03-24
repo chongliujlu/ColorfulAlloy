@@ -20,10 +20,10 @@ import static edu.mit.csail.sdg.ast.Sig.UNIV;
 import static edu.mit.csail.sdg.ast.Type.EMPTY;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import edu.mit.csail.sdg.alloy4.DirectedGraph;
 import edu.mit.csail.sdg.alloy4.Err;
@@ -119,7 +119,7 @@ public final class ExprUnary extends Expr {
 
     /** Constructs an unary expression. */
     // [HASLab] colorful Alloy
-    private ExprUnary(Pos pos, Op op, Expr sub, Type type, long weight, JoinableList<Err> errors, Set<Integer> color) {
+    private ExprUnary(Pos pos, Op op, Expr sub, Type type, long weight, JoinableList<Err> errors, Map<Integer,Pos> color) {
         super(pos, null, sub.ambiguous, type, (op == Op.EXACTLYOF || op == Op.SOMEOF || op == Op.LONEOF || op == Op.ONEOF || op == Op.SETOF) ? 1 : 0, weight, errors, color); // [HASLab] colorful Alloy
         this.op = op;
         this.sub = sub;
@@ -195,7 +195,7 @@ public final class ExprUnary extends Expr {
         private final String label;
 
         //colorful Alloy
-        public String getOpLabel(){
+        public String getOpLabel() {
             return this.label;
         }
 
@@ -217,7 +217,7 @@ public final class ExprUnary extends Expr {
          */
         // [HASLab] colorful Alloy
         public final Expr make(Pos pos, Expr sub) {
-            return make(pos, sub, null, 0, new HashSet<Integer>()); // [HASLab] colorful Alloy
+            return make(pos, sub, null, 0, new HashMap<Integer,Pos>()); // [HASLab] colorful Alloy
         }
 
         /**
@@ -237,7 +237,7 @@ public final class ExprUnary extends Expr {
          *            ExprUnary's constructor never sees it)
          */
         // [HASLab] colorful Alloy
-        public final Expr make(Pos pos, Expr sub, Set<Integer> color) {
+        public final Expr make(Pos pos, Expr sub, Map<Integer,Pos> color) {
             return make(pos, sub, null, 0, color); // [HASLab] colorful Alloy
         }
 
@@ -261,7 +261,7 @@ public final class ExprUnary extends Expr {
          */
         // [HASLab] colorful Alloy
         public final Expr make(Pos pos, Expr sub, Err extraError, long extraWeight) {
-            return make(pos, sub, extraError, extraWeight, new HashSet<Integer>());
+            return make(pos, sub, extraError, extraWeight, new HashMap<Integer,Pos>());
         }
 
         /**
@@ -283,7 +283,7 @@ public final class ExprUnary extends Expr {
          *            ExprUnary's constructor never sees it)
          */
         // [HASLab] colorful Alloy
-        public final Expr make(Pos pos, Expr sub, Err extraError, long extraWeight, Set<Integer> color) {
+        public final Expr make(Pos pos, Expr sub, Err extraError, long extraWeight, Map<Integer,Pos> color) {
             if (pos == null || pos == Pos.UNKNOWN) {
                 if (this == NOOP)
                     pos = sub.pos;

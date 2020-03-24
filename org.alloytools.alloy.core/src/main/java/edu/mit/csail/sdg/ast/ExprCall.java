@@ -18,14 +18,21 @@ package edu.mit.csail.sdg.ast;
 import static edu.mit.csail.sdg.ast.Type.EMPTY;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
-import edu.mit.csail.sdg.alloy4.*;
+import edu.mit.csail.sdg.alloy4.ConstList;
 import edu.mit.csail.sdg.alloy4.ConstList.TempList;
+import edu.mit.csail.sdg.alloy4.Env;
+import edu.mit.csail.sdg.alloy4.Err;
+import edu.mit.csail.sdg.alloy4.ErrorSyntax;
+import edu.mit.csail.sdg.alloy4.ErrorType;
+import edu.mit.csail.sdg.alloy4.ErrorWarning;
+import edu.mit.csail.sdg.alloy4.JoinableList;
+import edu.mit.csail.sdg.alloy4.Pos;
+import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.ast.Sig.Field;
-import edu.mit.csail.sdg.parser.CompModule;
 
 /**
  * Immutable; represents a call.
@@ -271,7 +278,7 @@ public final class ExprCall extends Expr {
      * of arguments "args".
      */
     // [HASLab] colorful Alloy
-    private ExprCall(Pos pos, Pos closingBracket, boolean ambiguous, Type type, Func fun, ConstList<Expr> args, long extraWeight, long weight, JoinableList<Err> errs, Set<Integer> color) {
+    private ExprCall(Pos pos, Pos closingBracket, boolean ambiguous, Type type, Func fun, ConstList<Expr> args, long extraWeight, long weight, JoinableList<Err> errs, Map<Integer,Pos> color) {
         super(pos, closingBracket, ambiguous, type, 0, weight, errs, color); // [HASLab] colorful Alloy
         this.fun = fun;
         this.args = args;
@@ -310,7 +317,7 @@ public final class ExprCall extends Expr {
      */
     // [HASLab] colorful Alloy
     public static Expr make(Pos pos, Pos closingBracket, Func fun, List<Expr> args, long extraPenalty) {
-        return make(pos, closingBracket, fun, args, extraPenalty, new HashSet<Integer>());
+        return make(pos, closingBracket, fun, args, extraPenalty, new HashMap<Integer,Pos>());
     }
 
     /**
@@ -318,7 +325,7 @@ public final class ExprCall extends Expr {
      * list of arguments "args".
      */
     // [HASLab] colorful Alloy
-    public static Expr make(Pos pos, Pos closingBracket, Func fun, List<Expr> args, long extraPenalty, Set<Integer> color) {
+    public static Expr make(Pos pos, Pos closingBracket, Func fun, List<Expr> args, long extraPenalty, Map<Integer,Pos> color) {
         if (extraPenalty < 0)
             extraPenalty = 0;
         if (args == null)
@@ -368,7 +375,7 @@ public final class ExprCall extends Expr {
 
     /** {@inheritDoc} */
     @Override
-    public Expr resolve(Type t, Collection<ErrorWarning> warns){
+    public Expr resolve(Type t, Collection<ErrorWarning> warns) {
         if (errors.size() > 0)
             return this;
         TempList<Expr> args = new TempList<Expr>(this.args.size());
@@ -394,7 +401,7 @@ public final class ExprCall extends Expr {
             // "+p));
         }
         //CompModule.Context.contextFeats.addAll(this.color);//colorful Alloy
-        return changed ? make(pos, closingBracket, fun, args.makeConst(), extraWeight,this.color) : this;//colorful Alloy
+        return changed ? make(pos, closingBracket, fun, args.makeConst(), extraWeight, this.color) : this;//colorful Alloy
     }
 
     // ============================================================================================================//

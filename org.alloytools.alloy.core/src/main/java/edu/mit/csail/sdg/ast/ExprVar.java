@@ -17,9 +17,9 @@ package edu.mit.csail.sdg.ast;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.ErrorWarning;
@@ -49,7 +49,7 @@ public final class ExprVar extends ExprHasName implements Clause {
 
     /** Constructs an ExprVar object */
     // [HASLab] colorful Alloy
-    private ExprVar(Pos pos, String label, Type type, Set<Integer> color) {
+    private ExprVar(Pos pos, String label, Type type, Map<Integer,Pos> color) {
         super(pos, label, type, color); // [HASLab] colorful Alloy
     }
 
@@ -62,7 +62,7 @@ public final class ExprVar extends ExprHasName implements Clause {
      *            pretty-printing and does not have to be unique)
      */
     public static ExprVar make(Pos pos, String label) {
-        return new ExprVar(pos, label, Type.EMPTY, new HashSet<Integer>()); // [HASLab] colorful Alloy
+        return new ExprVar(pos, label, Type.EMPTY, new HashMap<Integer,Pos>()); // [HASLab] colorful Alloy
     }
 
     /**
@@ -76,7 +76,7 @@ public final class ExprVar extends ExprHasName implements Clause {
      */
     // [HASLab] colorful Alloy
     public static ExprVar make(Pos pos, String label, Type type) {
-        return make(pos, label, type, new HashSet<Integer>());
+        return make(pos, label, type, new HashMap<Integer,Pos>());
     }
 
     /**
@@ -89,7 +89,7 @@ public final class ExprVar extends ExprHasName implements Clause {
      * @param type - the type
      */
     // [HASLab] colorful Alloy
-    public static ExprVar make(Pos pos, String label, Type type, Set<Integer> color) {
+    public static ExprVar make(Pos pos, String label, Type type, Map<Integer,Pos> color) {
         return new ExprVar(pos, label, type, color); // [HASLab] colorful Alloy
     }
 

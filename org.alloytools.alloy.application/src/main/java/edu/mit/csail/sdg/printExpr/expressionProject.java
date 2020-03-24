@@ -37,7 +37,7 @@ public  class expressionProject extends VisitReturn<Expr> {
     public void computeFeatures(Expr x){
         NFeatures.clear();
         PFeatures.clear();
-        for(Integer i: x.color){
+        for(Integer i: x.color.keySet()){
             if(i<0)
                 NFeatures.add(-i);
             else PFeatures.add(i);
@@ -47,7 +47,7 @@ public  class expressionProject extends VisitReturn<Expr> {
     @Override
     public Expr visit(ExprBinary x) throws Err {
 
-        if(paintWithOppositeFeature(x.color))
+        if(paintWithOppositeFeature(x.color.keySet()))
             return null;
 
         computeFeatures(x);
@@ -88,7 +88,7 @@ public  class expressionProject extends VisitReturn<Expr> {
     @Override
     public Expr visit(ExprList x) throws Err {
 
-        if(paintWithOppositeFeature(x.color))
+        if(paintWithOppositeFeature(x.color.keySet()))
             return null;
 
         ConstList.TempList<Expr> temp = new ConstList.TempList<>(x.args.size());
@@ -108,7 +108,7 @@ public  class expressionProject extends VisitReturn<Expr> {
     @Override
     public Expr visit(ExprCall x) throws Err {
 
-        if(paintWithOppositeFeature(x.color))
+        if(paintWithOppositeFeature(x.color.keySet()))
             return null;
         computeFeatures(x);
         if(executefeats.containsAll(PFeatures)){
@@ -119,7 +119,7 @@ public  class expressionProject extends VisitReturn<Expr> {
 
     @Override
     public Expr visit(ExprConstant x) throws Err {
-        if(paintWithOppositeFeature(x.color))
+        if(paintWithOppositeFeature(x.color.keySet()))
             return null;
 
         computeFeatures(x);
@@ -133,7 +133,7 @@ public  class expressionProject extends VisitReturn<Expr> {
     @Override
     public Expr visit(ExprITE x) throws Err {
 
-        if(paintWithOppositeFeature(x.color))
+        if(paintWithOppositeFeature(x.color.keySet()))
             return null;
         Expr cond=null; Expr leftExpr=null; Expr rightExpr=null;
 
@@ -152,7 +152,7 @@ public  class expressionProject extends VisitReturn<Expr> {
     @Override
     public Expr visit(ExprLet x) throws Err {
 
-        if(paintWithOppositeFeature(x.color))
+        if(paintWithOppositeFeature(x.color.keySet()))
             return null;
         computeFeatures(x);
         // no positive feature marked
@@ -165,7 +165,7 @@ public  class expressionProject extends VisitReturn<Expr> {
     @Override
     public Expr visit(ExprQt x) throws Err {
 
-        if(paintWithOppositeFeature(x.color))
+        if(paintWithOppositeFeature(x.color.keySet()))
             return null;
 
         computeFeatures(x);
@@ -201,7 +201,7 @@ public  class expressionProject extends VisitReturn<Expr> {
 
     @Override
     public Expr visit(ExprUnary x) throws Err {
-        if(paintWithOppositeFeature(x.color))
+        if(paintWithOppositeFeature(x.color.keySet()))
             return null;
 
         Expr tempExpr=null;
@@ -222,7 +222,7 @@ public  class expressionProject extends VisitReturn<Expr> {
     @Override
     public Expr visit(ExprVar x) throws Err {
 
-        if(paintWithOppositeFeature(x.color))
+        if(paintWithOppositeFeature(x.color.keySet()))
             return null;
         computeFeatures(x);
         if(executefeats.containsAll(PFeatures)){
@@ -233,7 +233,7 @@ public  class expressionProject extends VisitReturn<Expr> {
 
     @Override
     public Expr visit(Sig x) throws Err {
-        if(paintWithOppositeFeature(x.color))
+        if(paintWithOppositeFeature(x.color.keySet()))
             return null;
 
         Sig signew=null;
@@ -259,7 +259,7 @@ public  class expressionProject extends VisitReturn<Expr> {
                     labels[i]=d.names.get(i).label;
                 }
                 //add features to its bounding expression
-                d.expr.color.addAll(d.color);
+                d.expr.color.putAll(d.color);
                 Expr exprout = visitThis(d.expr);
                 if (exprout!=null){
                     signew.addTrickyField(d.span(),d.isPrivate,d.disjoint,d.disjoint2,null,labels,exprout,d.color);
@@ -271,7 +271,7 @@ public  class expressionProject extends VisitReturn<Expr> {
     }
     @Override
     public Expr visit(Sig.Field x) throws Err {
-        if(paintWithOppositeFeature(x.color))
+        if(paintWithOppositeFeature(x.color.keySet()))
             return null;
 
         Expr tempExpr=null;

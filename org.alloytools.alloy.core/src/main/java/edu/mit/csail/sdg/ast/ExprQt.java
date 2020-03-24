@@ -19,10 +19,10 @@ import static edu.mit.csail.sdg.ast.Type.EMPTY;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Set;
 
 import edu.mit.csail.sdg.alloy4.ConstList;
 import edu.mit.csail.sdg.alloy4.ConstList.TempList;
@@ -157,7 +157,7 @@ public final class ExprQt extends Expr {
 
     /** Constructs a new quantified expression. */
     // [HASLab] colorful Alloy
-    private ExprQt(Pos pos, Pos closingBracket, Op op, Type type, ConstList<Decl> decls, Expr sub, boolean ambiguous, long weight, JoinableList<Err> errs, Set<Integer> color) {
+    private ExprQt(Pos pos, Pos closingBracket, Op op, Type type, ConstList<Decl> decls, Expr sub, boolean ambiguous, long weight, JoinableList<Err> errs, Map<Integer,Pos> color) {
         super(pos, closingBracket, ambiguous, type, 0, weight, errs, color); // [HASLab] colorful Alloy
         this.op = op;
         this.decls = decls;
@@ -195,23 +195,8 @@ public final class ExprQt extends Expr {
         private final String label;
 
         // colorful Alloy
-       public String getLabel(){
+        public String getLabel() {
             return this.label;
-        }
-        /**
-         * Constructs a quantification expression with "this" as the operator.
-         *
-         * @param pos - the position of the "quantifier" in the source file (or null if
-         *            unknown)
-         * @param closingBracket - the position of the "closing bracket" in the source
-         *            file (or null if unknown)
-         * @param decls - the list of variable declarations (each variable must be over
-         *            a set or relation)
-         * @param sub - the body of the expression
-         */
-        // [HASLab] colorful Alloy
-        public final Expr make(Pos pos, Pos closingBracket, List<Decl> decls, Expr sub) {
-            return make(pos, closingBracket, decls, sub, new HashSet<Integer>());
         }
 
         /**
@@ -226,7 +211,23 @@ public final class ExprQt extends Expr {
          * @param sub - the body of the expression
          */
         // [HASLab] colorful Alloy
-        public final Expr make(Pos pos, Pos closingBracket, List<Decl> decls, Expr sub, Set<Integer> color) {
+        public final Expr make(Pos pos, Pos closingBracket, List<Decl> decls, Expr sub) {
+            return make(pos, closingBracket, decls, sub, new HashMap<Integer,Pos>());
+        }
+
+        /**
+         * Constructs a quantification expression with "this" as the operator.
+         *
+         * @param pos - the position of the "quantifier" in the source file (or null if
+         *            unknown)
+         * @param closingBracket - the position of the "closing bracket" in the source
+         *            file (or null if unknown)
+         * @param decls - the list of variable declarations (each variable must be over
+         *            a set or relation)
+         * @param sub - the body of the expression
+         */
+        // [HASLab] colorful Alloy
+        public final Expr make(Pos pos, Pos closingBracket, List<Decl> decls, Expr sub, Map<Integer,Pos> color) {
             Type t = this == SUM ? Type.smallIntType() : (this == COMPREHENSION ? Type.EMPTY : Type.FORMULA);
             if (this != SUM)
                 sub = sub.typecheck_as_formula();
