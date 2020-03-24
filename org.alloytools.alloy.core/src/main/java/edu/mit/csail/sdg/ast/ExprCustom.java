@@ -18,7 +18,7 @@ package edu.mit.csail.sdg.ast;
 import static edu.mit.csail.sdg.ast.Type.EMPTY;
 
 import java.util.Collection;
-import java.util.Set;
+import java.util.Map;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.ErrorWarning;
@@ -46,7 +46,7 @@ public abstract class ExprCustom extends Expr {
      * @param error - the error to display if this node does not get desugared
      */
     // [HASLab] colorful Alloy
-    public ExprCustom(Pos pos, Err error, Set<Integer> color) {
+    public ExprCustom(Pos pos, Err error, Map<Integer,Pos> color) {
         super(pos, null, false, EMPTY, 0, 0, new JoinableList<Err>(error), color); // [HASLab] colorful Alloy
         if (error == null)
             throw new NullPointerException();

@@ -19,9 +19,9 @@ import static edu.mit.csail.sdg.ast.Type.EMPTY;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.ErrorSyntax;
@@ -71,7 +71,7 @@ public final class ExprBinary extends Expr {
 
     /** Constructs a new ExprBinary node. */
     // [HASLab] colorful Alloy
-    private ExprBinary(Pos pos, Pos closingBracket, Op op, Expr left, Expr right, Type type, JoinableList<Err> errors, Set<Integer> color) {
+    private ExprBinary(Pos pos, Pos closingBracket, Op op, Expr left, Expr right, Type type, JoinableList<Err> errors, Map<Integer,Pos> color) {
         super(pos, closingBracket, left.ambiguous || right.ambiguous, type, (op.isArrow && (left.mult == 2 || right.mult == 2 || op != Op.ARROW)) ? 2 : 0, left.weight + right.weight, errors, color);    // [HASLab] colorful Alloy
         this.op = op;
         this.left = left;
@@ -276,9 +276,10 @@ public final class ExprBinary extends Expr {
         /** The human readable label for this operator. */
 
         private final String label;
+
         // colorful Alloy
-        public String getLabel(){
-         return this.label;
+        public String getLabel() {
+            return this.label;
         }
 
         /**
@@ -297,7 +298,7 @@ public final class ExprBinary extends Expr {
          */
         // [HASLab] colorful Alloy
         public final Expr make(Pos pos, Pos closingBracket, Expr left, Expr right) {
-            return make(pos, closingBracket, left, right, new HashSet<Integer>());
+            return make(pos, closingBracket, left, right, new HashMap<Integer,Pos>());
         }
 
         /**
@@ -309,7 +310,7 @@ public final class ExprBinary extends Expr {
          * @param right - the right hand side expression
          */
         // [HASLab] colorful Alloy
-        public final Expr make(Pos pos, Pos closingBracket, Expr left, Expr right, Set<Integer> color) {
+        public final Expr make(Pos pos, Pos closingBracket, Expr left, Expr right, Map<Integer,Pos> color) {
             switch (this) {
                 case AND :
                     return ExprList.makeAND(pos, closingBracket, left, right);

@@ -632,24 +632,24 @@ Spec ::= Spec Command         ;
 Spec ::= Spec PSpec           ;
 Spec ::= ;
 
-PSpec ::= PFEAT1 PSpec:p PFEAT1{:  for (Browsable b:p) b.paint(1); RESULT=p; :};         //colorful Alloy
-PSpec ::= PFEAT2 PSpec:p PFEAT2{:  for (Browsable b:p) b.paint(2); RESULT=p; :};         //colorful Alloy
-PSpec ::= PFEAT3 PSpec:p PFEAT3{:  for (Browsable b:p) b.paint(3); RESULT=p; :};         //colorful Alloy
-PSpec ::= PFEAT4 PSpec:p PFEAT4{:  for (Browsable b:p) b.paint(4); RESULT=p; :};         //colorful Alloy
-PSpec ::= PFEAT5 PSpec:p PFEAT5{:  for (Browsable b:p) b.paint(5); RESULT=p; :};         //colorful Alloy
-PSpec ::= PFEAT6 PSpec:p PFEAT6{:  for (Browsable b:p) b.paint(6); RESULT=p; :};         //colorful Alloy
-PSpec ::= PFEAT7 PSpec:p PFEAT7{:  for (Browsable b:p) b.paint(7); RESULT=p; :};         //colorful Alloy
-PSpec ::= PFEAT8 PSpec:p PFEAT8{:  for (Browsable b:p) b.paint(8); RESULT=p; :};         //colorful Alloy
-PSpec ::= PFEAT9 PSpec:p PFEAT9{:  for (Browsable b:p) b.paint(9); RESULT=p; :};         //colorful Alloy
-PSpec ::= NFEAT1 PSpec:p NFEAT1{:  for (Browsable b:p) b.paint(-1); RESULT=p; :};        //colorful Alloy
-PSpec ::= NFEAT2 PSpec:p NFEAT2{:  for (Browsable b:p) b.paint(-2); RESULT=p; :};        //colorful Alloy
-PSpec ::= NFEAT3 PSpec:p NFEAT3{:  for (Browsable b:p) b.paint(-3); RESULT=p; :};        //colorful Alloy
-PSpec ::= NFEAT4 PSpec:p NFEAT4{:  for (Browsable b:p) b.paint(-4); RESULT=p; :};        //colorful Alloy
-PSpec ::= NFEAT5 PSpec:p NFEAT5{:  for (Browsable b:p) b.paint(-5); RESULT=p; :};        //colorful Alloy
-PSpec ::= NFEAT6 PSpec:p NFEAT6{:  for (Browsable b:p) b.paint(-6); RESULT=p; :};        //colorful Alloy
-PSpec ::= NFEAT7 PSpec:p NFEAT7{:  for (Browsable b:p) b.paint(-7); RESULT=p; :};        //colorful Alloy
-PSpec ::= NFEAT8 PSpec:p NFEAT8{:  for (Browsable b:p) b.paint(-8); RESULT=p; :};        //colorful Alloy
-PSpec ::= NFEAT9 PSpec:p NFEAT9{:  for (Browsable b:p) b.paint(-9); RESULT=p; :};        //colorful Alloy
+PSpec ::= PFEAT1:a1 PSpec:p PFEAT1:a2 {:  for (Browsable b:p) b.paint(1,a1.merge(a2)); RESULT=p; :};         //colorful Alloy
+PSpec ::= PFEAT2:a1 PSpec:p PFEAT2:a2 {:  for (Browsable b:p) b.paint(2,a1.merge(a2)); RESULT=p; :};         //colorful Alloy
+PSpec ::= PFEAT3:a1 PSpec:p PFEAT3:a2 {:  for (Browsable b:p) b.paint(3,a1.merge(a2)); RESULT=p; :};         //colorful Alloy
+PSpec ::= PFEAT4:a1 PSpec:p PFEAT4:a2 {:  for (Browsable b:p) b.paint(4,a1.merge(a2)); RESULT=p; :};         //colorful Alloy
+PSpec ::= PFEAT5:a1 PSpec:p PFEAT5:a2 {:  for (Browsable b:p) b.paint(5,a1.merge(a2)); RESULT=p; :};         //colorful Alloy
+PSpec ::= PFEAT6:a1 PSpec:p PFEAT6:a2 {:  for (Browsable b:p) b.paint(6,a1.merge(a2)); RESULT=p; :};         //colorful Alloy
+PSpec ::= PFEAT7:a1 PSpec:p PFEAT7:a2 {:  for (Browsable b:p) b.paint(7,a1.merge(a2)); RESULT=p; :};         //colorful Alloy
+PSpec ::= PFEAT8:a1 PSpec:p PFEAT8:a2 {:  for (Browsable b:p) b.paint(8,a1.merge(a2)); RESULT=p; :};         //colorful Alloy
+PSpec ::= PFEAT9:a1 PSpec:p PFEAT9:a2 {:  for (Browsable b:p) b.paint(9,a1.merge(a2)); RESULT=p; :};         //colorful Alloy
+PSpec ::= NFEAT1:a1 PSpec:p NFEAT1:a2 {:  for (Browsable b:p) b.paint(-1,a1.merge(a2)); RESULT=p; :};        //colorful Alloy
+PSpec ::= NFEAT2:a1 PSpec:p NFEAT2:a2 {:  for (Browsable b:p) b.paint(-2,a1.merge(a2)); RESULT=p; :};        //colorful Alloy
+PSpec ::= NFEAT3:a1 PSpec:p NFEAT3:a2 {:  for (Browsable b:p) b.paint(-3,a1.merge(a2)); RESULT=p; :};        //colorful Alloy
+PSpec ::= NFEAT4:a1 PSpec:p NFEAT4:a2 {:  for (Browsable b:p) b.paint(-4,a1.merge(a2)); RESULT=p; :};        //colorful Alloy
+PSpec ::= NFEAT5:a1 PSpec:p NFEAT5:a2 {:  for (Browsable b:p) b.paint(-5,a1.merge(a2)); RESULT=p; :};        //colorful Alloy
+PSpec ::= NFEAT6:a1 PSpec:p NFEAT6:a2 {:  for (Browsable b:p) b.paint(-6,a1.merge(a2)); RESULT=p; :};        //colorful Alloy
+PSpec ::= NFEAT7:a1 PSpec:p NFEAT7:a2 {:  for (Browsable b:p) b.paint(-7,a1.merge(a2)); RESULT=p; :};        //colorful Alloy
+PSpec ::= NFEAT8:a1 PSpec:p NFEAT8:a2 {:  for (Browsable b:p) b.paint(-8,a1.merge(a2)); RESULT=p; :};        //colorful Alloy
+PSpec ::= NFEAT9:a1 PSpec:p NFEAT9:a2 {:  for (Browsable b:p) b.paint(-9,a1.merge(a2)); RESULT=p; :};        //colorful Alloy
 PSpec ::= FACT:o          Super:e {:         parser.alloymodule.addFact      (o , ""       , e); RESULT = Arrays.asList(e); :};
 PSpec ::= FACT:o   Name:n Super:e {: nod(n); parser.alloymodule.addFact      (o , n.label  , e); RESULT = Arrays.asList(e); :};
 PSpec ::= FACT:o   STR:n  Super:e {:         parser.alloymodule.addFact      (o , n.string , e); RESULT = Arrays.asList(e); :};
@@ -865,24 +865,24 @@ Namex ::= Namex:a COMMA         Name:b {: nod(b);              a.add(b); RESULT=
 Namex ::= Namex:a COMMA EXACTLY Name:b {: nod(b); a.add(null); a.add(b); RESULT=a;                                   :};
 
 // [HASLab] colorful Alloy, marked decls
-Decla ::= PFEAT1 Decla:x PFEAT1    {: x.paint(1); RESULT = x;   :};
-Decla ::= PFEAT2 Decla:x PFEAT2    {: x.paint(2); RESULT = x;   :};
-Decla ::= PFEAT3 Decla:x PFEAT3    {: x.paint(3); RESULT = x;   :};
-Decla ::= PFEAT4 Decla:x PFEAT4    {: x.paint(4); RESULT = x;   :};
-Decla ::= PFEAT5 Decla:x PFEAT5    {: x.paint(5); RESULT = x;   :};
-Decla ::= PFEAT6 Decla:x PFEAT6    {: x.paint(6); RESULT = x;   :};
-Decla ::= PFEAT7 Decla:x PFEAT7    {: x.paint(7); RESULT = x;   :};
-Decla ::= PFEAT8 Decla:x PFEAT8    {: x.paint(8); RESULT = x;   :};
-Decla ::= PFEAT9 Decla:x PFEAT9    {: x.paint(9); RESULT = x;   :};
-Decla ::= NFEAT1 Decla:x NFEAT1    {: x.paint(-1); RESULT = x;  :};
-Decla ::= NFEAT2 Decla:x NFEAT2    {: x.paint(-2); RESULT = x;  :};
-Decla ::= NFEAT3 Decla:x NFEAT3    {: x.paint(-3); RESULT = x;  :};
-Decla ::= NFEAT4 Decla:x NFEAT4    {: x.paint(-4); RESULT = x;  :};
-Decla ::= NFEAT5 Decla:x NFEAT5    {: x.paint(-5); RESULT = x;  :};
-Decla ::= NFEAT6 Decla:x NFEAT6    {: x.paint(-6); RESULT = x;  :};
-Decla ::= NFEAT7 Decla:x NFEAT7    {: x.paint(-7); RESULT = x;  :};
-Decla ::= NFEAT8 Decla:x NFEAT8    {: x.paint(-8); RESULT = x;  :};
-Decla ::= NFEAT9 Decla:x NFEAT9    {: x.paint(-9); RESULT = x;  :};
+Decla ::= PFEAT1:a1 Decla:x PFEAT1:a2    {: x.paint(1,a1.merge(a2)); RESULT = x;   :};
+Decla ::= PFEAT2:a1 Decla:x PFEAT2:a2    {: x.paint(2,a1.merge(a2)); RESULT = x;   :};
+Decla ::= PFEAT3:a1 Decla:x PFEAT3:a2    {: x.paint(3,a1.merge(a2)); RESULT = x;   :};
+Decla ::= PFEAT4:a1 Decla:x PFEAT4:a2    {: x.paint(4,a1.merge(a2)); RESULT = x;   :};
+Decla ::= PFEAT5:a1 Decla:x PFEAT5:a2    {: x.paint(5,a1.merge(a2)); RESULT = x;   :};
+Decla ::= PFEAT6:a1 Decla:x PFEAT6:a2    {: x.paint(6,a1.merge(a2)); RESULT = x;   :};
+Decla ::= PFEAT7:a1 Decla:x PFEAT7:a2    {: x.paint(7,a1.merge(a2)); RESULT = x;   :};
+Decla ::= PFEAT8:a1 Decla:x PFEAT8:a2    {: x.paint(8,a1.merge(a2)); RESULT = x;   :};
+Decla ::= PFEAT9:a1 Decla:x PFEAT9:a2    {: x.paint(9,a1.merge(a2)); RESULT = x;   :};
+Decla ::= NFEAT1:a1 Decla:x NFEAT1:a2    {: x.paint(-1,a1.merge(a2)); RESULT = x;  :};
+Decla ::= NFEAT2:a1 Decla:x NFEAT2:a2    {: x.paint(-2,a1.merge(a2)); RESULT = x;  :};
+Decla ::= NFEAT3:a1 Decla:x NFEAT3:a2    {: x.paint(-3,a1.merge(a2)); RESULT = x;  :};
+Decla ::= NFEAT4:a1 Decla:x NFEAT4:a2    {: x.paint(-4,a1.merge(a2)); RESULT = x;  :};
+Decla ::= NFEAT5:a1 Decla:x NFEAT5:a2    {: x.paint(-5,a1.merge(a2)); RESULT = x;  :};
+Decla ::= NFEAT6:a1 Decla:x NFEAT6:a2    {: x.paint(-6,a1.merge(a2)); RESULT = x;  :};
+Decla ::= NFEAT7:a1 Decla:x NFEAT7:a2    {: x.paint(-7,a1.merge(a2)); RESULT = x;  :};
+Decla ::= NFEAT8:a1 Decla:x NFEAT8:a2    {: x.paint(-8,a1.merge(a2)); RESULT = x;  :};
+Decla ::= NFEAT9:a1 Decla:x NFEAT9:a2    {: x.paint(-9,a1.merge(a2)); RESULT = x;  :};
 
 Decla ::=           PART:k Names   COLON                 Expr    {: if (1==1) throw CompModule.hint(k, "part");        :};
 Decla ::=           EXH:k  Names   COLON                 Expr    {: if (1==1) throw CompModule.hint(k, "exh");         :};
@@ -1172,24 +1172,24 @@ BaseExpr ::= INTMIN:o                               {: RESULT = ExprConstant.Op.
 BaseExpr ::= INTMAX:o                               {: RESULT = ExprConstant.Op.MAX.make(o, 0);                           :};
 BaseExpr ::= INTNEXT:o                              {: RESULT = ExprConstant.Op.NEXT.make(o, 0);                          :};
 BaseExpr ::= LPAREN Expr:x RPAREN                   {: RESULT = x;                                                        :};
-BaseExpr ::= PFEAT1 Expr:x PFEAT1                   {: x.paint(1); RESULT = x;                                            :};
-BaseExpr ::= PFEAT2 Expr:x PFEAT2                   {: x.paint(2); RESULT = x;                                            :};
-BaseExpr ::= PFEAT3 Expr:x PFEAT3                   {: x.paint(3); RESULT = x;                                            :};
-BaseExpr ::= PFEAT4 Expr:x PFEAT4                   {: x.paint(4); RESULT = x;                                            :};
-BaseExpr ::= PFEAT5 Expr:x PFEAT5                   {: x.paint(5); RESULT = x;                                            :};
-BaseExpr ::= PFEAT6 Expr:x PFEAT6                   {: x.paint(6); RESULT = x;                                            :};
-BaseExpr ::= PFEAT7 Expr:x PFEAT7                   {: x.paint(7); RESULT = x;                                            :};
-BaseExpr ::= PFEAT8 Expr:x PFEAT8                   {: x.paint(8); RESULT = x;                                            :};
-BaseExpr ::= PFEAT9 Expr:x PFEAT9                   {: x.paint(9); RESULT = x;                                            :};
-BaseExpr ::= NFEAT1 Expr:x NFEAT1                   {: x.paint(-1); RESULT = x;                                           :};
-BaseExpr ::= NFEAT2 Expr:x NFEAT2                   {: x.paint(-2); RESULT = x;                                           :};
-BaseExpr ::= NFEAT3 Expr:x NFEAT3                   {: x.paint(-3); RESULT = x;                                           :};
-BaseExpr ::= NFEAT4 Expr:x NFEAT4                   {: x.paint(-4); RESULT = x;                                           :};
-BaseExpr ::= NFEAT5 Expr:x NFEAT5                   {: x.paint(-5); RESULT = x;                                           :};
-BaseExpr ::= NFEAT6 Expr:x NFEAT6                   {: x.paint(-6); RESULT = x;                                           :};
-BaseExpr ::= NFEAT7 Expr:x NFEAT7                   {: x.paint(-7); RESULT = x;                                           :};
-BaseExpr ::= NFEAT8 Expr:x NFEAT8                   {: x.paint(-8); RESULT = x;                                           :};
-BaseExpr ::= NFEAT9 Expr:x NFEAT9                   {: x.paint(-9); RESULT = x;                                           :};
+BaseExpr ::= PFEAT1:a1 Expr:x PFEAT1:a2             {: x.paint(1,a1.merge(a2)); RESULT = x;                               :};
+BaseExpr ::= PFEAT2:a1 Expr:x PFEAT2:a2             {: x.paint(2,a1.merge(a2)); RESULT = x;                               :};
+BaseExpr ::= PFEAT3:a1 Expr:x PFEAT3:a2             {: x.paint(3,a1.merge(a2)); RESULT = x;                               :};
+BaseExpr ::= PFEAT4:a1 Expr:x PFEAT4:a2             {: x.paint(4,a1.merge(a2)); RESULT = x;                               :};
+BaseExpr ::= PFEAT5:a1 Expr:x PFEAT5:a2             {: x.paint(5,a1.merge(a2)); RESULT = x;                               :};
+BaseExpr ::= PFEAT6:a1 Expr:x PFEAT6:a2             {: x.paint(6,a1.merge(a2)); RESULT = x;                               :};
+BaseExpr ::= PFEAT7:a1 Expr:x PFEAT7:a2             {: x.paint(7,a1.merge(a2)); RESULT = x;                               :};
+BaseExpr ::= PFEAT8:a1 Expr:x PFEAT8:a2             {: x.paint(8,a1.merge(a2)); RESULT = x;                               :};
+BaseExpr ::= PFEAT9:a1 Expr:x PFEAT9:a2             {: x.paint(9,a1.merge(a2)); RESULT = x;                               :};
+BaseExpr ::= NFEAT1:a1 Expr:x NFEAT1:a2             {: x.paint(-1,a1.merge(a2)); RESULT = x;                              :};
+BaseExpr ::= NFEAT2:a1 Expr:x NFEAT2:a2             {: x.paint(-2,a1.merge(a2)); RESULT = x;                              :};
+BaseExpr ::= NFEAT3:a1 Expr:x NFEAT3:a2             {: x.paint(-3,a1.merge(a2)); RESULT = x;                              :};
+BaseExpr ::= NFEAT4:a1 Expr:x NFEAT4:a2             {: x.paint(-4,a1.merge(a2)); RESULT = x;                              :};
+BaseExpr ::= NFEAT5:a1 Expr:x NFEAT5:a2             {: x.paint(-5,a1.merge(a2)); RESULT = x;                              :};
+BaseExpr ::= NFEAT6:a1 Expr:x NFEAT6:a2             {: x.paint(-6,a1.merge(a2)); RESULT = x;                              :};
+BaseExpr ::= NFEAT7:a1 Expr:x NFEAT7:a2             {: x.paint(-7,a1.merge(a2)); RESULT = x;                              :};
+BaseExpr ::= NFEAT8:a1 Expr:x NFEAT8:a2             {: x.paint(-8,a1.merge(a2)); RESULT = x;                              :};
+BaseExpr ::= NFEAT9:a1 Expr:x NFEAT9:a2             {: x.paint(-9,a1.merge(a2)); RESULT = x;                              :};
 BaseExpr ::= SigRef:x                               {: RESULT = x;                                                        :};
 BaseExpr ::= AT:o Name:x                            {: nod(x); RESULT = ExprVar.make(o.merge(x.pos), "@"+x.label);        :};
 BaseExpr ::= Super:x                                {: RESULT = x;                                                        :};

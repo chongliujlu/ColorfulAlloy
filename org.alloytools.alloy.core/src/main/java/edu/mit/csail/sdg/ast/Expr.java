@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.ErrorType;
@@ -121,7 +121,7 @@ public abstract class Expr extends Browsable {
      *            null if there are none)
      */
     // [HASLab] colorful Alloy
-    Expr(Pos pos, Pos closingBracket, boolean ambiguous, Type type, int mult, long weight, JoinableList<Err> errors, Set<Integer> color) {
+    Expr(Pos pos, Pos closingBracket, boolean ambiguous, Type type, int mult, long weight, JoinableList<Err> errors, Map<Integer,Pos> color) {
         this.pos = (pos == null ? Pos.UNKNOWN : pos);
         this.closingBracket = (closingBracket == null ? Pos.UNKNOWN : closingBracket);
         this.ambiguous = ambiguous;
@@ -138,7 +138,7 @@ public abstract class Expr extends Browsable {
 
     /** This must only be called by Sig's constructor. */
     // [HASLab] colorful Alloy
-    Expr(Pos pos, Type type, Set<Integer> color) {
+    Expr(Pos pos, Type type, Map<Integer,Pos> color) {
         this.closingBracket = Pos.UNKNOWN;
         this.ambiguous = false;
         this.errors = emptyListOfErrors;

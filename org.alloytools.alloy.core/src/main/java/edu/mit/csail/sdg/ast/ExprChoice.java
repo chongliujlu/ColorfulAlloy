@@ -19,9 +19,9 @@ import static edu.mit.csail.sdg.ast.Type.EMPTY;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import edu.mit.csail.sdg.alloy4.ConstList;
 import edu.mit.csail.sdg.alloy4.ConstList.TempList;
@@ -104,7 +104,7 @@ public final class ExprChoice extends Expr {
 
     /** Constructs an ExprChoice node. */
     // [HASLab] colorful Alloy
-    private ExprChoice(Pos pos, ConstList<Expr> choices, ConstList<String> reasons, Type type, long weight, Set<Integer> color) {
+    private ExprChoice(Pos pos, ConstList<Expr> choices, ConstList<String> reasons, Type type, long weight, Map<Integer,Pos> color) {
         super(pos, null, true, type, 0, weight, emptyListOfErrors.make(type == EMPTY ? complain(pos, choices) : null), color); // [HASLab] colorful Alloy
         this.choices = choices;
         this.reasons = reasons;
@@ -116,12 +116,12 @@ public final class ExprChoice extends Expr {
     /** Construct an ExprChoice node. */
     // [HASLab] colorful Alloy
     public static Expr make(boolean ignoreIntFuns, Pos pos, ConstList<Expr> choices, ConstList<String> reasons) {
-        return make(ignoreIntFuns, pos, choices, reasons, new HashSet<Integer>());
+        return make(ignoreIntFuns, pos, choices, reasons, new HashMap<Integer,Pos>());
     }
 
     /** Construct an ExprChoice node. */
     // [HASLab] colorful Alloy
-    public static Expr make(boolean ignoreIntFuns, Pos pos, ConstList<Expr> choices, ConstList<String> reasons, Set<Integer> color) {
+    public static Expr make(boolean ignoreIntFuns, Pos pos, ConstList<Expr> choices, ConstList<String> reasons, Map<Integer,Pos> color) {
         if (choices.size() == 0)
             return new ExprBad(pos, "", new ErrorType(pos, "This expression failed to be typechecked."));
         if (choices.size() == 1 && choices.get(0).errors.isEmpty())
@@ -160,7 +160,7 @@ public final class ExprChoice extends Expr {
      * of unresolvable ambiguities.
      */
     // [HASLab] colorful Alloy
-    private Expr resolveHelper(boolean firstPass, final Type t, List<Expr> choices, List<String> reasons, Collection<ErrorWarning> warns, Set<Integer> color) {
+    private Expr resolveHelper(boolean firstPass, final Type t, List<Expr> choices, List<String> reasons, Collection<ErrorWarning> warns, Map<Integer,Pos> color) {
         List<Expr> ch = new ArrayList<Expr>(choices.size());
         List<String> re = new ArrayList<String>(choices.size());
         // We first prefer exact matches

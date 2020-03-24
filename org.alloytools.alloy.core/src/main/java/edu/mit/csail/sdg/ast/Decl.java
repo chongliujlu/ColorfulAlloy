@@ -15,10 +15,9 @@
 
 package edu.mit.csail.sdg.ast;
 
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import edu.mit.csail.sdg.alloy4.ConstList;
 import edu.mit.csail.sdg.alloy4.Pos;
@@ -30,16 +29,16 @@ import edu.mit.csail.sdg.alloy4.Pos;
 public final class Decl {
 
     // [HASLab] colorful Alloy
-    public Set<Integer> color = new HashSet<Integer>();
+    public Map<Integer,Pos> color = new HashMap<Integer,Pos>();
 
     // [HASLab] colorful Alloy
-    public void paint(int c) {
-        color.add(c);
+    public void paint(int c, Pos p) {
+        color.put(c, p);
     }
 
     // [HASLab] colorful Alloy
-    public void paint(Collection<Integer> c) {
-        color.addAll(c);
+    public void paint(Map<Integer,Pos> c) {
+        color.putAll(c);
     }
 
     /**
@@ -89,14 +88,14 @@ public final class Decl {
      */
     // [HASLab] colorful Alloy
     public Decl(Pos isPrivate, Pos disjoint, Pos disjoint2, List< ? extends ExprHasName> names, Expr expr) {
-        this(isPrivate, disjoint, disjoint2, names, expr, new HashSet<Integer>());
+        this(isPrivate, disjoint, disjoint2, names, expr, new HashMap<Integer,Pos>());
     }
 
     /**
      * This constructs a declaration; the list of names must not be empty.
      */
     // [HASLab] colorful Alloy
-    public Decl(Pos isPrivate, Pos disjoint, Pos disjoint2, List< ? extends ExprHasName> names, Expr expr, Set<Integer> color) {
+    public Decl(Pos isPrivate, Pos disjoint, Pos disjoint2, List< ? extends ExprHasName> names, Expr expr, Map<Integer,Pos> color) {
         if (names.size() == 0)
             throw new NullPointerException();
         this.isPrivate = isPrivate;

@@ -19,9 +19,9 @@ import static edu.mit.csail.sdg.ast.Type.EMPTY;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import edu.mit.csail.sdg.alloy4.ConstList;
 import edu.mit.csail.sdg.alloy4.ConstList.TempList;
@@ -111,7 +111,7 @@ public final class ExprList extends Expr {
 
     /** Constructs an ExprList node. */
     // [HASLab] colorful Alloy
-    private ExprList(Pos pos, Pos closingBracket, Op op, boolean ambiguous, ConstList<Expr> args, long weight, JoinableList<Err> errs, Set<Integer> color) {
+    private ExprList(Pos pos, Pos closingBracket, Op op, boolean ambiguous, ConstList<Expr> args, long weight, JoinableList<Err> errs, Map<Integer,Pos> color) {
         super(pos, closingBracket, ambiguous, Type.FORMULA, 0, weight, errs, color); // [HASLab] colorful Alloy
         this.op = op;
         this.args = args;
@@ -133,8 +133,8 @@ public final class ExprList extends Expr {
             return;
         }
         if (x instanceof ExprList && ((ExprList) x).op == ExprList.Op.AND) {
-            for (Expr y : ((ExprList) x).args){
-                y.color.addAll(x.color);  //colorful Alloy
+            for (Expr y : ((ExprList) x).args) {
+                y.color.putAll(x.color);  //colorful Alloy
                 addAND(list, y);
             }
             return;
@@ -166,12 +166,12 @@ public final class ExprList extends Expr {
     /** Generates a call to a builtin predicate */
     // [HASLab] colorful Alloy
     public static ExprList make(Pos pos, Pos closingBracket, Op op, List< ? extends Expr> args) {
-        return make(pos, closingBracket, op, args, new HashSet<Integer>());
+        return make(pos, closingBracket, op, args, new HashMap<Integer,Pos>());
     }
 
     /** Generates a call to a builtin predicate */
     // [HASLab] colorful Alloy
-    public static ExprList make(Pos pos, Pos closingBracket, Op op, List< ? extends Expr> args, Set<Integer> color) {
+    public static ExprList make(Pos pos, Pos closingBracket, Op op, List< ? extends Expr> args, Map<Integer,Pos> color) {
         boolean ambiguous = false;
         JoinableList<Err> errs = emptyListOfErrors;
         TempList<Expr> newargs = new TempList<Expr>(args.size());

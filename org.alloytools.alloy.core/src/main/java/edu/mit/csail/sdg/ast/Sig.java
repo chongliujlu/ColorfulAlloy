@@ -19,9 +19,9 @@ import static edu.mit.csail.sdg.alloy4.TableView.clean;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import org.alloytools.util.table.Table;
 
@@ -247,7 +247,7 @@ public abstract class Sig extends Expr implements Clause {
 
     /** Constructs a new builtin PrimSig. */
     private Sig(String label) {
-        super(Pos.UNKNOWN, null, new HashSet<Integer>()); // [HASLab] colorful Alloy
+        super(Pos.UNKNOWN, null, new HashMap<Integer,Pos>()); // [HASLab] colorful Alloy
         Expr oneof = ExprUnary.Op.ONEOF.make(null, this);
         ExprVar v = ExprVar.make(null, "this", oneof.type);
         this.decl = new Decl(null, null, null, Util.asList(v), oneof);
@@ -268,12 +268,12 @@ public abstract class Sig extends Expr implements Clause {
     /** Constructs a new PrimSig or SubsetSig. */
     // [HASLab] colorful Alloy
     private Sig(Type type, String label, Attr... attributes) throws Err {
-        this(type, label, new HashSet<Integer>(), attributes);
+        this(type, label, new HashMap<Integer,Pos>(), attributes);
     }
 
     /** Constructs a new PrimSig or SubsetSig. */
     // [HASLab] colorful Alloy
-    private Sig(Type type, String label, Set<Integer> color, Attr... attributes) throws Err {
+    private Sig(Type type, String label, Map<Integer,Pos> color, Attr... attributes) throws Err {
         super(AttrType.WHERE.find(attributes), type, color); // [HASLab] colorful Alloy
         this.attributes = Util.asList(attributes);
         Expr oneof = ExprUnary.Op.ONEOF.make(null, this);
@@ -489,7 +489,7 @@ public abstract class Sig extends Expr implements Clause {
          */
         // [HASLab] colorful Alloy
         public PrimSig(String label, PrimSig parent, Attr... attributes) throws Err {
-            this(label, parent, new HashSet<Integer>(), attributes);
+            this(label, parent, new HashMap<Integer,Pos>(), attributes);
         }
 
         /**
@@ -504,7 +504,7 @@ public abstract class Sig extends Expr implements Clause {
          *             SEQIDX, or STRING
          */
         // [HASLab] colorful Alloy
-        public PrimSig(String label, PrimSig parent, Set<Integer> color, Attr... attributes) throws Err {
+        public PrimSig(String label, PrimSig parent, Map<Integer,Pos> color, Attr... attributes) throws Err {
             super(((parent != null && parent.isEnum != null) ? parent.type : null), label, color, Util.append(attributes, Attr.SUBSIG)); // [HASLab] colorful Alloy
             if (parent == SIGINT)
                 throw new ErrorSyntax(pos, "sig " + label + " cannot extend the builtin \"Int\" signature");
@@ -641,7 +641,7 @@ public abstract class Sig extends Expr implements Clause {
          */
         // [HASLab] colorful Alloy
         public SubsetSig(String label, Collection<Sig> parents, Attr... attributes) throws Err {
-            this(label, parents, new HashSet<Integer>(), attributes);
+            this(label, parents, new HashMap<Integer,Pos>(), attributes);
         }
 
         /**
@@ -656,7 +656,7 @@ public abstract class Sig extends Expr implements Clause {
          * @throws ErrorType if parents only contains NONE
          */
         // [HASLab] colorful Alloy
-        public SubsetSig(String label, Collection<Sig> parents, Set<Integer> color, Attr... attributes) throws Err {
+        public SubsetSig(String label, Collection<Sig> parents, Map<Integer,Pos> color, Attr... attributes) throws Err {
             super(getType(label, parents), label, color, Util.append(attributes, Attr.SUBSET)); // [HASLab] colorful Alloy
 
             if (isEnum != null)
@@ -736,7 +736,7 @@ public abstract class Sig extends Expr implements Clause {
 
         /** Constructs a new Field object. */
         // [HASLab] colorful Alloy
-        private Field(Pos pos, Pos isPrivate, Pos isMeta, Pos disjoint, Pos disjoint2, Sig sig, String label, Expr bound, Set<Integer> color) throws Err {
+        private Field(Pos pos, Pos isPrivate, Pos isMeta, Pos disjoint, Pos disjoint2, Sig sig, String label, Expr bound, Map<Integer,Pos> color) throws Err {
             super(pos, label, sig.type.product(bound.type), color); // [HASLab] colorful Alloy
             this.defined = bound.mult() == ExprUnary.Op.EXACTLYOF;
             if (sig.builtin)
@@ -873,8 +873,8 @@ public abstract class Sig extends Expr implements Clause {
                                                          // multiplicity
                                                          // symbol, we assume
                                                          // it's oneOf
-        final Field f = new Field(null, null, null, null, null, this, label, bound, new HashSet<Integer>()); // [HASLab] colorful Alloy
-        final Decl d = new Decl(null, null, null, Arrays.asList(f), bound, new HashSet<Integer>()); // [HASLab] colorful Alloy
+        final Field f = new Field(null, null, null, null, null, this, label, bound, new HashMap<Integer,Pos>()); // [HASLab] colorful Alloy
+        final Decl d = new Decl(null, null, null, Arrays.asList(f), bound, new HashMap<Integer,Pos>()); // [HASLab] colorful Alloy
         f.decl = d;
         fields.add(d);
         realFields.add(f);
@@ -903,7 +903,7 @@ public abstract class Sig extends Expr implements Clause {
      *             set/relation
      */
     // [HASLab] colorful Alloy
-    public final Field[] addTrickyField(Pos pos, Pos isPrivate, Pos isDisjoint, Pos isDisjoint2, Pos isMeta, String[] labels, Expr bound, Set<Integer> color) throws Err {
+    public final Field[] addTrickyField(Pos pos, Pos isPrivate, Pos isDisjoint, Pos isDisjoint2, Pos isMeta, String[] labels, Expr bound, Map<Integer,Pos> color) throws Err {
         bound = bound.typecheck_as_set();
         if (bound.ambiguous)
             bound = bound.resolve_as_set(null);
@@ -953,8 +953,8 @@ public abstract class Sig extends Expr implements Clause {
             bound = bound.resolve_as_set(null);
         if (bound.mult() != ExprUnary.Op.EXACTLYOF)
             bound = ExprUnary.Op.EXACTLYOF.make(null, bound);
-        final Field f = new Field(pos, isPrivate, isMeta, null, null, this, label, bound, new HashSet<Integer>()); // [HASLab] colorful Alloy
-        final Decl d = new Decl(null, null, null, Arrays.asList(f), bound, new HashSet<Integer>()); // [HASLab] colorful Alloy
+        final Field f = new Field(pos, isPrivate, isMeta, null, null, this, label, bound, new HashMap<Integer,Pos>()); // [HASLab] colorful Alloy
+        final Decl d = new Decl(null, null, null, Arrays.asList(f), bound, new HashMap<Integer,Pos>()); // [HASLab] colorful Alloy
         f.decl = d;
         fields.add(d);
         realFields.add(f);

@@ -16,21 +16,25 @@
 package edu.mit.csail.sdg.ast;
 
 import java.awt.BorderLayout;
-
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.border.EmptyBorder;
 
-import edu.mit.csail.sdg.alloy4.*;
+import edu.mit.csail.sdg.alloy4.ConstList;
+import edu.mit.csail.sdg.alloy4.ErrorColor;
+import edu.mit.csail.sdg.alloy4.ErrorSyntax;
+import edu.mit.csail.sdg.alloy4.Listener;
+import edu.mit.csail.sdg.alloy4.OurTree;
+import edu.mit.csail.sdg.alloy4.Pos;
+import edu.mit.csail.sdg.alloy4.Util;
 
 
 /**
@@ -41,16 +45,18 @@ import edu.mit.csail.sdg.alloy4.*;
 public abstract class Browsable {
 
     // [HASLab] colorful Alloy
-    public Set<Integer> color = new HashSet<Integer>();
+    public Map<Integer,Pos> color = new HashMap<Integer,Pos>();
+
     // [HASLab] colorful Alloy
-    public void paint(int c) throws ErrorColor {
-        if(color.contains(-c))
+    public void paint(int c, Pos p) throws ErrorColor {
+        if (color.keySet().contains(-c))
             throw new ErrorSyntax(this.pos(), "Negative and positive of same feature: " + this);
-        color.add(c);
+        color.put(c, p);
     }
+
     // [HASLab] colorful Alloy
-    public void paint(Collection<Integer> c) {
-        color.addAll(c);
+    public void paint(Map<Integer,Pos> c) {
+        color.putAll(c);
     }
 
     /**
@@ -168,28 +174,31 @@ public abstract class Browsable {
         };
 
 
-         tree.setBorder(new EmptyBorder(3, 3, 3, 3));
-         final JScrollPane scr = new
-          JScrollPane(tree, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        tree.setBorder(new EmptyBorder(3, 3, 3, 3));
+        final JScrollPane scr = new JScrollPane(tree, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
-         scr.addFocusListener(new FocusListener() {
+        scr.addFocusListener(new FocusListener() {
 
-          @Override public void focusGained(FocusEvent e) {
-              tree.requestFocusInWindow();
-          }
-          @Override public void focusLost(FocusEvent e) {} });
+            @Override
+            public void focusGained(FocusEvent e) {
+                tree.requestFocusInWindow();
+            }
 
-         final JFrame x = new JFrame("Parse Tree");
-                x.setLayout(new BorderLayout());
-                x.add(scr,BorderLayout.CENTER);
-                x.pack();
-                x.setSize(500, 500);
-                x.setLocationRelativeTo(null); x.setVisible(true); if (listener != null)
-                tree.listeners.add(listener); return x;
+            @Override
+            public void focusLost(FocusEvent e) {}
+        });
+
+        final JFrame x = new JFrame("Parse Tree");
+        x.setLayout(new BorderLayout());
+        x.add(scr, BorderLayout.CENTER);
+        x.pack();
+        x.setSize(500, 500);
+        x.setLocationRelativeTo(null);
+        x.setVisible(true);
+        if (listener != null)
+            tree.listeners.add(listener);
+        return x;
     }
-
-
-
 
 
 

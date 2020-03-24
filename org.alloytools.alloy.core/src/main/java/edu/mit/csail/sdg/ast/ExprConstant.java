@@ -19,7 +19,7 @@ import static edu.mit.csail.sdg.ast.Sig.UNIV;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 
 import edu.mit.csail.sdg.alloy4.Err;
@@ -90,7 +90,7 @@ public final class ExprConstant extends Expr {
      * @param num - the number (this argument is ignored if op!=NUMBER)
      */
     private ExprConstant(Pos pos, Op op, int num, String string) {
-        super(pos, null, false, (op == Op.IDEN ? Type.make2(UNIV) : (op == Op.NEXT ? Type.make2(Sig.SIGINT) : (op == Op.TRUE || op == Op.FALSE ? Type.FORMULA : (op == Op.EMPTYNESS ? UNIV.type : (op == Op.STRING ? Sig.STRING.type : Type.smallIntType()))))), 0, 0, null, new HashSet<Integer>()); // [HASLab] colorful Alloy
+        super(pos, null, false, (op == Op.IDEN ? Type.make2(UNIV) : (op == Op.NEXT ? Type.make2(Sig.SIGINT) : (op == Op.TRUE || op == Op.FALSE ? Type.FORMULA : (op == Op.EMPTYNESS ? UNIV.type : (op == Op.STRING ? Sig.STRING.type : Type.smallIntType()))))), 0, 0, null, new HashMap<Integer,Pos>()); // [HASLab] colorful Alloy
         this.op = op;
         this.num = (op == Op.NUMBER ? num : 0);
         this.string = (op == Op.STRING ? string : "");

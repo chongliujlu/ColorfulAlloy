@@ -19,7 +19,7 @@ import static edu.mit.csail.sdg.ast.Type.EMPTY;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 
 import edu.mit.csail.sdg.alloy4.ConstList;
@@ -89,7 +89,7 @@ public final class ExprBadCall extends Expr {
 
     /** Constructs an ExprBadCall object. */
     private ExprBadCall(Pos pos, Pos closingBracket, boolean ambiguous, Func fun, ConstList<Expr> args, JoinableList<Err> errors, long extraWeight, long weight) {
-        super(pos, closingBracket, ambiguous, EMPTY, 0, weight, errors, new HashSet<Integer>()); // [HASLab] colorful Alloy
+        super(pos, closingBracket, ambiguous, EMPTY, 0, weight, errors, new HashMap<Integer,Pos>()); // [HASLab] colorful Alloy
         this.fun = fun;
         this.args = args;
         this.extraWeight = extraWeight;
