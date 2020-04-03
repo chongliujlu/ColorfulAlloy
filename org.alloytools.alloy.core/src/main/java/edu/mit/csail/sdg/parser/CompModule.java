@@ -31,16 +31,7 @@ import static edu.mit.csail.sdg.ast.Sig.UNIV;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLOutput;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import edu.mit.csail.sdg.alloy4.*;
 import edu.mit.csail.sdg.alloy4.ConstList.TempList;
@@ -86,7 +77,7 @@ public final class CompModule extends Browsable implements Module {
     //colorful Alloy
     /**
      * used in colorful Alloy
-     * Stores features appear in this module
+     * Stores features appear in total
      */
     public static Set<Integer> feats =new HashSet<>();
 
@@ -182,13 +173,9 @@ public final class CompModule extends Browsable implements Module {
      * Each param is mapped to its corresponding Sig (or null if we have not
      * resolved it).
      */
-    private final Map<String,Sig> params     = new LinkedHashMap<String,Sig>();				// Must
-    // be
-    // LinkedHashMap
-    // since
-    // the
-    // order
-    // matters
+    // private final Map<String,Sig> params     = new LinkedHashMap<String,Sig>();	// Must  be  LinkedHashMap  since the orders  matters
+    //colorful merge
+    private final Map<String,Map<Map<Integer,Pos>,Sig>> params     = new LinkedHashMap<>();	// Must  be  LinkedHashMap  since the orders  matters
 
     /**
      * Each alias is mapped to its corresponding "open" statement.
@@ -196,8 +183,9 @@ public final class CompModule extends Browsable implements Module {
     private final Map<String,Open>            opens       = new LinkedHashMap<String,Open>();
 
     /** Each sig name is mapped to its corresponding SigAST. */
-    public final Map<String,Sig>              sigs        = new LinkedHashMap<String,Sig>();
-
+    //public final Map<String,Sig>              sigs        = new LinkedHashMap<String,Sig>();
+    //colorful merge
+    public final Map<String,Map<Map<Integer,Pos>,Sig>> sigs        = new LinkedHashMap<>();
     /**
      * The list of params in this module whose scope shall be deemed "exact"
      */
@@ -318,7 +306,7 @@ public final class CompModule extends Browsable implements Module {
         /**
          * Resolve the given name to get a collection of Expr and Func objects.
          */
-        public Expr resolve(final Pos pos, final String name) {
+        public Expr resolve(final Pos pos, final String name,Map<Integer,Pos> color) {
             if (name.indexOf('/') >= 0) {
                 String n = name.startsWith("this/") ? name.substring(5) : name;
                 CompModule mod = rootmodule;
@@ -369,7 +357,7 @@ public final class CompModule extends Browsable implements Module {
                 th = ExprUnary.Op.NOOP.make(pos, th);
             TempList<Expr> ch = new TempList<Expr>();
             TempList<String> re = new TempList<String>();
-            Expr ans = rootmodule.populate(ch, re, rootfield, rootsig, rootfunparam, rootfunbody, pos, name, th);
+            Expr ans = rootmodule.populate(ch, re, rootfield, rootsig, rootfunparam, rootfunbody, pos, name, th,color);
             if (ans != null)
                 return ans;
             if (ch.size() == 0)
@@ -447,6 +435,10 @@ public final class CompModule extends Browsable implements Module {
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprList x) throws Err {
+            //colorful merge
+            for(Expr e: x.args)
+                e.color.putAll(x.color);
+
             contextFeats.addAll(x.color.keySet());
             TempList<Expr> temp = new TempList<Expr>(x.args.size());
             Set<Integer> tempfeats=new HashSet<>(); //colorful Alloy
@@ -465,9 +457,10 @@ public final class CompModule extends Browsable implements Module {
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprITE x) throws Err {
-           // Expr f = visitThis(x.cond);
-           // Expr a = visitThis(x.left);
-            // Expr b = visitThis(x.right);
+            //colorful merge
+            x.cond.color.putAll(x.color);
+            x.left.color.putAll(x.color);
+            x.right.color.putAll(x.color);
 
             contextFeats.addAll(x.color.keySet());//colorful Alloy
         //---------------- colorful Alloy----------
@@ -499,8 +492,9 @@ public final class CompModule extends Browsable implements Module {
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprBadJoin x) throws Err {
-          //  Expr left = visitThis(x.left);
-          //  Expr right = visitThis(x.right);
+            //colorful merge
+            x.left.color.putAll(x.color);
+            x.right.color.putAll(x.color);
 
             //---------------- colorful Alloy----------
             Expr left,right;
@@ -539,9 +533,9 @@ public final class CompModule extends Browsable implements Module {
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprBinary x) throws Err {
-
-           // Expr left = visitThis(x.left);
-            //Expr right = visitThis(x.right);
+            //colorful merge
+            x.left.color.putAll(x.color);
+            x.right.color.putAll(x.color) ;
 
             //---------------- colorful Alloy----------
             if(!x.op.equals(ExprBinary.Op.PLUS)&& !x.op.equals(ExprBinary.Op.INTERSECT))
@@ -586,6 +580,10 @@ public final class CompModule extends Browsable implements Module {
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprLet x) throws Err {
+            //colorful merge
+            x.expr.color.putAll(x.color);
+            x.sub.color.putAll(x.color);
+            x.var.color.putAll(x.color);
             contextFeats.addAll(x.color.keySet());//colorful Alloy
 
             Expr right = visitThis(x.expr);
@@ -609,6 +607,10 @@ public final class CompModule extends Browsable implements Module {
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprQt x) throws Err {
+            //colorful merge
+            x.sub.color.putAll(x.color);
+            for(Decl de: x.decls)
+                de.color.putAll(x.color);
             contextFeats.addAll(x.color.keySet());//colorful Alloy
 
             TempList<Decl> decls = new TempList<Decl>(x.decls.size());
@@ -701,7 +703,8 @@ public final class CompModule extends Browsable implements Module {
             CompModule.feats.addAll(x.color.keySet()); //colorful Alloy
             contextFeats.addAll(x.color.keySet());//colorful Alloy
 
-            Expr obj = resolve(x.pos, x.label);
+            //Expr obj = resolve(x.pos, x.label);
+            Expr obj = resolve(x.pos, x.label,x.color); //colorful merge
             obj.paint(x.color); // [HASLab] colorful Alloy
             if(obj instanceof ExprUnary)
             //colorful Alloy
@@ -742,6 +745,7 @@ public final class CompModule extends Browsable implements Module {
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprUnary x) throws Err {
+            x.sub.color.putAll(x.color); //colorful merge
              contextFeats.addAll(x.color.keySet());//colorful Alloy
             CompModule.feats.addAll(x.color.keySet()); //colorful Alloy
             return x.op.make(x.pos, visitThis(x.sub), x.color);
@@ -784,6 +788,20 @@ public final class CompModule extends Browsable implements Module {
      * statement; equals() uses object identity.
      */
     public static final class Open implements Clause {
+        // [HASLab] colorful Alloy
+        public Map<Integer,Pos> color = new HashMap<Integer,Pos>();
+
+        // [HASLab] colorful Alloy
+        public void paint(int c, Pos p) throws ErrorColor {
+            if (color.keySet().contains(-c))
+                throw new ErrorSyntax(this.pos(), "Negative and positive of same feature: " + this);
+            color.put(c, p);
+        }
+
+        // [HASLab] colorful Alloy
+        public void paint(Map<Integer,Pos> c) {
+            color.putAll(c);
+        }
 
         /**
          * The position in the original model where this "open" statement was declared;
@@ -947,7 +965,13 @@ public final class CompModule extends Browsable implements Module {
             ans.add(make("<b>" + x.size() + (x.size() > 1 ? " opens</b>" : " open</b>"), x));
         }
         if (sigs.size() > 0) {
-            x = new ArrayList<Browsable>(sigs.values());
+            //x = new ArrayList<Browsable>(sigs.values());
+
+            //colorful merge
+            x = new ArrayList<Browsable>();
+            for(Map map: sigs.values())
+                if(map.values().size()>0)
+                    x.add((Browsable) map.values());
             ans.add(make("<b>" + x.size() + (x.size() > 1 ? " sigs</b>" : " sig</b>"), x));
         }
         if (funcs.size() > 0) {
@@ -1064,10 +1088,11 @@ public final class CompModule extends Browsable implements Module {
             throw new ErrorSyntax(pos, "\'Int\' is a reserved keyword.");
         if (name.equals("none"))
             throw new ErrorSyntax(pos, "\'none\' is a reserved keyword.");
-        if (checkSig && (params.containsKey(name) || sigs.containsKey(name)))
-            throw new ErrorSyntax(pos, "\"" + name + "\" is already the name of a sig/parameter in this module.");
-    }
+        //colorful merge
+        // if (checkSig && (params.containsKey(name) || sigs.containsKey(name)))
+        //   throw new ErrorSyntax(pos, "\"" + name + "\" is already the name of a sig/parameter in this module.");
 
+    }
     /**
      * Throw an exception if there are more than 1 match; return nonnull if only one
      * match; return null if no match.
@@ -1171,7 +1196,14 @@ public final class CompModule extends Browsable implements Module {
     public ConstList<Sig> getAllReachableUserDefinedSigs() {
         TempList<Sig> x = new TempList<Sig>();
         for (CompModule m : getAllReachableModules())
-            x.addAll(m.sigs.values());
+            // x.addAll(m.sigs.values());
+
+            //colorful merge
+            for(Map<Map<Integer,Pos>,Sig> map: m.sigs.values())
+                for(Map.Entry<Map<Integer,Pos>,Sig> entry : map.entrySet())
+                    if(entry.getValue()!=null)
+                        x.add( entry.getValue());
+
         return x.makeConst();
     }
 
@@ -1179,15 +1211,28 @@ public final class CompModule extends Browsable implements Module {
      * Lookup non-fully-qualified Sig/Func/Assertion from the current module; it
      * skips PARAMs.
      */
-    private List<Object> getRawNQS(CompModule start, final int r, String name) {
+    //colorful merge
+    private List<Object> getRawNQS(CompModule start, final int r, String name,Map<Integer,Pos> color) {
         // (r&1)!=0 => Sig, (r&2) != 0 => assertion, (r&4)!=0 => Func
         List<Object> ans = new ArrayList<Object>();
         for (CompModule m : getAllNameableModules()) {
             if ((r & 1) != 0) {
-                Sig x = m.sigs.get(name);
-                if (x != null)
-                    if (m == start || x.isPrivate == null)
-                        ans.add(x);
+                //Sig x = m.sigs.get(name);
+                //colorful merge
+                Map<Map<Integer,Pos>, Sig> map =m.sigs.get(name);
+                if(map!=null){
+                    Sig x=null;
+                    for(Map.Entry<Map<Integer,Pos>,Sig> entry:map.entrySet()){
+                        if(entry.getKey().size()==0 || entry.getKey().equals(color) || fieCloCointains(color,entry.getKey())){
+                            x=entry.getValue();
+                            break;
+                        }
+                    }
+
+                    if (x != null)
+                        if (m == start || x.isPrivate == null)
+                            ans.add(x);
+                }
             }
             if ((r & 2) != 0) {
                 Expr x = m.asserts.get(name);
@@ -1205,11 +1250,36 @@ public final class CompModule extends Browsable implements Module {
         return ans;
     }
 
+    //colorful merge
+    /**
+     * used when resolve Fields
+     * sig expresions in Fild must has much color than the cooresponding sig declaretion.
+     * @param color
+     * @param key
+     * @return
+     */
+    private boolean fieCloCointains(Map<Integer, Pos> color, Map<Integer, Pos> key) {
+        boolean contains=true;
+        for (Map.Entry<Integer, Pos> entry : key.entrySet()) {
+            Integer map2Key = entry.getKey();
+            Pos map2Value = entry.getValue();
+
+            boolean keyExist = color.containsKey(map2Key);
+            boolean valExist = color.containsValue(map2Value);
+            if (!keyExist || !valExist) {
+                contains = false;
+                break;
+                }
+        }
+        return  contains;
+    }
+
     /**
      * Lookup a fully-qualified Sig/Func/Assertion from the current module; it skips
      * PARAMs.
      */
-    private List<Object> getRawQS(final int r, String name) {
+    //colorful merge
+    private List<Object> getRawQS(final int r, String name,Map<Integer,Pos> color) {
         // (r&1)!=0 => Sig, (r&2) != 0 => assertion, (r&4)!=0 => Func
         List<Object> ans = new ArrayList<Object>();
         CompModule u = this;
@@ -1219,10 +1289,25 @@ public final class CompModule extends Browsable implements Module {
             int i = name.indexOf('/');
             if (i < 0) {
                 if ((r & 1) != 0) {
-                    Sig x = u.sigs.get(name);
-                    if (x != null)
-                        if (level == 0 || x.isPrivate == null)
-                            ans.add(x);
+                    // Sig x = u.sigs.get(name);
+                    //if (x != null)
+                    //  if (level == 0 || x.isPrivate == null)
+                    // ans.add(x);
+
+                    //colorful merge
+                    Map <Map<Integer,Pos>,Sig> map =u.sigs.get(name);
+                    if(map!=null){
+                        Sig x=null;
+                        for(Map.Entry<Map<Integer,Pos>,Sig> entry:map.entrySet()){
+                            if(entry.getKey().equals(color)){
+                                x=entry.getValue();
+                                break;
+                            }
+                        }
+                        if (x != null)
+                            if (level == 0 || x.isPrivate == null)
+                                ans.add(x);
+                    }
                 }
                 if ((r & 2) != 0) {
                     Expr x = u.asserts.get(name);
@@ -1237,9 +1322,7 @@ public final class CompModule extends Browsable implements Module {
                                 ans.add(y);
                 }
                 if (ans.size() == 0)
-                    return u.getRawNQS(this, r, name); // If nothing at this
-                                                      // module, then do a
-                                                      // non-qualified search
+                    return u.getRawNQS(this, r, name,color); // If nothing at this  module, then do a non-qualified search from this modulech
                                                       // from this module
                 return ans;
             }
@@ -1257,12 +1340,25 @@ public final class CompModule extends Browsable implements Module {
     /**
      * Lookup a Sig from the current module (and it will also search this.params)
      */
-    private Sig getRawSIG(Pos pos, String name) throws Err {
+    //[chong 不能用pos 因为有些open语句的中的sig 也要用，pos 为open字符的开始，不是sig的位置]
+    private Sig getRawSIG(Pos pos, String name,Map<Integer,Pos> color) throws Err {
         List<Object> s;
         Sig s2 = null;
         if (name.equals("sig$") || name.equals("field$"))
             if (world != null) {
-                s2 = world.sigs.get(name);
+                // s2 = world.sigs.get(name);
+                // colorful merge
+                Map<Map<Integer,Pos>,Sig> map=world.sigs.get(name);
+                if (map!=null) {
+                    Sig x=null;
+                    for(Map.Entry<Map<Integer,Pos>,Sig> entry:map.entrySet()){
+                        if(entry.getKey().equals(color)){
+                            x=entry.getValue();
+                            break;
+                        }
+                    }
+                }
+
                 if (s2 != null)
                     return s2;
             }
@@ -1277,14 +1373,17 @@ public final class CompModule extends Browsable implements Module {
         if (name.equals("none"))
             return NONE;
         if (name.indexOf('/') < 0) {
-            s = getRawNQS(this, 1, name);
-            s2 = params.get(name);
+            //colorful merge
+            s = getRawNQS(this, 1, name,color);
+            if(params.get(name)!=null)
+                s2 = params.get(name).get(color);
         } else {
             if (name.startsWith("this/")) {
                 name = name.substring(5);
-                s2 = params.get(name);
+                s2 = params.get(name).get(color);
             }
-            s = getRawQS(1, name);
+            //colorful merge
+            s = getRawQS(1, name,color);
         }
         if (s2 != null && !s.contains(s2))
             s.add(s2);
@@ -1460,26 +1559,57 @@ public final class CompModule extends Browsable implements Module {
                     if (open.args.size() != sub.params.size())
                         throw new ErrorSyntax(open.pos, "You supplied " + open.args.size() + " arguments to the open statement, but the imported module requires " + sub.params.size() + " arguments.");
                     int i = 0;
-                    for (Map.Entry<String,Sig> p : sub.params.entrySet()) {
-                        Sig old = p.getValue();
+                    //colorful merge
+                    for (Map.Entry<String,Map<Map<Integer,Pos>,Sig>> p : sub.params.entrySet()) {
+                        Map<Map<Integer,Pos>,Sig> map=p.getValue();
+
+                        // Sig old = p.getValue();
                         String kn = p.getKey(), vn = open.args.get(i);
                         i++;
-                        Sig vv = mod.getRawSIG(open.pos, vn);
+                        //colorful merge
+                        Sig vv = mod.getRawSIG(open.pos, vn,open.color);
                         if (vv == null) {
-                            if (old == null) {
+                            //if (old == null) {
+                            Sig x=null;
+                            if(map!=null)
+                                for(Map.Entry<Map<Integer,Pos>,Sig> entry:map.entrySet()){
+                                    if(entry.getKey().equals(open.color)){
+                                        x=entry.getValue();
+                                        break;
+                                    }
+                                }
+
+
+                            if (x==null) {
                                 missing = open;
                                 missingName = vn;
                             }
                             continue;
                         }
-                        if (old == vv)
-                            continue;
-                        if (old != null)
-                            throw new ErrorFatal(open.pos, "Internal error (module re-instantiated with different arguments)");
+
                         if (vv == NONE)
                             throw new ErrorSyntax(open.pos, "You cannot use \"none\" as an instantiating argument.");
+
+                        if(map!=null && map.containsValue(vv))
+                            continue;
+                        if (map!=null)
+                            throw new ErrorFatal(open.pos, "Internal error (module re-instantiated with different arguments)");
+
+//                        if (old == vv)
+//                            continue;
+//                        if (old != null)
+//                            throw new ErrorFatal(open.pos, "Internal error (module re-instantiated with different arguments)");
+//                        if (vv == NONE)
+//                            throw new ErrorSyntax(open.pos, "You cannot use \"none\" as an instantiating argument.");
+
                         chg = true;
-                        p.setValue(vv);
+                        //p.setValue(vv);
+                        //colorful merge
+                        if(map==null) {
+                            map = new LinkedHashMap<>();
+                            map.put(open.color, vv);
+                            p.setValue(map);
+                        }
                         rep.parse("RESOLVE: " + (sub.path.length() == 0 ? "this/" : sub.path) + "/" + kn + " := " + vv + "\n");
                     }
                 }
@@ -1521,9 +1651,20 @@ public final class CompModule extends Browsable implements Module {
                     modules.remove(j);
                     j--;
                     for (CompModule c : modules) {
-                        for (Map.Entry<String,Sig> p : c.params.entrySet())
-                            if (isin(p.getValue(), b.sigs))
-                                p.setValue(a.sigs.get(base(p.getValue())));
+                        //colorful merge
+                        for (Map.Entry<String,Map<Map<Integer,Pos>,Sig>> p : c.params.entrySet()){
+                            Map<Map<Integer,Pos>,Sig> map= p.getValue();
+                            String name=p.getKey();
+                            for(Map.Entry<Map<Integer,Pos>,Sig> entry: map.entrySet() ){
+                                Map<Map<Integer,Pos>,Sig> v=b.sigs.get(name);
+                                if(v!=null)
+                                    if(isin(entry.getValue(),v))
+                                        entry.setValue(a.sigs.get(name).get(entry.getKey()));
+                            }
+                        }
+
+                        // if (isin(p.getValue(), b.sigs))
+                        //  p.setValue(a.sigs.get(base(p.getValue())));
                         for (Open p : c.opens.values())
                             if (p.realModule == b)
                                 p.realModule = a;
@@ -1539,7 +1680,11 @@ public final class CompModule extends Browsable implements Module {
 
     /** Add a sig declaration. */
     void addGhostSig() throws Err {
-        sigs.put(Sig.GHOST.label, Sig.GHOST);
+        //sigs.put(Sig.GHOST.label,Sig.GHOST);
+        //colorful merge
+        Map<Map<Integer,Pos>,Sig> sig=new HashMap<>();
+        sig.put(new HashMap<Integer,Pos>(),Sig.GHOST);
+        sigs.put(Sig.GHOST.label,sig);
     }
 
     Sig addSig(String name, ExprVar par, List<ExprVar> parents, List<Decl> fields, Expr fact, Attr... attributes) throws Err {
@@ -1573,7 +1718,18 @@ public final class CompModule extends Browsable implements Module {
             PrimSig newParent = (parents != null && parents.size() > 0) ? (new PrimSig(parents.get(0).label, WHERE.make(parents.get(0).pos))) : UNIV;
             obj = new PrimSig(full, newParent, attributes);
         }
-        sigs.put(name, obj);
+        //colorful merge
+        //sigs.put(name, obj);
+        if(sigs.get(name)!=null){
+            Map m=sigs.get(name);
+            Set a= m.keySet();
+            m.put(obj.color,obj);
+            sigs.get(name).put(obj.color,obj);}
+        else {
+            Map<Map<Integer,Pos>,Sig> map=new IdentityHashMap<>();
+            map.put(obj.color,obj);
+            sigs.put(name,map);
+        }
         old2fields.put(obj, fields);
         old2appendedfacts.put(obj, fact);
         return obj;
@@ -1612,7 +1768,7 @@ public final class CompModule extends Browsable implements Module {
         if (oldS instanceof SubsetSig) {
             List<Sig> parents = new ArrayList<Sig>();
             for (Sig n : ((SubsetSig) oldS).parents) {
-                Sig parentAST = u.getRawSIG(n.pos, n.label);
+                Sig parentAST = u.getRawSIG(n.pos, n.label,n.color);//colorful merge
                 if (parentAST == null)
                     throw new ErrorSyntax(n.pos, "The sig \"" + n.label + "\" cannot be found.");
                 parents.add(resolveSig(res, topo, parentAST));
@@ -1621,7 +1777,7 @@ public final class CompModule extends Browsable implements Module {
             realSig = new SubsetSig(fullname, parents, oldS.color, oldS.attributes.toArray(new Attr[0])); // [HASLab] colorful Alloy
         } else {
             Sig sup = ((PrimSig) oldS).parent;
-            Sig parentAST = u.getRawSIG(sup.pos, sup.label);
+            Sig parentAST = u.getRawSIG(sup.pos, sup.label,sup.color);//colorful merge
             if (parentAST == null)
                 throw new ErrorSyntax(sup.pos, "The sig \"" + sup.label + "\" cannot be found.");
             Sig parent = resolveSig(res, topo, parentAST);
@@ -1634,12 +1790,29 @@ public final class CompModule extends Browsable implements Module {
         res.new2old.put(realSig, oldS);
         res.sig2module.put(realSig, u);
         for (CompModule m : res.allModules) {
-            for (Map.Entry<String,Sig> e : m.sigs.entrySet())
-                if (e.getValue() == oldS)
-                    e.setValue(realSig);
-            for (Map.Entry<String,Sig> e : m.params.entrySet())
-                if (e.getValue() == oldS)
-                    e.setValue(realSig);
+          //  for (Map.Entry<String,Sig> e : m.sigs.entrySet())
+//                if (e.getValue() == oldS)
+//                    e.setValue(realSig);
+//            for (Map.Entry<String,Sig> e : m.params.entrySet())
+//                if (e.getValue() == oldS)
+//                    e.setValue(realSig);
+                //colorful merge
+                for (Map.Entry<String,Map<Map<Integer,Pos>,Sig>> e : m.sigs.entrySet()){
+                    Map<Map<Integer,Pos>,Sig> map=e.getValue();
+                    for(Map.Entry <Map<Integer,Pos>,Sig> s: map.entrySet()){
+                        if(s.getValue()==oldS)
+                            s.setValue(realSig);
+                    }
+                }
+            for (Map.Entry<String,Map<Map<Integer,Pos>,Sig>> e : m.params.entrySet()){
+                Map<Map<Integer,Pos>,Sig> map=e.getValue();
+                for(Map.Entry <Map<Integer,Pos>,Sig> s: map.entrySet()){
+                    if(s.getValue()==oldS)
+                        s.setValue(realSig);
+                }
+            }
+
+
         }
         if (res.exactSigs.remove(oldS))
             res.exactSigs.add(realSig);
@@ -1671,9 +1844,14 @@ public final class CompModule extends Browsable implements Module {
      */
     @Override
     public SafeList<Sig> getAllSigs() {
-        return new SafeList<Sig>(sigs.values());
-        // SafeList<Sig> x = new SafeList<Sig>(sigs.values());
-        // return x.dup();
+        //colorful merge
+        SafeList<Sig> x = new SafeList<>();
+
+        for(Map<Map<Integer,Pos>, Sig> map:sigs.values())
+            for(Map.Entry<Map<Integer,Pos>,Sig> entry:map.entrySet())
+                if (entry.getValue()!=null)
+                    x.add(entry.getValue());
+        return x.dup();
     }
 
     // ============================================================================================================================//
@@ -1789,6 +1967,8 @@ public final class CompModule extends Browsable implements Module {
     private JoinableList<Err> resolveFuncBody(A4Reporter rep, JoinableList<Err> errors, List<ErrorWarning> warns) throws Err {
         for (ArrayList<Func> entry : funcs.values())
             for (Func ff : entry) {
+                //colorful merge
+                ff.getBody().color.putAll(ff.color);
                 Context.contextFeats.clear();//colorful Alloy
                 Context cx = new Context(this, warns);
                 cx.rootfunbody = ff;
@@ -1841,23 +2021,6 @@ public final class CompModule extends Browsable implements Module {
     }
 
     // ============================================================================================================================//
-    
-//    //colorful Alloy
-//    Expr addAssertion(Pos pos, String name, Expr value, Object color) throws Err {
-//        status = 3;
-//        if (name == null || name.length() == 0)
-//            name = "assert$" + (1 + asserts.size());
-//        dup(pos, name, false);
-//        Expr expr = ExprUnary.Op.NOOP.make(value.span().merge(pos), value);
-//        Expr old = asserts.put(name, expr);
-//        //Expr old = asserts.put(name, ExprUnary.Op.NOOP.make(value.span().merge(pos), value));
-//        if (old != null) {
-//            asserts.put(name, old);
-//            throw new ErrorSyntax(pos, "\"" + name + "\" is already the name of an assertion in this module.");
-//        }
-//        return expr;
-//    }
-    
     /** Add an ASSERT declaration. */
      String addAssertion(Pos pos, String name, Expr value) throws Err {
         status = 3;
@@ -1906,17 +2069,6 @@ public final class CompModule extends Browsable implements Module {
     }
 
     // ============================================================================================================================//
-
-//    //colorful Alloy
-//    public Expr addFact(Pos pos, String name, Expr value) throws Err {
-//        status = 3;
-//        if (name == null || name.length() == 0)
-//            name = "fact$" + (1 + facts.size());
-//        Expr fact = ExprUnary.Op.NOOP.make(value.span().merge(pos), value);//colorful Alloy
-//        facts.add(new Pair<String,Expr>(name, fact));
-//        return fact;//colorful Alloy
-//    }
-
     /** Add a FACT declaration. */
     public void addFact(Pos pos, String name, Expr value) throws Err {
         status = 3;
@@ -1944,7 +2096,44 @@ public final class CompModule extends Browsable implements Module {
             } else
                 errors = errors.make(expr.errors);
         }
-        for (Sig s : sigs.values()) {
+        //colorful merge
+        for(Map<Map<Integer,Pos>,Sig>map :sigs.values()){
+            for(Sig s: map.values()){
+                Context.contextFeats.clear();//colorful Alloy
+                Context.contextFeats.addAll(s.color.keySet());//colorful Alloy
+                Expr f = res.old2appendedfacts.get(res.new2old.get(s));
+                f.color.putAll(s.color); //colorful Alloy
+                if (f == null)
+                    continue;
+                if (f instanceof ExprConstant && ((ExprConstant) f).op == ExprConstant.Op.TRUE)
+                    continue;
+                Expr formula;
+                cx.rootsig = s;
+                if (s.isOne == null) {
+                    cx.put("this", s.decl.get());
+
+                    Context.contextFeats.addAll(f.color.keySet());//colorful Alloy
+                    formula = cx.check(f).resolve_as_formula(warns);
+                } else {
+                    cx.put("this", s);
+                    Context.contextFeats.clear();//colorful Alloy
+                    Context.contextFeats.addAll(f.color.keySet());//colorful Alloy
+                    formula = cx.check(f).resolve_as_formula(warns);
+                }
+                cx.remove("this");
+                if (formula.errors.size() > 0)
+                    errors = errors.make(formula.errors);
+                else {
+                    if(!s.color.isEmpty()) //colorful Alloy
+                        formula.paint(s.color); //colorful Alloy
+                    s.addFact(formula);
+                    rep.typecheck("Fact " + s + "$fact: " + formula.type() + "\n");
+                }
+            }
+
+        }
+
+/*        for (Sig s : sigs.values()) {
             Context.contextFeats.clear();//colorful Alloy
             Context.contextFeats.addAll(s.color.keySet());//colorful Alloy
             Expr f = res.old2appendedfacts.get(res.new2old.get(s));
@@ -1975,7 +2164,7 @@ public final class CompModule extends Browsable implements Module {
                 s.addFact(formula);
                 rep.typecheck("Fact " + s + "$fact: " + formula.type() + "\n");
             }
-        }
+          }*/
         return errors;
     }
 
@@ -2065,10 +2254,11 @@ public final class CompModule extends Browsable implements Module {
         Expr e;
         Clause declaringClause = null;
         if (cmd.check) {
-            List<Object> m = getRawQS(2, cname); // We prefer assertion in the
+            //colorful merge
+            List<Object> m = getRawQS(2, cname,cmd.color); // We prefer assertion in the
                                                 // topmost module
             if (m.size() == 0 && cname.indexOf('/') < 0)
-                m = getRawNQS(this, 2, cname);
+                m = getRawNQS(this, 2, cname,cmd.color);//colorful merge
             if (m.size() > 1)
                 unique(cmd.pos, cname, m);
             if (m.size() < 1)
@@ -2084,10 +2274,11 @@ public final class CompModule extends Browsable implements Module {
             }
             e = expr.not();
         } else {
-            List<Object> m = getRawQS(4, cname); // We prefer fun/pred in the
+            //colorful merge
+            List<Object> m = getRawQS(4, cname,cmd.color); // We prefer fun/pred in the
                                                 // topmost module
             if (m.size() == 0 && cname.indexOf('/') < 0)
-                m = getRawNQS(this, 4, cname);
+                m = getRawNQS(this, 4, cname,cmd.color);//colorful merge
             if (m.size() > 1)
                 unique(cmd.pos, cname, m);
             if (m.size() < 1)
@@ -2110,7 +2301,7 @@ public final class CompModule extends Browsable implements Module {
             e = ExprConstant.TRUE;
         TempList<CommandScope> sc = new TempList<CommandScope>(cmd.scope.size());
         for (CommandScope et : cmd.scope) {
-            Sig s = getRawSIG(et.sig.pos, et.sig.label);
+            Sig s = getRawSIG(et.sig.pos, et.sig.label,et.sig.color);//colorful merge
             if (s == null)
                 throw new ErrorSyntax(et.sig.pos, "The sig \"" + et.sig.label + "\" cannot be found.");
             sc.add(new CommandScope(null, s, et.isExact, et.startingScope, et.endingScope, et.increment));
@@ -2171,8 +2362,8 @@ public final class CompModule extends Browsable implements Module {
         final CompModule m = res.sig2module.get(s);
         final Context cx = new Context(m, warns);
         final ExprHasName dup = Decl.findDuplicateName(oldDecls);
-        if (dup != null)
-            throw new ErrorSyntax(dup.span(), "sig \"" + s + "\" cannot have 2 fields named \"" + dup.label + "\"");
+     //   if (dup != null)
+       //     throw new ErrorSyntax(dup.span(), "sig \"" + s + "\" cannot have 2 fields named \"" + dup.label + "\"");
         for (final Decl d : oldDecls) {
             if (d.expr.mult() != ExprUnary.Op.EXACTLYOF) {
                 if (defined)
@@ -2191,6 +2382,7 @@ public final class CompModule extends Browsable implements Module {
             Context.contextFeats.clear(); // colorful Alloy
             Context.contextFeats.addAll(d.color.keySet());// colorful Alloy
             CompModule.feats.addAll(d.color.keySet()); //colorful Alloy
+            d.expr.color.putAll(d.color); //colorful merge
             Expr bound = cx.check(d.expr).resolve_as_set(warns);
 
             cx.remove("this");
@@ -2212,7 +2404,24 @@ public final class CompModule extends Browsable implements Module {
         // first column must not intersect.
         final Map<String,List<Field>> fieldname2fields = new LinkedHashMap<String,List<Field>>();
         for (CompModule m : modules) {
-            for (Sig sig : m.sigs.values()) {
+            //colorful merge
+            for(Map<Map<Integer,Pos>,Sig> map  : m.sigs.values()){
+                for(Sig sig: map.values()){
+                    for (Field field : sig.getFields()) {
+                        List<Field> peers = fieldname2fields.get(field.label);
+                        if (peers == null) {
+                            peers = new ArrayList<Field>();
+                            fieldname2fields.put(field.label, peers);
+                        }
+                        //for (Field field2 : peers)
+                        //  if (field.type().firstColumnOverlaps(field2.type()))
+                        //        throw new ErrorType(field.pos, "Two overlapping signatures cannot have\n" + "two fields with the same name \"" + field.label + "\":\n\n1) one is in sig \"" + field.sig + "\"\n" + field.pos + "\n\n2) the other is in sig \"" + field2.sig + "\"\n" + field2.pos);
+                        peers.add(field);
+                    }
+                }
+            }
+
+/*            for (Sig sig : m.sigs.values()) {
                 for (Field field : sig.getFields()) {
                     List<Field> peers = fieldname2fields.get(field.label);
                     if (peers == null) {
@@ -2224,7 +2433,7 @@ public final class CompModule extends Browsable implements Module {
                             throw new ErrorType(field.pos, "Two overlapping signatures cannot have\n" + "two fields with the same name \"" + field.label + "\":\n\n1) one is in sig \"" + field.sig + "\"\n" + field.pos + "\n\n2) the other is in sig \"" + field2.sig + "\"\n" + field2.pos);
                     peers.add(field);
                 }
-            }
+             }*/
         }
     }
 
@@ -2236,17 +2445,46 @@ public final class CompModule extends Browsable implements Module {
         Map<Field,PrimSig> field2meta = new LinkedHashMap<Field,PrimSig>();
         boolean hasMetaSig = false, hasMetaField = false;
         root.new2old.put(root.metaSig, root.metaSig);
-        root.sigs.put(base(root.metaSig), root.metaSig);
+        //colorful merge
+        if (root.sigs.containsKey(base(root.metaSig)) && root.sigs.get(base(root.metaSig))!=null)
+            root.sigs.get(base(root.metaSig)).put(root.metaSig.color,root.metaSig);
+        else{
+            Map<Map<Integer,Pos>,Sig> map=new LinkedHashMap<>();
+            map.put(root.metaSig.color,root.metaSig);
+            root.sigs.put(base(root.metaSig), map);
+        }
+
+
+        //root.sigs.put(base(root.metaSig), root.metaSig);
         root.new2old.put(root.metaField, root.metaField);
-        root.sigs.put(base(root.metaField), root.metaField);
+        // root.sigs.put(base(root.metaField), root.metaField);
+        //colorful merge
+        if (root.sigs.containsKey(base(root.metaField)) && root.sigs.get(base(root.metaField))!=null)
+            root.sigs.get(base(root.metaField)).put(root.metaField.color,root.metaField);
+        else{
+            Map<Map<Integer,Pos>,Sig> map=new LinkedHashMap<>();
+            map.put(root.metaField.color,root.metaField);
+            root.sigs.put(base(root.metaField), map);
+        }
         for (CompModule m : root.allModules)
-            for (Sig s : new ArrayList<Sig>(m.sigs.values()))
+            for(Map<Map<Integer,Pos>,Sig> map :m.sigs.values())//colorful merge
+                for (Sig s : new ArrayList<Sig>(map.values()))//colorful merge
                 if (m != root || (s != root.metaSig && s != root.metaField)) {
                     PrimSig ka = new PrimSig(s.label + "$", root.metaSig, Attr.ONE, PRIVATE.makenull(s.isPrivate), Attr.META);
                     sig2meta.put(s, ka);
                     ka.addDefinedField(Pos.UNKNOWN, null, Pos.UNKNOWN, "value", s);
                     m.new2old.put(ka, ka);
-                    m.sigs.put(base(ka), ka);
+                    //m.sigs.put(base(ka), ka);
+
+                    //colorful merge
+                    if(m.sigs.containsKey(base(ka)) && m.sigs.get(base(ka))!=null){
+                        m.sigs.get(base(ka)).put(ka.color,ka);
+                    }else{
+                        Map<Map<Integer,Pos>,Sig> ma=new LinkedHashMap<>();
+                        ma.put(ka.color,ka);
+                        root.sigs.put(base(ka), ma);
+                    }
+
                     hasMetaSig = true;
                     Expr allfields = ExprConstant.EMPTYNESS;
                     for (Field field : s.getFields()) {
@@ -2256,7 +2494,17 @@ public final class CompModule extends Browsable implements Module {
                         PrimSig kb = new PrimSig(s.label + "$" + field.label, root.metaField, Attr.ONE, PRIVATE.makenull(priv), Attr.META);
                         field2meta.put(field, kb);
                         m.new2old.put(kb, kb);
-                        m.sigs.put(base(kb), kb);
+                        // m.sigs.put(base(kb), kb);
+
+                        //colorful merge
+                        if(m.sigs.containsKey(base(kb)) && m.sigs.get(base(kb))!=null){
+                            m.sigs.get(base(kb)).put(kb.color,kb);
+                        }else{
+                            Map<Map<Integer,Pos>,Sig> mb=new LinkedHashMap<>();
+                            mb.put(kb.color,kb);
+                            root.sigs.put(base(kb), mb);
+                        }
+
                         hasMetaField = true;
                         kb.addDefinedField(Pos.UNKNOWN, null, Pos.UNKNOWN, "value", field);
                         if (allfields == ExprConstant.EMPTYNESS)
@@ -2317,8 +2565,12 @@ public final class CompModule extends Browsable implements Module {
         resolveParams(rep, root.allModules);
         resolveModules(rep, root.allModules);
         for (CompModule m : root.allModules)
-            for (Sig s : m.sigs.values())
-                root.sig2module.put(s, m);
+            //for (Sig s : m.sigs.values())
+
+            //colorful merge
+            for(Map<Map<Integer,Pos>,Sig> map: m.sigs.values())
+                for(Sig s: map.values())
+                    root.sig2module.put(s, m);
         // Resolves SigAST -> Sig, and topologically sort the sigs into the
         // "sorted" array
         root.new2old.put(UNIV, UNIV);
@@ -2328,11 +2580,14 @@ public final class CompModule extends Browsable implements Module {
         root.new2old.put(NONE, NONE);
         HashSet<Object> topo = new HashSet<Object>();
         for (CompModule m : root.allModules)
-            for (Sig s : m.sigs.values()){
+            //for (Sig s : m.sigs.values()){
+            //colorful merge
+            for(Map<Map<Integer,Pos>,Sig> map:m.sigs.values())
+                for(Sig s: map.values()){
                     if(!s.color.isEmpty())                 //colorful Alloy
                         CompModule.feats.addAll(s.color.keySet());  //colorful Alloy
                 resolveSig(root, topo, s);
-            }
+                }
         // Add the non-defined fields to the sigs in topologically sorted order
         // (since fields in subsigs are allowed to refer to parent's fields)
         for (Sig oldS : root.new2old.keySet())
@@ -2359,9 +2614,18 @@ public final class CompModule extends Browsable implements Module {
             // also, we can collect up all the exact sigs and add them to the
             // root module's list of exact sigs
             for (String n : x.exactParams) {
-                Sig sig = x.params.get(n);
-                if (sig != null)
-                    root.exactSigs.add(sig);
+                //Sig sig = x.params.get(n);
+                //colorful merge
+                Map<Map<Integer,Pos>,Sig> map=x.params.get(n);
+
+                //[chong] 此处对所有name 相同的Sig 都设置为了exact， 以后需要修改
+                if(map!=null){
+                    for(Sig s: map.values())
+                        root.exactSigs.add(s);
+                }
+
+                //if (sig != null)
+                //   root.exactSigs.add(sig);
             }
         }
         if (!errors.isEmpty())
@@ -2391,7 +2655,8 @@ public final class CompModule extends Browsable implements Module {
     /**
      * Resolve the name based on the current context and this module.
      */
-    private Expr populate(TempList<Expr> ch, TempList<String> re, Decl rootfield, Sig rootsig, boolean rootfunparam, Func rootfunbody, Pos pos, String fullname, Expr THIS) {
+    //colorful merge
+    private Expr populate(TempList<Expr> ch, TempList<String> re, Decl rootfield, Sig rootsig, boolean rootfunparam, Func rootfunbody, Pos pos, String fullname, Expr THIS,Map<Integer,Pos> color) {
         // Return object can be Func(with > 0 arguments) or Expr
         final String name = (fullname.charAt(0) == '@') ? fullname.substring(1) : fullname;
         boolean fun = (rootsig != null && (rootfield == null || rootfield.expr.mult() == ExprUnary.Op.EXACTLYOF)) || (rootsig == null && !rootfunparam);
@@ -2409,12 +2674,21 @@ public final class CompModule extends Browsable implements Module {
             return ExprConstant.Op.IDEN.make(pos, 0);
         if (name.equals("sig$") || name.equals("field$"))
             if (world != null) {
-                Sig s = world.sigs.get(name);
-                if (s != null)
-                    return ExprUnary.Op.NOOP.make(pos, s);
+                // Sig s = world.sigs.get(name);
+                // if (s != null)
+                //     return ExprUnary.Op.NOOP.make(pos, s);
+
+                // colorful merge
+                if(world.sigs.get(name).containsKey(color)){
+                    Sig s=world.sigs.get(name).get(color);
+                    if (s != null)
+                        return ExprUnary.Op.NOOP.make(pos, s);
+                }
             }
-        final List<Object> ans = name.indexOf('/') >= 0 ? getRawQS(fun ? 5 : 1, name) : getRawNQS(this, fun ? 5 : 1, name);
-        final Sig param = params.get(name);
+        //colorful merge
+        final List<Object> ans = name.indexOf('/') >= 0 ? getRawQS(fun ? 5 : 1, name,color) : getRawNQS(this, fun ? 5 : 1, name,color);
+        //colorful merge
+        final Sig param =params.get(name)==null? null: params.get(name).get(color);
         if (param != null && !ans.contains(param))
             ans.add(param);
         for (Object x : ans) {
@@ -2469,7 +2743,9 @@ public final class CompModule extends Browsable implements Module {
         // (2) But can refer to anything else visible.
         // All else: we can call, and can refer to anything visible.
         for (CompModule m : getAllNameableModules())
-            for (Sig s : m.sigs.values())
+            //colorful merge
+            for (Map<Map<Integer,Pos>,Sig> map: m.sigs.values())
+                for (Sig s : map.values())
                 if (m == this || s.isPrivate == null)
                     for (Field f : s.getFields())
                         if (f.isMeta == null && (m == this || f.isPrivate == null) && f.label.equals(name))
@@ -2533,7 +2809,8 @@ public final class CompModule extends Browsable implements Module {
     }
 
     public Pos getGlobal(String key) {
-        Pos result = getGlobalFromModule(this, key);
+        //colorful merge
+        Pos result = getGlobalFromModule(this, key,this.color.keySet());
         if (result != null) {
             return result;
         }
@@ -2542,7 +2819,8 @@ public final class CompModule extends Browsable implements Module {
             if (cm == this)
                 continue;
 
-            result = getGlobalFromModule(cm, key);
+            //colorful merge
+            result = getGlobalFromModule(cm, key,cm.color.keySet());
             if (result != null) {
                 return result;
             }
@@ -2550,10 +2828,26 @@ public final class CompModule extends Browsable implements Module {
         return result;
     }
 
-    Pos getGlobalFromModule(CompModule module, String key) {
-        Sig sig = module.sigs.get(key);
-        if (sig != null)
-            return sig.pos;
+    //colorful merge
+    Pos getGlobalFromModule(CompModule module, String key,Set<Integer> color) {
+        //Sig sig = module.sigs.get(key);
+        //colorful merge
+        Map<Map<Integer,Pos>,Sig> map=module.sigs.get(key);
+        if(map!=null){
+            Sig x=null;
+            for(Map.Entry<Map<Integer,Pos>,Sig> entry:map.entrySet()){
+                if(entry.getKey().equals(color)){
+                    x=entry.getValue();
+                    break;
+                }
+            }
+            if(x!=null)
+                return x.pos;
+        }
+
+
+        // if (sig != null)
+        //     return sig.pos;
         ArrayList<Func> arrayList = module.funcs.get(key);
         if (arrayList == null || arrayList.isEmpty())
             return null;
@@ -2562,13 +2856,25 @@ public final class CompModule extends Browsable implements Module {
     }
 
     public <T> T visitExpressions(VisitReturn<T> visitor) {
+        //        sigs.values().forEach(s -> {
+//            s.accept(visitor);
+//            s.getFieldDecls().forEach(d -> {
+//                d.names.forEach(x -> x.accept(visitor));
+//                d.expr.accept(visitor);
+//            });
+//            s.getFacts().forEach(f -> f.accept(visitor));
+//        });
+
+        //colorful merge
         sigs.values().forEach(s -> {
-            s.accept(visitor);
-            s.getFieldDecls().forEach(d -> {
-                d.names.forEach(x -> x.accept(visitor));
-                d.expr.accept(visitor);
-            });
-            s.getFacts().forEach(f -> f.accept(visitor));
+            for(Sig ss:s.values()){
+                ss.accept(visitor);
+                ss.getFieldDecls().forEach(d -> {
+                    d.names.forEach(x -> x.accept(visitor));
+                    d.expr.accept(visitor);
+                });
+                ss.getFacts().forEach(f -> f.accept(visitor));
+            }
         });
 
         funcs.values().forEach(funs -> {
@@ -2604,7 +2910,12 @@ public final class CompModule extends Browsable implements Module {
         macros.values().forEach(macro -> {
             macro.accept(visitor);
         });
-        params.values().forEach(x -> x.accept(visitor));
+        //params.values().forEach(x -> x.accept(visitor));
+        //colorful merge
+        params.values().forEach(x -> {
+            for( Expr ss: x.values())
+                ss.accept(visitor);
+        });
         return null;
     }
 

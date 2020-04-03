@@ -753,21 +753,7 @@ final class SimpleReporter extends A4Reporter {
                         }
                        String output= printexecutedCode(iterativeApproach,world,cmd,allFeats,tempcode);
 
-                        // generate executed code, and write to variable "print"
-                       // if(iterativeApproach)
-                        //    generateIterativeModule(print, world, cmd, allFeats);
-                       // else
-                      //      generateAmalgamatedModule(print, world, cmd, allFeats);
-
-
                         getexecutecodeTime=System.currentTimeMillis() - startTime;
-                       // File Nmodule = new File(tempcode);
-                       // String output = Nmodule.getAbsolutePath();
-
-                       // if (print != null)
-                       //     Util.writeAll(output, print.toString());
-
-
 
                         long afterprinttime = System.currentTimeMillis();
 
@@ -1474,7 +1460,12 @@ final class SimpleReporter extends A4Reporter {
 
             //add sigs to module
             for(Sig s: sigsFinal.makeConst()){
-                newModule.sigs.put(s.label,s);
+                // newModule.sigs.put(s.label,s);
+                //colorful merge
+                if( newModule.sigs.get(s.label)!=null){
+                    Map map=newModule.sigs.get(s.label);
+                    map.put(s.color,s);
+                }
             }
             //used to print expr
             ExprPrinterVisitor printExprs =new ExprPrinterVisitor();
