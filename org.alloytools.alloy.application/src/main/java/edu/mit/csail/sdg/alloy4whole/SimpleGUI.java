@@ -46,7 +46,9 @@ import static edu.mit.csail.sdg.alloy4.A4Preferences.WarningNonfatal;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.Welcome;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menu;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menuItem;
+import static edu.mit.csail.sdg.ast.ExprUnary.Op.SOMEOF;
 import static edu.mit.csail.sdg.ast.Sig.UNIV;
+import static java.awt.event.InputEvent.getMaskForButton;
 import static java.awt.event.KeyEvent.VK_A;
 import static java.awt.event.KeyEvent.VK_ALT;
 import static java.awt.event.KeyEvent.VK_E;
@@ -54,16 +56,8 @@ import static java.awt.event.KeyEvent.VK_PAGE_DOWN;
 import static java.awt.event.KeyEvent.VK_PAGE_UP;
 import static java.awt.event.KeyEvent.VK_SHIFT;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Container;
-import java.awt.Font;
-import java.awt.GraphicsEnvironment;
-import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
+import java.awt.*;
+import java.awt.event.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -71,37 +65,13 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.List;
 
-import javax.swing.Action;
-import javax.swing.Box;
-import javax.swing.Icon;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JEditorPane;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSeparator;
-import javax.swing.JSplitPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.JToolBar;
-import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.Timer;
-import javax.swing.UIManager;
-import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
+import javax.swing.event.*;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.text.html.HTMLDocument;
 
@@ -180,7 +150,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
     /**
      * The "File", "Edit", "Run", "Option", "Window", and "Help" menus.
      */
-    private JMenu                 filemenu, editmenu, runmenu, optmenu, windowmenu, windowmenu2, helpmenu;
+    //colorful merge
+    private JMenu                 filemenu, editmenu, runmenu, optmenu, windowmenu, windowmenu2, helpmenu,mergemenu;
 
     /** The toolbar. */
     private JToolBar              toolbar;
@@ -258,6 +229,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
      * is edited).
      */
     private List<Command>         commands               = null;
+    //colorful merge
+    private  Map<String,Map<Map<Integer,Pos>,Sig>>       sigs               = null;
 
     /** The latest executed command. */
     private int                   latestCommand          = 0;
@@ -336,6 +309,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
         if (wrap)
             return wrapMe();
         commands = null;
+        //colorful merge
+        sigs=null;
         if (text == null)
             return null; // If this was called prior to the "text" being fully
                         // initialized
@@ -1006,6 +981,393 @@ public final class SimpleGUI implements ComponentListener, Listener {
     }
 
     // ===============================================================================================================//
+    //colorful merge
+    /** This method refreshes the "run" menu. */
+    private Runner doRefreshmerge() {
+        if (wrap)
+            return wrapMe();
+        Map<String,Map<Map<Integer,Pos>,Sig>> cp = sigs;
+        JMenu mergeSigs,mergeField,remMultiplicity,remAbstract;
+         mergeSigs=new JMenu("Merge Sigs");
+         mergeField=new JMenu("Merge Field");
+         remMultiplicity=new JMenu("Remove remMultiplicity");
+         remAbstract=new JMenu("Remove Abstract");
+        //存储所有的sig
+        SafeList<Sig> sigSafeList=new SafeList<>();
+        //parser the model to get sigs
+        if (cp == null) {
+            Module world = null;
+            try {
+                int resolutionMode = (Version.experimental && ImplicitThis.get()) ? 2 : 1;
+                A4Options opt = new A4Options();
+                opt.tempDirectory = alloyHome() + fs + "tmp";
+                opt.solverDirectory = alloyHome() + fs + "binary";
+                opt.originalFilename = Util.canon(text.get().getFilename());
+                world = CompUtil.parseEverything_fromFile(A4Reporter.NOP, text.takeSnapshot(), opt.originalFilename, resolutionMode);
+            } catch (Err er) {
+                text.shade(er.pos);
+                log.logRed(er.toString() + "\n\n");
+                return null;
+            }
+            cp=world.getcolorfulSigSet();
+            sigs=cp;
+        }
+
+        text.clearShade();
+        log.clearError(); // To clear any residual error message
+
+        mergemenu.removeAll();
+        mergemenu.add(mergeSigs);
+        mergemenu.add(mergeField);
+        mergemenu.add(remMultiplicity);
+        mergemenu.add(remAbstract);
+
+        //1. merge sig 菜单
+        // 计算可以进行合并的sig ,Map <sig,Arraylist>
+        for(Map m:cp.values()){
+            sigSafeList.addAll(m.values());
+        }
+        Iterator<Map.Entry<String, Map<Map<Integer,Pos>,Sig>>> entries = cp.entrySet().iterator();
+        Map<Sig, ArrayList<Sig>> sigList=new HashMap();
+        Map<Field, ArrayList<Field>> fieldList=new HashMap();
+
+        while (entries.hasNext()) {
+            Map.Entry<String, Map<Map<Integer,Pos>,Sig>> entry = entries.next();
+
+            for(Sig s:sigSafeList){
+                ArrayList<Sig> sigArray=new ArrayList<>();
+                if(entry.getKey().equals(s.label.substring(5))){
+                    for (Map.Entry<Map<Integer,Pos>, Sig> en : entry.getValue().entrySet()){
+                        if(!en.getValue().equals(s))
+                        if(compare((en.getValue().color.keySet()),s.color.keySet(),new HashSet<>())){
+                            sigArray.add(en.getValue());
+                        }
+                    }
+                }
+                if(sigArray.size()>0)
+                    sigList.put(s,sigArray);
+            }
+            //计算可以merge的Field
+            for (Map.Entry<Map<Integer,Pos>, Sig> en : entry.getValue().entrySet()){
+                //计算可以merge的Field
+                if(en.getValue().getFields().size()>1){
+                    for (Field f: en.getValue().getFields()){
+                        ArrayList<Field>  fieldArray=new ArrayList<>();
+                        for(Field f2: en.getValue().getFields()){
+                            if(!f2.equals(f))
+                                if(f.label.equals(f2.label)){
+                                    //表达式相同
+                                    if(f.decl().expr.isSame(f2.decl().expr)){
+                                        if(f.color.keySet().equals(f2.color.keySet())||compare(f.color.keySet(),f2.color.keySet(),new HashSet<>())){
+                                            fieldArray.add(f2);
+                                        }
+
+                                    }
+                                }
+                        }
+                        if(!fieldArray.isEmpty())
+                            fieldList.put(f,fieldArray);
+
+                    }
+                }
+            }
+
+        }
+
+        //根据sigList生成菜单，
+        if(sigList.isEmpty())
+            mergemenu.remove(mergeSigs);
+        for(Map.Entry<Sig,ArrayList<Sig>> m:sigList.entrySet()){
+            JMenu sig=new JMenu(m.getKey().label.substring(5)+" "+getColorString(m.getKey().color.keySet()));
+            for(Sig sigSub:m.getValue()){
+                JMenuItem y = new JMenuItem(sigSub.label.substring(5) + " " + getColorString(sigSub.color.keySet()), null);
+                y.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        //获得父菜单SIG，
+                       // Sig parentSig=m.getKey();
+                        //获得当前菜单的sig
+                       // sigSub;
+                        //进行merge
+                        domerge(m.getKey(),sigSub);
+                    }
+                });
+                sig.add(y);
+            }
+            mergeSigs.add(sig);
+        }
+        //根据fieldList 生成菜单
+        if(fieldList.isEmpty())
+            mergemenu.remove(mergeField);
+        for(Map.Entry<Field,ArrayList<Field>> f:fieldList.entrySet()){
+            JMenu field=new JMenu(f.getKey().label+": "+getColorString(f.getKey().color.keySet()));
+            for(Field fieSub:f.getValue()){
+                JMenuItem y = new JMenuItem(fieSub.label + ": " + getColorString(fieSub.color.keySet()), null);
+                y.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        domerge(f.getKey(),fieSub);
+                    }
+                });
+                field.add(y);
+            }
+            mergeField.add(field);
+        }
+        
+        //生成 remove multiplicity 菜单
+        Set <Sig> multSig=new HashSet<>();
+        Set <Sig> abstractSig=new HashSet<>();
+        Set<Field> multFie=new HashSet<>();
+        for(Sig s:sigSafeList){
+            if(s.isLone!=null){
+                multSig.add(s);
+            }
+            if(s.isOne!=null){
+                multSig.add(s);
+            }
+            if(s.isSome!=null){
+                multSig.add(s);
+            }
+            if(s.isAbstract!=null){
+                abstractSig.add(s);
+            }
+            for(Field fie:s.getFields()){
+                Expr e=fie.decl().expr;
+                if(e instanceof ExprUnary &&((ExprUnary) e).op.equals(ExprUnary.Op.NOOP)){
+                    Expr exprSub=((ExprUnary) e).sub;
+                    if(exprSub instanceof ExprUnary){
+                        if(((ExprUnary) exprSub).op.equals(ExprUnary.Op.LONE)||
+                                ((ExprUnary) exprSub).op.equals(ExprUnary.Op.ONE)||
+                                ((ExprUnary) exprSub).op.equals(ExprUnary.Op.SOME) )
+                                    multFie.add(fie);
+                    }else if(exprSub instanceof ExprBinary){
+                        if(((ExprBinary) exprSub).op.isArrow){
+                            if(!((ExprBinary) exprSub).op.equals(ExprBinary.Op.ARROW))
+                                multFie.add(fie);
+                        }
+                    }
+                }
+            }
+        }
+
+        if(multSig.isEmpty()&&multFie.isEmpty())
+            mergemenu.remove(remMultiplicity);
+        for(Sig sMul:multSig){
+            JMenuItem y = new JMenuItem(sMul.label.substring(5) + " " + getColorString(sMul.color.keySet()), null);
+            y.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    doRmMultipilicity(sMul);
+                }
+
+                private void doRmMultipilicity(Sig sig) {
+                    StringBuilder coloF,colorB;
+                    coloF=new StringBuilder();
+                    colorB=new StringBuilder();
+                    if(sig.color!=null)
+                        printcolor(coloF,colorB,sig.color.keySet());
+
+                    StringBuilder factString=new StringBuilder();
+                    factString.append("fact { ");
+
+                    if (sig.isLone!=null){
+                        text.changeText(sig.isLone);
+                        factString.append("one "+ sig.label.substring(5)+" ");
+                    }
+                    if(sig.isOne!=null){
+                        text.changeText(sig.isOne);
+                        factString.append("one "+ sig.label.substring(5)+" ");
+                    }
+                    if(sig.isSome!=null){
+                        text.changeText(sig.isSome);
+                        factString.append("some "+ sig.label.substring(5)+" ");
+                    }
+                    factString.append("}");
+                    text.appendText("\r\n"+coloF+factString+colorB);
+                }
+            });
+            remMultiplicity.add(y);
+        }
+        for(Field fMul:multFie){
+            JMenuItem y = new JMenuItem(fMul.label + ": " + getColorString(fMul.color.keySet()), null);
+            y.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    doRmMultipilicity(fMul);
+                }
+
+                private void doRmMultipilicity(Field f) {
+                    Expr e= null;
+                    if(f.decl().expr instanceof ExprUnary ){
+                      e=  ((ExprUnary) f.decl().expr).sub;
+
+                        if(e instanceof ExprUnary){
+                            if(((ExprUnary) e).op.equals(SOMEOF)){
+                                System.out.println("some");
+                            }
+                        }else if(e instanceof ExprBinary && ((ExprBinary) e).op.isArrow){
+
+                        }
+                    }
+
+
+
+                }
+            });
+            remMultiplicity.add(y);
+        }
+
+        if(abstractSig.isEmpty())
+            mergemenu.remove(remAbstract);
+        for(Sig sMul:abstractSig){
+            JMenuItem y = new JMenuItem(sMul.label.substring(5) + " " + getColorString(sMul.color.keySet()), null);
+
+            y.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    doRmAbstract(sMul);
+                }
+
+                private void doRmAbstract(Sig sig) {
+                    if (sig.isAbstract!=null){
+                        text.changeText(sig.isAbstract);
+                        Set <Sig> children=new HashSet<>();
+                        for (Sig s:sigSafeList){
+                            if(!sig.equals(s)){
+                                if(s instanceof Sig.PrimSig){
+                                    if (((Sig.PrimSig) s).parent.equals(sig)){
+                                        children.add(s);
+                                    }
+                                }
+                            }
+                        }
+
+                        StringBuilder coloF,colorB;
+                        coloF=new StringBuilder();
+                        colorB=new StringBuilder();
+                        if(sig.color!=null)
+                            printcolor(coloF,colorB,sig.color.keySet());
+
+
+                        if(children.isEmpty())
+                            text.appendText("\r\n"+coloF+"fact{no "+sig.label.substring(5)+" }"+colorB);
+                        else{
+                            StringBuilder childString=new StringBuilder();
+                            for(Sig child:children){
+                                childString.append(child.label.substring(5)+"+");
+                            }
+                            childString.deleteCharAt(childString.length()-1);
+
+
+
+
+                        text.appendText("\r\n"+coloF+"fact{ "+sig.label.substring(5)+"="+childString+"}"+colorB);
+                        }
+                    }
+
+                }
+            });
+            remAbstract.add(y);
+//            remAbstract.addMenuListener(new MenuListener() {
+//                @Override
+//                public void menuSelected(MenuEvent e) {
+//                    text.get().shade();
+//                }
+//
+//                @Override
+//                public void menuDeselected(MenuEvent e) {
+//
+//                }
+//
+//                @Override
+//                public void menuCanceled(MenuEvent e) {
+//                }
+//            });
+        }
+        return null;
+    }
+//colorful merge
+    private void domerge(Sig key, Sig sigSub) {
+        Set<Integer> k=new HashSet<>();
+        ArrayList<Sig> tomerge=new ArrayList<>();
+        tomerge.add(key);
+        tomerge.add(sigSub);
+
+            if(compare(key.color.keySet(),sigSub.color.keySet(),k));
+            if(k.size()==1){
+                //位置问题
+                Sig s=mergelaw(tomerge,k.iterator().next());
+
+                StringBuilder print = new StringBuilder();
+                printsigs(new ArrayList<Sig>(){{add(s);}},print);
+                for (Map.Entry<Integer,Pos> ent:key.color.entrySet()){
+                    key.pos=key.pos.merge(ent.getValue());
+                }
+                for (Map.Entry<Integer,Pos> ent:sigSub.color.entrySet()){
+                    sigSub.pos=sigSub.pos.merge(ent.getValue());
+                }
+
+                // sig 位置添加为空白
+                text.changeText(key.pos,sigSub.pos);
+                text.appendText(print.toString());
+                //text.changeText(key.pos,print.toString());
+        }
+
+    }
+    private void domerge(Field key, Field fieldSub) {
+        if(key.color.keySet().equals(fieldSub.color.keySet())){
+            if(key.pos.x<fieldSub.pos.x||(key.pos.x==fieldSub.pos.x&& key.pos.y<fieldSub.pos.y)){
+                getFieldPos(key);
+                text.changeText(key.pos);}
+            else {
+                getFieldPos(fieldSub);
+                text.changeText(fieldSub.pos);
+            }
+            return;
+        }
+
+        Set<Integer> k=new HashSet<>();
+        ArrayList<Field> tomerge=new ArrayList<>();
+        tomerge.add(key);
+        tomerge.add(fieldSub);
+
+        if(compare(key.color.keySet(),fieldSub.color.keySet(),k));
+        if(k.size()==1){
+            //位置问题
+            int colk=key.color.keySet().contains(k.iterator().next())?k.iterator().next():-k.iterator().next();
+            Pos p=key.color.get(colk);
+            key.color.remove(colk);
+            Pos p1=new Pos(p.filename,p.x,p.y,p.x+1,p.y);
+            Pos p2=new Pos(p.filename,p.x2,p.y2,p.x2+1,p.y2);
+            text.changeText(p1,p2);
+
+            //删除第二个Field
+            getFieldPos(fieldSub);
+            text.changeText(fieldSub.pos);
+
+        }
+
+    }
+
+    //merge the pos of feature annotations
+    private void getFieldPos(Field f) {
+        Map<Integer,Pos> sc=new HashMap<>(f.color);
+        for(Map.Entry<Integer,Pos> en:f.color.entrySet()){
+            if(!f.sig.color.containsValue(en.getValue())){
+                f.pos=f.pos.merge(en.getValue());
+            }
+        }
+    }
+
+    private String emptyString(Pos pos) {
+        int leng=pos.end()-pos.start();
+        StringBuilder blank=new StringBuilder();
+        for(int i=0;i<pos.end()-pos.start()+1;i++){
+            blank.append(" ");
+        }
+        return blank.toString();
+    }
+
 
     /** This method refreshes the "run" menu. */
     private Runner doRefreshRun() {
@@ -1441,6 +1803,626 @@ public final class SimpleGUI implements ComponentListener, Listener {
             text.enableSyntax(!SyntaxDisabled.get());
         }
         return wrapMe();
+    }
+
+    // ===============================================================================================================//
+//    //colorful merge
+//    /** This method refreshes the "Refactor" menu. */
+//    private Runner doRefreshRefactor() {
+//        if (wrap)
+//            return wrapMe();
+//        try {
+//            wrap = true;
+//        } finally {
+//            wrap = false;
+//        }
+//
+//        Map cp = sigs;
+//
+//        //parser the model to get sigs
+//        if (cp == null) {
+//            Module world = null;
+//            try {
+//                int resolutionMode = (Version.experimental && ImplicitThis.get()) ? 2 : 1;
+//                A4Options opt = new A4Options();
+//                opt.tempDirectory = alloyHome() + fs + "tmp";
+//                opt.solverDirectory = alloyHome() + fs + "binary";
+//                opt.originalFilename = Util.canon(text.get().getFilename());
+//                world = CompUtil.parseEverything_fromFile(A4Reporter.NOP, text.takeSnapshot(), opt.originalFilename, resolutionMode);
+//            } catch (Err er) {
+//                text.shade(er.pos);
+//                log.logRed(er.toString() + "\n\n");
+//                return null;
+//            }
+//            cp=world.getcolorfulSigSet();
+//            sigs=cp;
+//        }
+//
+//        text.clearShade();
+//        log.clearError(); // To clear any residual error message
+//        if (cp == null) {
+//            refactormenu.getItem(0).setEnabled(false);
+//            refactormenu.getItem(3).setEnabled(false);
+//            return null;
+//        }
+//        if (cp.size() == 0) {
+//            refactormenu.getItem(0).setEnabled(false);
+//            return null;
+//        }
+//
+//        refactormenu.removeAll();
+//        try {
+//            wrap = true;
+//
+//            //define meanue bar
+//            Iterator<Map.Entry<String, Map<Map<Integer,Pos>,Sig>>> entries = cp.entrySet().iterator();
+//            while (entries.hasNext()) {
+//                Map.Entry<String, Map<Map<Integer,Pos>,Sig>> entry = entries.next();
+//
+//                String[] color= new String [entry.getValue().size()];
+//
+//                int j=0;
+//                for (Map.Entry<Map<Integer,Pos>, Sig> en : entry.getValue().entrySet()) {
+//                    if(en.getKey().size()==0)
+//                        color [j]=en.getValue().label.substring(5);
+//                    else{
+//                        String feaname=getColorString(en.getKey().keySet());
+//                        color [j]=en.getValue().label.substring(5) +" "+ feaname;
+//                    }
+//                    j++;
+//                }
+//                A4Preferences.StringChoicePref Signame   = new A4Preferences.StringChoicePref("SigName", "Sig "+entry.getKey(), Arrays.asList(color), "");
+//
+//                //add Listener to Jmenue bar
+//                Signame.addChangeListener(new ChangeListener() {
+//                    @Override
+//                    public void stateChanged(ChangeEvent e) {
+//                        Set<Integer> color=new HashSet<>();
+//
+//                        //get click button's String[sigName color list ]
+//                        if(!Signame.get().isEmpty()){
+//                            String [] string=Signame.get().split("\\s+");
+//
+//                            //get click sigs's color
+//                            if(sigs!=null){
+//                                if(string.length>1)
+//                                    for(int k=1;k<string.length;k++)
+//                                        color.add(Integer.parseInt(string[k]));
+//                            }
+//
+//                            //get the sig map, <color,sig>
+//                            Map<Map<Integer,Pos>,Sig> map=new HashMap<>();
+//                            if (string.length>=1)
+//                                map= sigs.get(string[0]);
+//
+//
+//                            //remove extra sigs,need to add fields
+//                            if(color.size()==0){
+//                                Iterator<Map.Entry<Map<Integer,Pos>, Sig>> it = map.entrySet().iterator();
+//                                ArrayList<Field> fields=new ArrayList<>();
+//                                while(it.hasNext()){
+//                                    Map.Entry<Map<Integer,Pos>, Sig> entry = it.next();
+//
+//                                    if(!entry.getKey().isEmpty()){
+//                                        fields.addAll(entry.getValue().getFields().makeCopy()) ;
+//                                        it.remove();//使用迭代器的remove()方法删除元素
+//                                    }
+//
+//                                    //deal with fields
+//                                }
+//                                //不是base sig
+//                            }else {
+//                                Sig sig=null;
+//
+//                                //查找点击的Sig
+//                                Iterator<Map.Entry<Map<Integer,Pos>, Sig>> it = map.entrySet().iterator();
+//                                while(it.hasNext()){
+//                                    Map.Entry<Map<Integer,Pos>, Sig> entry = it.next();
+//                                    if(entry.getKey().keySet().equals(color)) {
+//                                        sig = entry.getValue();
+//                                        break;
+//                                    }
+//                                    else
+//                                        continue;
+//                                }
+//
+//                                if(sig!=null){
+//                                    JPopupMenu jPopupMenuOne=new JPopupMenu();
+//                                    JMenu sigMenu=new JMenu("Sig "+sig.label.substring(5) + " " + getColorString(sig.color.keySet()));
+//
+//                                    ArrayList<Sig> sigToMerge=new ArrayList();
+//                                    sigToMerge.add(sig);
+//
+//                                    Map mapclone=new HashMap(map);
+//                                    Iterator<Map.Entry<Map<Integer,Pos>, Sig>> itmap = mapclone.entrySet().iterator();
+//                                    while(itmap.hasNext()){
+//                                        Map.Entry<Map<Integer,Pos>, Sig> entry = itmap.next();
+//                                        if(!entry.getValue().equals(sig)) {
+//                                            HashSet<Integer> k=new HashSet<>();
+//                                            if(!sig.equals(entry.getValue()))
+//                                            if (compare(sig.color.keySet(), entry.getValue().color.keySet(),k)) {
+//                                                JMenuItem y = new JMenuItem("Sig "+entry.getValue().label.substring(5) + " " + getColorString(entry.getKey().keySet()), null);
+//
+//                                                sigToMerge.add(entry.getValue());
+//                                                Map<Map<Integer,Pos>, Sig> finalMap = map;
+//                                                Sig finalSig = sig;
+////                                                y.addMouseMotionListener(new MouseMotionListener() {
+////                                                    @Override
+////                                                    public void mouseDragged(MouseEvent e) {
+////
+////                                                    }
+////
+////                                                    @Override
+////                                                    public void mouseMoved(MouseEvent e) {
+////                                                        text.get()
+////
+////                                                    }
+////                                                });
+//                                                y.addActionListener(new ActionListener() {
+//
+//                                                    public void actionPerformed(ActionEvent e) {
+//                                                        String [] string=y.getText().split("\\s+");
+//                                                        ArrayList<Sig> sigToMergecolon=new ArrayList<>();
+//                                                        sigToMergecolon.add(finalSig);
+//                                                        if(string.length>2){
+//                                                            Set<Integer> co=new HashSet<>();
+//                                                            for(int k=2;k<string.length;k++)
+//                                                                co.add(Integer.parseInt(string[k]));
+//                                                            for(Sig s: sigToMerge){
+//                                                                if(co.equals(s.color.keySet()))
+//                                                                    sigToMergecolon.add(s);
+//                                                            }
+//                                                        }
+//                                                        doRefactor(finalMap,sigToMergecolon,sigs);
+//                                                    }
+//                                                });
+//
+//                                                //y.addActionListener(doRefactor(map,sigToMerge,sigs));
+//                                                sigMenu.add(y);
+//                                            }
+//
+//                                        }
+//                                    }
+//                                    if(sigMenu.getMenuComponentCount()==0)
+//                                        sigMenu =new JMenu("Can not apply merge law !");
+//
+//                                    sigMenu.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
+//                                    sigMenu.setHorizontalAlignment(SwingConstants.LEFT);
+//                                    jPopupMenuOne.add(sigMenu);
+//                                    jPopupMenuOne.show(text.get().getComponent(),540,10);
+//
+//
+//                                }
+//                            }
+//
+//
+//
+//
+////                        if (string.length>0){
+////                            if(sigs.containsKey(string[0])){
+////                                for (Map.Entry<Set<Integer>, Sig> entry : map.entrySet()) {
+////                                    if(string.length==1)
+////                                    System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue());
+////                                    if(entry.getKey().isEmpty())
+////                                        System.out.println("!!!!!!Key =null  " + ", Value = " + entry.getValue());
+////                                }
+////                            }
+////                            System.out.println(string.toString());
+////                        }
+//                        }
+//                    }
+//                });
+//                addToMenu(refactormenu, Signame);
+//
+//
+//            }
+//        } finally {
+//            wrap = false;
+//        }
+//        return null;
+//    }
+
+    /**
+     * print sigs
+     */
+    public  void printsigs(ArrayList<Sig> finalsig,StringBuilder print){
+        for(Sig s: finalsig){
+            StringBuilder coloF,colorB,coloFieldF,colorFieldB;
+             coloF=new StringBuilder();
+             colorB=new StringBuilder();
+            if(s.color!=null)
+                printcolor(coloF,colorB,s.color.keySet());
+
+            print.append(coloF);
+
+            if(s.isAbstract!=null)
+                print.append("abstract ");
+            if(s.isLone !=null)
+                print.append("lone ");
+            if (s.isOne!=null)
+                print.append("one ");
+            if(s.isSome != null)
+                print.append("some ");
+
+            print.append("sig "+ s.label.substring(5));
+
+            if(s.isSubsig!=null ){
+                if(((Sig.PrimSig) s).parent!=UNIV){
+                    print.append(" extends ");
+                    print.append( ((Sig.PrimSig) s).parent.label.substring(5));
+                }
+            }
+
+            if(s.isSubset!=null){
+                print.append(" in ");
+                print.append(((Sig.SubsetSig) s).parents.get(0).label.substring(5));
+
+                if(((Sig.SubsetSig) s).parents.size()>1){
+                    for (int j = 1; j< ((Sig.SubsetSig) s).parents.size()-1; j ++){
+                        print.append(" + "+((Sig.SubsetSig) s).parents.get(j).label.substring(5));
+                    }
+                }
+            }
+            //print fields
+            print.append("{ ");
+
+            for (Decl f:s.getFieldDecls()){
+                coloFieldF=new StringBuilder();
+                colorFieldB =new StringBuilder();
+                if(f.color!=null){
+                    Map<Integer,Pos> fcol=new HashMap<>(f.color);
+                    if(s.color!=null)
+                   for (Map.Entry<Integer,Pos> col:s.color.entrySet()){
+                           fcol.remove(col.getKey());
+                    }
+
+                    printcolor(coloFieldF,colorFieldB,fcol.keySet());
+                }
+                print.append("\r\n        "+coloFieldF);
+                print.append(f.disjoint!=null? "disj ": "");
+                if(f.names.size()>=1){
+                    for(ExprHasName n:f.names){
+                        print.append(n.label+",");
+                    }
+                    print.deleteCharAt(print.length()-1);
+                    print.append(": ");
+
+                    //get the first Field
+                    Sig.Field n= (Sig.Field)f.names.get(0);
+                    print.append( n.decl().expr.toString().replace("this/",""));
+                    print.append(colorFieldB);
+                    print.append(",");
+                }
+            }
+
+            if(!s.getFieldDecls().isEmpty()){
+                print.deleteCharAt(print.length()-1);
+                //} of Sig
+                print.append("\r\n        }");
+            }else
+                //} of Sig
+                print.append("}");
+
+            //fact for sig
+            if(!s.getFacts().isEmpty()){
+                print.append("{");
+                for(Expr fact:s.getFacts()){
+                    String temp=fact.toString();
+                    //replace "s.fileld" to field
+                    temp=temp.replace(s.label.substring(5)+" .","");
+                    print.append("\r\n        "+temp);
+                }
+                print.append("\r\n        }\r\n");
+            }
+
+            print.append(colorB);
+            //print.append("\r\n");
+        }
+    }
+
+    //colorful merge
+    /**
+     * print color annotation, for example clor: -1,2,3, colfront :➊➁➂
+     * @param colfront record the front color annotation:➂➁➊
+     * @param colback record the back color annotation
+     * @param color  colors in the expression
+     */
+    private void printcolor(StringBuilder colfront, StringBuilder colback, Set<Integer> color) {
+        final String PFEAT1="\u2780";
+        final String PFEAT2="\u2781";
+        final String PFEAT3="\u2782" ;
+        final String PFEAT4="\u2783" ;
+        final String PFEAT5="\u2784" ;
+        final String PFEAT6="\u2785" ;
+        final String PFEAT7="\u2786" ;
+        final String PFEAT8="\u2787" ;
+        final String PFEAT9="\u2788" ;
+        final String NFEAT1="\u278A" ;
+        final String NFEAT2="\u278B" ;
+        final String NFEAT3="\u278C" ;
+        final String NFEAT4="\u278D" ;
+        final String NFEAT5="\u278E" ;
+        final String NFEAT6="\u278F" ;
+        final String NFEAT7="\u2790" ;
+        final String NFEAT8="\u2791" ;
+        final String NFEAT9="\u2792" ;
+        for(Integer i: color){
+            if(i==1) {
+                colfront.append(PFEAT1+" ");
+                colback.insert(0,PFEAT1);
+            }else if(i==2) {
+                colfront.append(PFEAT2+" ");
+                colback.insert(0,PFEAT2);
+            }else if(i==3) {
+                colfront.append(PFEAT3+" ");
+                colback.insert(0,PFEAT3);
+            }else if(i==4) {
+                colfront.append(PFEAT4+" ");
+                colback.insert(0,PFEAT4);
+            }else if(i==5) {
+                colfront.append(PFEAT5+" ");
+                colback.insert(0,PFEAT5);
+            }else if(i==6) {
+                colfront.append(PFEAT6+" ");
+                colback.insert(0,PFEAT6);
+            }else if(i==7) {
+                colfront.append(PFEAT7+" ");
+                colback.insert(0,PFEAT7);
+            }else if(i==8) {
+                colfront.append(PFEAT8+" ");
+                colback.insert(0,PFEAT8);
+            }else if(i==9) {
+                colfront.append(PFEAT9+" ");
+                colback.insert(0,PFEAT9);
+            }else if(i==-1) {
+                colfront.append(NFEAT1+" ");
+                colback.insert(0,NFEAT1);
+            }else if(i==-2) {
+                colfront.append(NFEAT2+" ");
+                colback.insert(0,NFEAT2);
+            }else if(i==-3) {
+                colfront.append(NFEAT3+" ");
+                colback.insert(0,NFEAT3);
+            }else if(i==-4) {
+                colfront.append(NFEAT4+" ");
+                colback.insert(0,NFEAT4);
+            }else if(i==-5) {
+                colfront.append(NFEAT5+" ");
+                colback.insert(0,NFEAT5);
+            }else if(i==-6) {
+                colfront.append(NFEAT6+" ");
+                colback.insert(0,NFEAT6);
+            }else if(i==-7) {
+                colfront.append(NFEAT7+" ");
+                colback.insert(0,NFEAT7);
+            }else if(i==-8) {
+                colfront.append(NFEAT8+" ");
+                colback.insert(0,NFEAT8);
+            }else if(i==-9) {
+                colfront.append(NFEAT9+" ");
+                colback.insert(0,NFEAT9);
+            }
+
+            if(colfront!=null)
+                colfront.deleteCharAt(colfront.length()-1);
+        }
+        return;
+    }
+
+    private ActionListener doRefactor(Map map,ArrayList<Sig> toMerge,Map <String,Map<Map<Integer,Pos>,Sig> >sigs) {
+        if (wrap)
+            return wrapMe();
+        Set<Integer> k=new HashSet<>();
+        if(toMerge.size()>=2){
+            Sig sig1=toMerge.get(0);
+            Sig sig2=toMerge.get(1);
+            if(compare(toMerge.get(0).color.keySet(),toMerge.get(1).color.keySet(),k));
+            if(k.size()==1){
+                Sig s=mergelaw(toMerge,k.iterator().next());
+                if(s!=null)
+                    map.put(s.color,s);
+
+                //delete  mereged sigs
+                Iterator<Map.Entry<Map<Integer,Pos>, Sig>> it = map.entrySet().iterator();
+                while(it.hasNext()){
+                    Map.Entry<Map<Integer,Pos>, Sig> entry = it.next();
+                    if(entry.getValue().equals(sig1)|| entry.getValue().equals(sig2))
+                        it.remove();//使用迭代器的remove()方法删除元素
+                }
+            }
+
+            //Repaint
+            ArrayList<Sig> finalsig=new ArrayList<>();
+            Iterator<Map.Entry<String, Map<Map<Integer,Pos>,Sig>>> entries = sigs.entrySet().iterator();
+            while (entries.hasNext()) {
+                Map.Entry<String, Map<Map<Integer,Pos>,Sig>> entry = entries.next();
+
+                finalsig.addAll(entry.getValue().values());
+                StringBuilder print = new StringBuilder();
+                if(finalsig.size()>0)
+                    printsigs(finalsig,print);
+                text.get().setText(print.toString());
+
+            }
+        }
+        return null;
+    }
+
+    /**
+     * merge law,to merge sigs
+     * @param tomerge two sigs need to be merge
+     * @param k  feature to be remove
+     */
+    private static Sig mergelaw( ArrayList<Sig> tomerge,Integer k){
+        if(tomerge.size()==2) {
+            Sig sig1 = tomerge.get(0);
+            Sig sig2 = tomerge.get(1);
+            //used to generate new Sig
+            Attr[] attributes = new Attr[sig1.attributes.size()];
+            for (int i = 0; i < sig1.attributes.size(); i++) {
+                attributes[i] = sig1.attributes.get(i);
+            }
+            Sig signew = new Sig.PrimSig(sig1.label, ((Sig.PrimSig) sig1).parent, attributes);
+
+            Map<Integer,Pos> feats=new HashMap<>(sig1.color);
+            feats.remove(k);
+            feats.remove(-k);
+            signew.color.putAll(feats);
+            //合并Fields
+            VisitQuery<Expr> sigold2newVisitor = new VisitQuery<Expr>() {
+
+                @Override
+                public  Expr visit(ExprCall x) {
+                    return x;
+                }
+
+                @Override
+                public Expr visit(ExprBinary x) throws Err {
+                    visitThis(x.left);
+                    visitThis(x.right);
+                    return x;
+                }
+
+                @Override
+                public Expr visit(ExprList x) throws Err {
+                    for(Expr e: x.args)
+                        visitThis(e);
+                    return x;
+                }
+
+                @Override
+                public Expr visit(ExprConstant x) throws Err {
+                    return x;
+                }
+
+                @Override
+                public Expr visit(ExprITE x) throws Err {
+                    visitThis(x.cond);
+                    visitThis(x.left);
+                    visitThis(x.right);
+                    return x;
+                }
+
+                @Override
+                public Expr visit(ExprLet x) throws Err {
+                    visitThis(x.expr);
+                    visitThis(x.sub);
+                    return x;
+                }
+
+                @Override
+                public Expr visit(ExprQt x) throws Err {
+                    return x;
+                }
+
+                @Override
+                public Expr visit(ExprUnary x) throws Err {
+                    visitThis(x.sub);
+                    return x;
+                }
+
+                @Override
+                public Expr visit(ExprVar x) throws Err {
+                    return x;
+                }
+
+                @Override
+                public Expr visit(Sig x) throws Err {
+                    if (x.equals(sig1)||x.equals(sig2))
+                        return signew;
+                    return x;
+                }
+
+                @Override
+                public Expr visit(Field x) throws Err {
+                    return x;
+                }
+            };
+
+
+            for (Decl d: sig1.getFieldDecls()){
+                Expr exprNew=d.expr.accept(sigold2newVisitor);
+                String[]labels = new String[d.names.size()];
+                for(int i=0; i< d.names.size();i++){
+                    labels[i]=d.names.get(i).label;
+                }
+                signew.addTrickyField(d.span(),d.isPrivate,d.disjoint,d.disjoint2,null,labels,exprNew,d.color);
+            }
+            for (Decl d: sig2.getFieldDecls()){
+                Expr exprNew=d.expr.accept(sigold2newVisitor);
+                String[]labels = new String[d.names.size()];
+                for(int i=0; i< d.names.size();i++){
+                    labels[i]=d.names.get(i).label;
+                }
+                signew.addTrickyField(d.span(),d.isPrivate,d.disjoint,d.disjoint2,null,labels,exprNew,d.color);
+            }
+
+            return signew;
+        }
+        return null;
+    }
+//colorful merge
+    /**
+     * find two sigs can apply law.
+     * return true if find match
+     */
+    private static boolean compare( Set<Integer> feats1,  Set<Integer> feats2,Set<Integer> k){
+        boolean match=false;
+        //if(sig1.equals(sig2))
+         //   return match;
+        //Set<Integer> feats1=sig1.color.keySet();
+       // Set<Integer> feats2=sig2.color.keySet();
+        if(feats1.size()!=feats2.size())
+            return match;
+
+        for(int i: feats1){
+            if(feats2.contains(i) || feats2.contains(-i)){
+                for(int j:feats2){
+                    if(i==-j){
+                        if(k.size()<1){
+                            k.add(j>0?j:-j);
+                            break;
+                        } else{
+                            k.clear();
+                            return match;}
+                    }else if(i==j){
+                        break;
+                    }
+                }
+            }
+        }
+        match=true;
+        return match;
+    }
+
+
+
+    private String getColorString(Set<Integer> key) {
+        String name=null;
+        for (Integer i:key){
+            String color=null;
+            if(i==1) color ="\u2780";
+            else if(i==2) color ="\u2781";
+            else if(i==3) color ="\u2782" ;
+            else if(i==4) color ="\u2783" ;
+            else if(i==5) color ="\u2784" ;
+            else if(i==6) color ="\u2785" ;
+            else if(i==7) color ="\u2786" ;
+            else if(i==8) color ="\u2787" ;
+            else if(i==9) color ="\u2788" ;
+            else if(i==-1) color ="\u278A" ;
+            else if(i==-2) color ="\u278B" ;
+            else if(i==-3) color ="\u278C" ;
+            else if(i==-4) color ="\u278D" ;
+            else if(i==-5) color ="\u278E" ;
+            else if(i==-6) color ="\u278F" ;
+            else if(i==-7) color ="\u2790" ;
+            else if(i==-8) color ="\u2791" ;
+            else if(i==-9) color ="\u2792" ;
+
+            name=name==null? color : name+" "+color;
+        }
+        return name;
     }
 
     // ===============================================================================================================//
@@ -2035,6 +3017,9 @@ public final class SimpleGUI implements ComponentListener, Listener {
                 menuItem(helpmenu, "About Alloy...", 'A', doAbout());
             menuItem(helpmenu, "Quick Guide", 'Q', doHelp());
             menuItem(helpmenu, "See the Copyright Notices...", 'L', doLicense());
+            //colorful merge
+          // refactormenu= menu(bar, "R&efactor", doRefreshRefactor());
+            mergemenu= menu(bar, "M&erge", doRefreshmerge());
         } finally {
             wrap = false;
         }
@@ -2158,6 +3143,11 @@ public final class SimpleGUI implements ComponentListener, Listener {
         doRefreshOption();
         doRefreshWindow(false);
         OurUtil.enableAll(windowmenu);
+
+        //doRefreshRefactor();//colorful merge
+        doRefreshmerge();//colorful merge
+        OurUtil.enableAll(mergemenu);
+
         frame.setJMenuBar(bar);
 
         // Open the given file, if a filename is given in the command line
@@ -2294,4 +3284,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
             }
         };
     }
+
+
 }

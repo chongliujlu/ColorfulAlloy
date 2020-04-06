@@ -18,6 +18,7 @@ package edu.mit.csail.sdg.ast;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JFrame;
 
@@ -70,7 +71,8 @@ public interface Module extends Clause {
      * Returns an unmodifiable list of all signatures defined inside this module.
      */
     public SafeList<Sig> getAllSigs();
-
+    //colorful merge
+    public Map getcolorfulSigSet();
     /**
      * Return an unmodifiable list of all functions in this module.
      */

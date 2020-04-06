@@ -33,6 +33,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.text.BadLocationException;
 
 import edu.mit.csail.sdg.alloy4.Listener.Event;
 
@@ -489,7 +490,46 @@ public final class OurTabbedSyntaxWidget {
     public void shade(Pos pos) {
         shade(Util.asList(pos), new Color(0.9f, 0.4f, 0.4f), true);
     }
+   //colorful merge
+    /**
+     * change the content of the edit panel
+     * @param set
+     * @param color
+     * @param clearOldHighlightsFirst
+     * @param string
+     */
+    public void changeText(Iterable<Pos> set, Color color, boolean clearOldHighlightsFirst,String string){
+        if (clearOldHighlightsFirst)
+            clearShade();
+        OurSyntaxWidget text = null;
+        int c = 0, d;
+        for (Pos p : set)
+            if (p != null && p.filename.length() > 0 && p.y > 0 && p.x > 0 && newtab(p.filename)) {
+                text = get();
+                c = text.getLineStartOffset(p.y - 1) + p.x - 1;
+                d = text.getLineStartOffset(p.y2 - 1) + p.x2 - 1;
+                if(string==null)
+                    text.changeText(p,c,d); //clear text,except \r,\n,\t
+            }
 
+        if (text != null) {
+            text.moveCaret(0, 0);
+            text.moveCaret(c, c);
+        } // Move to 0 ensures we'll scroll to the highlighted section
+        get().requestFocusInWindow();
+        adjustLabelColor();
+        listeners.fire(this, Event.STATUS_CHANGE);
+    }
+
+    public void appendText(String string) {
+         get().appendText(string);
+    }
+    public void changeText(Pos... pos) {
+        changeText(Util.asList(pos), new Color(0.9f, 0.4f, 0.4f), true,null);
+    }
+    public void changeText(Pos pos,String string) {
+        changeText(Util.asList(pos), new Color(0.9f, 0.4f, 0.4f), true,string);
+    }
     public OurSyntaxWidget open(Pos pos) {
         for (int i = 0; i < tabs.size(); i++) {
             if (me == i)

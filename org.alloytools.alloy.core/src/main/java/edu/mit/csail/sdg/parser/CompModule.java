@@ -1262,11 +1262,12 @@ public final class CompModule extends Browsable implements Module {
         boolean contains=true;
         for (Map.Entry<Integer, Pos> entry : key.entrySet()) {
             Integer map2Key = entry.getKey();
-            Pos map2Value = entry.getValue();
+           // Pos map2Value = entry.getValue();
 
             boolean keyExist = color.containsKey(map2Key);
-            boolean valExist = color.containsValue(map2Value);
-            if (!keyExist || !valExist) {
+           // boolean valExist = color.containsValue(map2Value);
+            //if (!keyExist || !valExist) {
+            if (!keyExist ) {
                 contains = false;
                 break;
                 }
@@ -1777,7 +1778,7 @@ public final class CompModule extends Browsable implements Module {
             realSig = new SubsetSig(fullname, parents, oldS.color, oldS.attributes.toArray(new Attr[0])); // [HASLab] colorful Alloy
         } else {
             Sig sup = ((PrimSig) oldS).parent;
-            Sig parentAST = u.getRawSIG(sup.pos, sup.label,sup.color);//colorful merge
+            Sig parentAST = u.getRawSIG(sup.pos, sup.label,oldS.color);//colorful merge
             if (parentAST == null)
                 throw new ErrorSyntax(sup.pos, "The sig \"" + sup.label + "\" cannot be found.");
             Sig parent = resolveSig(res, topo, parentAST);
@@ -1839,6 +1840,15 @@ public final class CompModule extends Browsable implements Module {
         }
     }
 
+    //colorful merge
+    /**
+     * return all module.sigs
+     * @return
+     */
+    @Override
+    public Map getcolorfulSigSet() {
+        return new HashMap(sigs);
+    }
     /**
      * Returns an unmodifiable list of all signatures defined inside this module.
      */
@@ -2378,7 +2388,13 @@ public final class CompModule extends Browsable implements Module {
             cx.rootsig = s;
             cx.put("this", s.decl.get());
 
+            //colorful Alloy
+            for(Integer i: d.color.keySet()){
+                if(s.color.keySet().contains(-i))
+                    throw new ErrorSyntax(d.span(), "Color annotation is not compatible, conflict between Sig and Field declaration");
+            }
             if(!s.color.isEmpty()) d.paint(s.color); // colorful Alloy
+
             Context.contextFeats.clear(); // colorful Alloy
             Context.contextFeats.addAll(d.color.keySet());// colorful Alloy
             CompModule.feats.addAll(d.color.keySet()); //colorful Alloy

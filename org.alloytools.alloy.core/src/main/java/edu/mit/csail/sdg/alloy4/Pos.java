@@ -177,12 +177,12 @@ public final class Pos implements Serializable {
         else
             return "line " + y + ", column " + x + ", filename=" + filename;
     }
-
-    int start() {
+   //colorful merge,change to public
+   public int start() {
         return y * 500 + x;
     }
-
-    int end() {
+    //colorful merge,change to public
+   public int end() {
         return y2 * 500 + x2;
     }
 

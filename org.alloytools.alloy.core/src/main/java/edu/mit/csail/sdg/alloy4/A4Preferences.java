@@ -309,6 +309,15 @@ public class A4Preferences {
             super(id, title, desc, validChoices, defaultValueCandidates);
         }
     }
+    //colorful merge
+    public static class StringChoice extends ChoicePref<String> {
+        public StringChoice(String id, String title, Iterable<String> validChoices, String... defaultValueCandidates) {
+            super(id, title, validChoices, defaultValueCandidates);
+        }
+
+
+    }
+
 
     /**
      * This reads and writes String-valued Java persistent preferences.

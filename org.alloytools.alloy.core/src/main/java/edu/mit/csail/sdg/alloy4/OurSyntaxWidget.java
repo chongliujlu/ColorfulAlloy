@@ -454,7 +454,10 @@ public final class OurSyntaxWidget {
         }
         listeners.fire(this, Event.CARET_MOVED);
     }
-
+//colorful merge
+    public JScrollPane getComponent(){
+        return component;
+    }
     private void doTabRemove() {
         String s = pane.getSelectedText();
         if (s != null && s.length() > 0) {
@@ -581,7 +584,7 @@ public final class OurSyntaxWidget {
      * Shade the range of text from start (inclusive) to end (exclusive).
      */
     // [HASLab] colorful Alloy, whether to strike out
-    void shade(Color color, boolean strike, int start, int end) {
+   public void shade(Color color, boolean strike, int start, int end) {
         int c = color.getRGB() & 0xFFFFFF;
         if (painter == null || (painter.color.getRGB() & 0xFFFFFF) != c)
             painter = new OurHighlighter(color, strike); // [HASLab] colorful Alloy, whether to strike out
@@ -590,6 +593,76 @@ public final class OurSyntaxWidget {
         } catch (Throwable ex) {} // exception is okay
     }
 
+    //colorful merge
+    public void appendText(String string){
+        Document docs= pane.getDocument();
+        try {
+            docs.insertString(docs.getLength(), "\r\n\n"+string, pane.getCharacterAttributes());//对文本进行追加
+            pane.repaint();
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //colorful merge
+    public void changeText(Pos p, int c, int d) {
+        pane.setSelectionStart(c);
+        pane.setSelectionEnd(d);
+       // String s1=pane.getSelectedText();
+        String s=pane.getSelectedText().replaceAll("[^\\s]", " ")+" ";
+        if(s.length()==2){
+            s=s.substring(0,s.length()-1);
+        }else{
+            pane.setSelectionStart(d+1);
+            pane.setSelectionEnd(d+1000);
+            String temp=pane.getSelectedText();
+            if(temp.replace("\\s*|\t|\r|\n","").startsWith(",")){
+                for (int i=0;i<s.length();i++){
+                    String subStr = temp.substring(i, i+1);
+                    if(subStr.equals(",")){
+                        s=s+" ";
+                        break;
+                    }else{
+                        s=s+subStr;
+                    }
+                }
+                //s=s+" ";
+            }
+        }
+
+            System.out.println(s.length());
+         //   System.out.println(s1);
+        try {
+            doc.replace(c,s.length(),s,null);
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
+    }
+    //colorful merge
+    public void changeText(Pos pos,String text) throws BadLocationException {
+        int a=pos.start();
+        int b=pos.end();
+        int c2 = getLineStartOffset(pos.y - 1) + pos.x - 1;
+        int d2 = getLineStartOffset(pos.y2 - 1) + pos.x2 - 1;
+
+        pane.setSelectionStart(c2);
+        pane.setSelectionEnd(d2);
+
+        String s= pane.getSelectedText();
+        Document d=pane.getDocument();
+
+       //int offset= getLineStartOffset(pos.y)+pos.x;
+
+       // String sss=doc.getText(offset,pos.width()+1);
+       // String answer = sss.replaceAll("[^\\s]", " ");
+       // System.out.println(answer);
+       // doc.replace(offset,sss.length(),answer,null);
+
+      //  System.out.println(sss);
+
+
+        pane.repaint();
+    }
     /** Returns the filename. */
     public String getFilename() {
         return filename;
@@ -921,6 +994,8 @@ public final class OurSyntaxWidget {
         int x2 = pane.getSelectionEnd() - getLineStartOffset(y2 - 1);
         return new Pos(getFilename(), x1, y1, x2, y2);
     }
+
+
 
     /** A label view with the ability to strike out text with colors. */
     // [HASLab] colorful Alloy
