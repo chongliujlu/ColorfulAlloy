@@ -509,7 +509,12 @@ public final class OurTabbedSyntaxWidget {
                 c = text.getLineStartOffset(p.y - 1) + p.x - 1;
                 d = text.getLineStartOffset(p.y2 - 1) + p.x2 - 1;
                 if(string==null)
-                    text.changeText(p,c,d); //clear text,except \r,\n,\t
+                    text.changeText(c,d); //clear text,except \r,\n,\t
+                else {
+                    if(string=="")
+                    text.changeText(c,d+2,string);
+                    else text.changeText(c,d,string);
+                }
             }
 
         if (text != null) {

@@ -602,10 +602,11 @@ public final class OurSyntaxWidget {
         } catch (BadLocationException e) {
             e.printStackTrace();
         }
+        pane.repaint();
     }
 
     //colorful merge
-    public void changeText(Pos p, int c, int d) {
+    public void changeText( int c, int d) {
         pane.setSelectionStart(c);
         pane.setSelectionEnd(d);
        // String s1=pane.getSelectedText();
@@ -626,41 +627,22 @@ public final class OurSyntaxWidget {
                         s=s+subStr;
                     }
                 }
-                //s=s+" ";
             }
         }
-
-            System.out.println(s.length());
-         //   System.out.println(s1);
         try {
             doc.replace(c,s.length(),s,null);
         } catch (BadLocationException e) {
             e.printStackTrace();
         }
+        pane.repaint();
     }
     //colorful merge
-    public void changeText(Pos pos,String text) throws BadLocationException {
-        int a=pos.start();
-        int b=pos.end();
-        int c2 = getLineStartOffset(pos.y - 1) + pos.x - 1;
-        int d2 = getLineStartOffset(pos.y2 - 1) + pos.x2 - 1;
-
-        pane.setSelectionStart(c2);
-        pane.setSelectionEnd(d2);
+    public void changeText(int c, int d,String text) {
+        pane.setSelectionStart(c);
+        pane.setSelectionEnd(d);
 
         String s= pane.getSelectedText();
-        Document d=pane.getDocument();
-
-       //int offset= getLineStartOffset(pos.y)+pos.x;
-
-       // String sss=doc.getText(offset,pos.width()+1);
-       // String answer = sss.replaceAll("[^\\s]", " ");
-       // System.out.println(answer);
-       // doc.replace(offset,sss.length(),answer,null);
-
-      //  System.out.println(sss);
-
-
+        pane.replaceSelection(text);
         pane.repaint();
     }
     /** Returns the filename. */

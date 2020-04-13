@@ -46,6 +46,8 @@ import static edu.mit.csail.sdg.alloy4.A4Preferences.WarningNonfatal;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.Welcome;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menu;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menuItem;
+import static edu.mit.csail.sdg.alloy4.Pos.UNKNOWN;
+import static edu.mit.csail.sdg.ast.ExprUnary.Op.NOOP;
 import static edu.mit.csail.sdg.ast.ExprUnary.Op.SOMEOF;
 import static edu.mit.csail.sdg.ast.Sig.UNIV;
 import static java.awt.event.InputEvent.getMaskForButton;
@@ -80,6 +82,7 @@ import edu.mit.csail.sdg.ast.*;
 import edu.mit.csail.sdg.parser.CompModule;
 import edu.mit.csail.sdg.printExpr.*;
 import edu.mit.csail.sdg.translator.*;
+import kodkod.engine.bool.Int;
 import org.alloytools.alloy.core.AlloyCore;
 
 //import com.apple.eawt.Application;
@@ -231,6 +234,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
     private List<Command>         commands               = null;
     //colorful merge
     private  Map<String,Map<Map<Integer,Pos>,Sig>>       sigs               = null;
+    //colorful merge
+    private Set<Set>        incompatibleFeats;
 
     /** The latest executed command. */
     private int                   latestCommand          = 0;
@@ -986,12 +991,18 @@ public final class SimpleGUI implements ComponentListener, Listener {
     private Runner doRefreshmerge() {
         if (wrap)
             return wrapMe();
+        incompatibleFeats=new HashSet<Set>();
         Map<String,Map<Map<Integer,Pos>,Sig>> cp = sigs;
-        JMenu mergeSigs,mergeField,remMultiplicity,remAbstract;
+        SafeList<Pair<String, Expr>> facts=null;
+        //存储冗余feature对，old2new redundant
+        Map<Set<Integer>,Set<Integer>> redundantOld2new=new HashMap<>();
+        JMenu mergeSigs,mergeField,remMultiplicity,remAbstract,remIncompatibleSigs,remRedundantFeat;
          mergeSigs=new JMenu("Merge Sigs");
          mergeField=new JMenu("Merge Field");
-         remMultiplicity=new JMenu("Remove remMultiplicity");
+         remMultiplicity=new JMenu("Remove Multiplicity");
          remAbstract=new JMenu("Remove Abstract");
+        remIncompatibleSigs=new JMenu("Remove Redundant Sigs");
+        remRedundantFeat=new JMenu("Remove Redundant Features");
         //存储所有的sig
         SafeList<Sig> sigSafeList=new SafeList<>();
         //parser the model to get sigs
@@ -1011,6 +1022,37 @@ public final class SimpleGUI implements ComponentListener, Listener {
             }
             cp=world.getcolorfulSigSet();
             sigs=cp;
+            //寻找some none 语句
+           facts=  world.getAllFacts();
+            //求解全集
+            ArrayList<Set> featSet=new ArrayList<>();
+            getAllFeatSets(CompModule.feats, featSet);
+            featSet.add(new HashSet());
+
+
+
+            for (Pair fac: facts){
+               if(fac.b instanceof ExprUnary) {
+                  if(((ExprUnary) fac.b).sub instanceof ExprUnary){
+                      Expr body=((ExprUnary) ((ExprUnary) fac.b).sub).sub;
+                          if(body instanceof ExprList){
+                            for(Expr e: ((ExprList) body).args){
+                                if (e.toString().equals("some none")){
+                                    Map<Integer,Pos> col=e.color;
+                                    if(col!=null)
+                                        incompatibleFeats.addAll(getIncompatible(col,featSet,redundantOld2new));
+
+                                }
+                            }
+                          }
+                          else if(body instanceof ExprUnary && body.toString().equals("some none")){
+                              Map<Integer,Pos> col=body.color;
+                              if(col!=null)
+                                  incompatibleFeats.addAll(getIncompatible(col,featSet,redundantOld2new));
+                          }
+                   }
+               }
+           }
         }
 
         text.clearShade();
@@ -1021,8 +1063,9 @@ public final class SimpleGUI implements ComponentListener, Listener {
         mergemenu.add(mergeField);
         mergemenu.add(remMultiplicity);
         mergemenu.add(remAbstract);
+        mergemenu.add(remIncompatibleSigs);
+        mergemenu.add(remRedundantFeat);
 
-        //1. merge sig 菜单
         // 计算可以进行合并的sig ,Map <sig,Arraylist>
         for(Map m:cp.values()){
             sigSafeList.addAll(m.values());
@@ -1030,18 +1073,30 @@ public final class SimpleGUI implements ComponentListener, Listener {
         Iterator<Map.Entry<String, Map<Map<Integer,Pos>,Sig>>> entries = cp.entrySet().iterator();
         Map<Sig, ArrayList<Sig>> sigList=new HashMap();
         Map<Field, ArrayList<Field>> fieldList=new HashMap();
+        Set <Sig> multSig=new HashSet<>();
+        Set <Sig> abstractSig=new HashSet<>();
+        Set<Field> multFie=new HashSet<>();
+        //to creat incompatible sig menu
+        Set<Sig> incompatibleSigs =new HashSet<>();
+        Set<Sig> redundantSigs=new HashSet<>();
+
 
         while (entries.hasNext()) {
             Map.Entry<String, Map<Map<Integer,Pos>,Sig>> entry = entries.next();
-
             for(Sig s:sigSafeList){
                 ArrayList<Sig> sigArray=new ArrayList<>();
                 if(entry.getKey().equals(s.label.substring(5))){
                     for (Map.Entry<Map<Integer,Pos>, Sig> en : entry.getValue().entrySet()){
                         if(!en.getValue().equals(s))
                         if(compare((en.getValue().color.keySet()),s.color.keySet(),new HashSet<>())){
-                            sigArray.add(en.getValue());
+                            Sig temp=en.getValue();
+                            if ((en.getValue().isAbstract==null && s.isAbstract==null)||(en.getValue().isAbstract!=null && s.isAbstract!=null))
+                                if((en.getValue().isLone==null && s.isLone==null)||(en.getValue().isLone!=null && s.isLone!=null))
+                                    if((en.getValue().isOne==null && s.isOne==null)||(en.getValue().isOne!=null && s.isOne!=null))
+                                        if((en.getValue().isSome==null && s.isSome==null)||(en.getValue().isSome!=null && s.isSome!=null))
+                                            sigArray.add(en.getValue());
                         }
+
                     }
                 }
                 if(sigArray.size()>0)
@@ -1055,69 +1110,20 @@ public final class SimpleGUI implements ComponentListener, Listener {
                         ArrayList<Field>  fieldArray=new ArrayList<>();
                         for(Field f2: en.getValue().getFields()){
                             if(!f2.equals(f))
-                                if(f.label.equals(f2.label)){
+                                if(f.label.equals(f2.label))
                                     //表达式相同
-                                    if(f.decl().expr.isSame(f2.decl().expr)){
-                                        if(f.color.keySet().equals(f2.color.keySet())||compare(f.color.keySet(),f2.color.keySet(),new HashSet<>())){
+                                    if(f.decl().expr.isSame(f2.decl().expr))
+                                        if(f.color.keySet().equals(f2.color.keySet())||
+                                                compare(f.color.keySet(),f2.color.keySet(),new HashSet<>()))
                                             fieldArray.add(f2);
-                                        }
-
-                                    }
-                                }
                         }
                         if(!fieldArray.isEmpty())
                             fieldList.put(f,fieldArray);
-
                     }
                 }
             }
-
         }
 
-        //根据sigList生成菜单，
-        if(sigList.isEmpty())
-            mergemenu.remove(mergeSigs);
-        for(Map.Entry<Sig,ArrayList<Sig>> m:sigList.entrySet()){
-            JMenu sig=new JMenu(m.getKey().label.substring(5)+" "+getColorString(m.getKey().color.keySet()));
-            for(Sig sigSub:m.getValue()){
-                JMenuItem y = new JMenuItem(sigSub.label.substring(5) + " " + getColorString(sigSub.color.keySet()), null);
-                y.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        //获得父菜单SIG，
-                       // Sig parentSig=m.getKey();
-                        //获得当前菜单的sig
-                       // sigSub;
-                        //进行merge
-                        domerge(m.getKey(),sigSub);
-                    }
-                });
-                sig.add(y);
-            }
-            mergeSigs.add(sig);
-        }
-        //根据fieldList 生成菜单
-        if(fieldList.isEmpty())
-            mergemenu.remove(mergeField);
-        for(Map.Entry<Field,ArrayList<Field>> f:fieldList.entrySet()){
-            JMenu field=new JMenu(f.getKey().label+": "+getColorString(f.getKey().color.keySet()));
-            for(Field fieSub:f.getValue()){
-                JMenuItem y = new JMenuItem(fieSub.label + ": " + getColorString(fieSub.color.keySet()), null);
-                y.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        domerge(f.getKey(),fieSub);
-                    }
-                });
-                field.add(y);
-            }
-            mergeField.add(field);
-        }
-        
-        //生成 remove multiplicity 菜单
-        Set <Sig> multSig=new HashSet<>();
-        Set <Sig> abstractSig=new HashSet<>();
-        Set<Field> multFie=new HashSet<>();
         for(Sig s:sigSafeList){
             if(s.isLone!=null){
                 multSig.add(s);
@@ -1139,7 +1145,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                         if(((ExprUnary) exprSub).op.equals(ExprUnary.Op.LONE)||
                                 ((ExprUnary) exprSub).op.equals(ExprUnary.Op.ONE)||
                                 ((ExprUnary) exprSub).op.equals(ExprUnary.Op.SOME) )
-                                    multFie.add(fie);
+                            multFie.add(fie);
                     }else if(exprSub instanceof ExprBinary){
                         if(((ExprBinary) exprSub).op.isArrow){
                             if(!((ExprBinary) exprSub).op.equals(ExprBinary.Op.ARROW))
@@ -1148,7 +1154,67 @@ public final class SimpleGUI implements ComponentListener, Listener {
                     }
                 }
             }
+
+            //计算 不兼容的sigs
+            Set<Integer> sig_colore=new HashSet();
+            for(Integer i: s.color.keySet())
+                sig_colore.add(i>0? i: -i);
+
+            if(incompatibleFeats.contains(sig_colore)){
+                incompatibleSigs.add(s);
+            }
+
+            for(Map.Entry<Set<Integer>, Set<Integer>> entry:redundantOld2new.entrySet()){
+                if(s.color.keySet().containsAll(entry.getKey())){
+                    redundantSigs.add(s);
+                    break;
+                }
+            }
         }
+
+        //根据sigList生成菜单，
+        if(sigList.isEmpty())
+            mergemenu.remove(mergeSigs);
+        for(Map.Entry<Sig,ArrayList<Sig>> m:sigList.entrySet()){
+            JMenu sig=new JMenu(m.getKey().label.substring(5)+" "+getColorString(m.getKey().color.keySet()));
+            for(Sig sigSub:m.getValue()){
+                JMenuItem y = new JMenuItem(sigSub.label.substring(5) + " " + getColorString(sigSub.color.keySet()), null);
+                y.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        text.clearShade();
+                        log.clearError(); // To clear any residual error message
+                        domerge(m.getKey(),sigSub);
+                    }
+                });
+                sig.add(y);
+            }
+            mergeSigs.add(sig);
+        }
+
+        //根据fieldList 生成菜单
+        if(fieldList.isEmpty())
+            mergemenu.remove(mergeField);
+        for(Map.Entry<Field,ArrayList<Field>> f:fieldList.entrySet()){
+            JMenu field=new JMenu("Sig "+f.getKey().sig.label.substring(5)+": "+f.getKey().label+" "+getColorString(f.getKey().color.keySet()));
+            for(Field fieSub:f.getValue()){
+                JMenuItem y = new JMenuItem("Sig " + fieSub.sig.label.substring(5)+": "+fieSub.label + " " + getColorString(fieSub.color.keySet()), null);
+                y.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        text.clearShade();
+                        log.clearError(); // To clear any residual error message
+                        domerge(f.getKey(),fieSub);
+                    }
+                });
+                field.add(y);
+            }
+            mergeField.add(field);
+        }
+        
+        //生成 remove multiplicity 菜单
+
+
 
         if(multSig.isEmpty()&&multFie.isEmpty())
             mergemenu.remove(remMultiplicity);
@@ -1157,10 +1223,13 @@ public final class SimpleGUI implements ComponentListener, Listener {
             y.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
+                    text.clearShade();
+                    log.clearError(); // To clear any residual error message
                     doRmMultipilicity(sMul);
                 }
 
                 private void doRmMultipilicity(Sig sig) {
+
                     StringBuilder coloF,colorB;
                     coloF=new StringBuilder();
                     colorB=new StringBuilder();
@@ -1169,21 +1238,31 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
                     StringBuilder factString=new StringBuilder();
                     factString.append("fact { ");
+                    Pos multipos=UNKNOWN;
 
                     if (sig.isLone!=null){
+                        multipos=sig.isLone;
                         text.changeText(sig.isLone);
                         factString.append("one "+ sig.label.substring(5)+" ");
                     }
                     if(sig.isOne!=null){
+                        multipos=sig.isOne;
                         text.changeText(sig.isOne);
                         factString.append("one "+ sig.label.substring(5)+" ");
                     }
                     if(sig.isSome!=null){
+                        multipos=sig.isSome;
                         text.changeText(sig.isSome);
                         factString.append("some "+ sig.label.substring(5)+" ");
                     }
                     factString.append("}");
-                    text.appendText("\r\n"+coloF+factString+colorB);
+                    for(Map.Entry<Integer,Pos> entry:sig.color.entrySet())
+                        sig.pos= sig.pos.merge(entry.getValue());
+                    Pos factPos=new Pos(sig.pos.filename,sig.pos.x2+1,sig.pos.y2);
+                    text.changeText(factPos,"\r\n"+coloF+factString+colorB+"");
+
+                    text.changeText(multipos,"");
+                    //text.appendText("\r\n"+coloF+factString+colorB);
                 }
             });
             remMultiplicity.add(y);
@@ -1193,6 +1272,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
             y.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
+                    text.clearShade();
+                    log.clearError(); // To clear any residual error message
                     doRmMultipilicity(fMul);
                 }
 
@@ -1209,9 +1290,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
                         }
                     }
-
-
-
                 }
             });
             remMultiplicity.add(y);
@@ -1225,12 +1303,16 @@ public final class SimpleGUI implements ComponentListener, Listener {
             y.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
+                    text.clearShade();
+                    log.clearError(); // To clear any residual error message
                     doRmAbstract(sMul);
                 }
 
                 private void doRmAbstract(Sig sig) {
+
                     if (sig.isAbstract!=null){
                         text.changeText(sig.isAbstract);
+                        //text.changeText(sig.isAbstract,"");
                         Set <Sig> children=new HashSet<>();
                         for (Sig s:sigSafeList){
                             if(!sig.equals(s)){
@@ -1249,20 +1331,23 @@ public final class SimpleGUI implements ComponentListener, Listener {
                             printcolor(coloF,colorB,sig.color.keySet());
 
 
+                        for(Map.Entry<Integer,Pos> entry:sig.color.entrySet())
+                            sig.pos= sig.pos.merge(entry.getValue());
+                        Pos factPos=new Pos(sig.pos.filename,sig.pos.x2+1,sig.pos.y2);
+
                         if(children.isEmpty())
-                            text.appendText("\r\n"+coloF+"fact{no "+sig.label.substring(5)+" }"+colorB);
+                           // text.appendText("\r\n"+coloF+"fact{no "+sig.label.substring(5)+" }"+colorB);
+                            text.changeText(factPos,"\r\n"+coloF+"fact{no "+sig.label.substring(5)+" }"+colorB+"\r\n");
                         else{
                             StringBuilder childString=new StringBuilder();
                             for(Sig child:children){
                                 childString.append(child.label.substring(5)+"+");
                             }
                             childString.deleteCharAt(childString.length()-1);
-
-
-
-
-                        text.appendText("\r\n"+coloF+"fact{ "+sig.label.substring(5)+"="+childString+"}"+colorB);
+                            text.changeText(factPos,"\r\n"+coloF+"fact{ "+sig.label.substring(5)+"="+childString+"}"+colorB+"\n\r");
+                        //text.appendText("\r\n"+coloF+"fact{ "+sig.label.substring(5)+"="+childString+"}"+colorB);
                         }
+                        text.changeText(sig.isAbstract,"");
                     }
 
                 }
@@ -1284,9 +1369,154 @@ public final class SimpleGUI implements ComponentListener, Listener {
 //                }
 //            });
         }
+
+        //生成 IncompatibleSigs 菜单
+        if(incompatibleSigs.isEmpty())
+            mergemenu.remove(remIncompatibleSigs);
+        for(Sig sIncompat:incompatibleSigs){
+            JMenuItem y = new JMenuItem(sIncompat.label.substring(5) + " " + getColorString(sIncompat.color.keySet()), null);
+            y.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    text.clearShade();
+                    log.clearError(); // To clear any residual error message
+                    doRmSig(sIncompat);
+                }
+
+                private void doRmSig(Sig sig) {
+                    for(Map.Entry<Integer,Pos> entry:sig.color.entrySet())
+                        sig.pos= sig.pos.merge(entry.getValue());
+                        text.changeText(sig.pos,"");
+                }
+            });
+            remIncompatibleSigs.add(y);
+        }
+
+        if(redundantSigs.isEmpty())
+            mergemenu.remove(remRedundantFeat);
+        for(Sig sRed:redundantSigs){
+            JMenuItem y = new JMenuItem(sRed.label.substring(5) + " " + getColorString(sRed.color.keySet()), null);
+            y.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    doRmSigRed(sRed);
+                }
+
+                private void doRmSigRed(Sig sig) {
+                    for(Map.Entry<Integer,Pos> entry:sig.color.entrySet())
+                        sig.pos= sig.pos.merge(entry.getValue());
+                    //找到匹配
+                    for(Map.Entry<Set<Integer>, Set<Integer>> entry:redundantOld2new.entrySet()){
+                        if(sig.color.keySet().containsAll(entry.getKey())){
+                            Set<Integer> sub=new HashSet(entry.getKey());
+                            sub.removeAll(entry.getValue());
+                            for(Integer i: sub){
+                                sig.color.remove(i);
+                            }
+                        }
+                    }
+                    //
+                    StringBuilder print = new StringBuilder();
+                    printsigs(new ArrayList<Sig>(){{add(sig);}},print);
+                    Pos newSigPos=new Pos(sig.pos.filename,sig.pos.x,sig.pos.y,sig.pos.x2+1,sig.pos.y2);
+                    text.changeText(newSigPos,print.toString());
+                }
+            });
+            remRedundantFeat.add(y);
+        }
+
         return null;
     }
+
+    /**
+     * get the power set of feats
+     * @param feats
+     * @param powerSet
+     */
+    private void getAllFeatSets(Set<Integer> feats, ArrayList<Set> powerSet) {
+       Set <Integer> colors=new HashSet<>();
+        for(Integer i: feats){
+                colors.add(i>0?i:-i);
+        }
+
+        ArrayList<Set> tempset;
+        for(Integer i:colors) {
+
+            tempset= (ArrayList<Set>) powerSet.clone();
+            for(Set s: tempset){
+
+                Set ss=new HashSet(s);
+                ss.add(i);
+                powerSet.add(ss);
+            }
+            Set s=new HashSet();
+            s.add(i);
+            powerSet.add(s);
+            //powerSet.add(new HashSet(){{add(i);}});
+        }
+
+    }
 //colorful merge
+    /**
+     *compute incompatible feature sets according Feature Model
+     * @param col colors from "some none"
+     * @param featSet
+     *
+     */
+    private Set<Set> getIncompatible(Map<Integer, Pos> col, ArrayList<Set> featSet,Map<Set<Integer>,Set<Integer>> featMapFM) {
+        Set<Set> incompatibleFeats=new HashSet<>();
+    //计算PFeat 以及NFeat
+        Set<Integer> NFeatures = new HashSet<>();
+        Set<Integer> PFeatures = new HashSet<>();
+        for (Integer i : col.keySet()) {
+            if (i < 0)
+                NFeatures.add(-i);
+            else PFeatures.add(i);
+        }
+       //计算FM化简集合
+       if(!PFeatures.isEmpty() && !NFeatures.isEmpty()){
+           Set FMSets=new HashSet();//最后的结果集合
+
+           ArrayList<Set> temFMSets=new ArrayList();
+           getAllFeatSets(NFeatures,temFMSets);
+           Set<Integer> newset=new HashSet();
+
+           for(Set set:temFMSets){
+               set.addAll(PFeatures);
+               featMapFM.put(set,PFeatures);
+           }
+
+       }
+
+
+
+
+        //计算Pfeats 不兼容的set
+        for(Set set:featSet){
+            if(set.containsAll(PFeatures))
+                incompatibleFeats.add(set);
+        }
+
+        //计算Nfeat 不兼容的
+        Set Ntemp=new HashSet<>();
+
+        for(Integer i: NFeatures){
+            Set temp=new HashSet();
+            for(Set set:featSet){
+
+                if(!set.contains(i))
+                    temp.add(set);
+            }
+            if(Ntemp.isEmpty())
+                Ntemp.addAll(temp);
+            else Ntemp.retainAll(temp);
+        }
+        incompatibleFeats.retainAll(Ntemp);
+
+        return incompatibleFeats;
+    }
+
+    //colorful merge
     private void domerge(Sig key, Sig sigSub) {
         Set<Integer> k=new HashSet<>();
         ArrayList<Sig> tomerge=new ArrayList<>();
@@ -1309,7 +1539,9 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
                 // sig 位置添加为空白
                 text.changeText(key.pos,sigSub.pos);
-                text.appendText(print.toString());
+                text.changeText(key.pos,print.toString());
+                text.changeText(sigSub.pos,"");
+               // text.appendText(print.toString());
                 //text.changeText(key.pos,print.toString());
         }
 
@@ -2368,10 +2600,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
      */
     private static boolean compare( Set<Integer> feats1,  Set<Integer> feats2,Set<Integer> k){
         boolean match=false;
-        //if(sig1.equals(sig2))
-         //   return match;
-        //Set<Integer> feats1=sig1.color.keySet();
-       // Set<Integer> feats2=sig2.color.keySet();
+
         if(feats1.size()!=feats2.size())
             return match;
 
@@ -2389,7 +2618,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
                         break;
                     }
                 }
-            }
+            }else
+                return match;
         }
         match=true;
         return match;
@@ -3220,7 +3450,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
     public Object do_action(Object sender, Event e, Object arg) {
         if (sender instanceof OurTree && e == Event.CLICK && arg instanceof Browsable) {
             Pos p = ((Browsable) arg).pos();
-            if (p == Pos.UNKNOWN)
+            if (p == UNKNOWN)
                 p = ((Browsable) arg).span();
             text.shade(p);
         }
