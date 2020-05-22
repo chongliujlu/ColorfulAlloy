@@ -1005,54 +1005,170 @@ public final class SimpleGUI implements ComponentListener, Listener {
         remRedundantFeat=new JMenu("Remove Redundant Features");
         //存储所有的sig
         SafeList<Sig> sigSafeList=new SafeList<>();
+        Map<Sig, ArrayList<Sig>> sigList=new HashMap();
+        Map<Field, ArrayList<Field>> fieldList=new HashMap();
+        Set <Sig> multSig=new HashSet<>();
+        Set <Sig> abstractSig=new HashSet<>();
+        Set<Field> multFie=new HashSet<>();
+        //to creat incompatible sig menu
+        Set<Sig> incompatibleSigs =new HashSet<>();
+        Set<Sig> redundantSigs=new HashSet<>();
+
+
         //parser the model to get sigs
         if (cp == null) {
             Module world = null;
             try {
                 int resolutionMode = (Version.experimental && ImplicitThis.get()) ? 2 : 1;
                 A4Options opt = new A4Options();
-                opt.tempDirectory = alloyHome() + fs + "tmp";
-                opt.solverDirectory = alloyHome() + fs + "binary";
+
                 opt.originalFilename = Util.canon(text.get().getFilename());
-                world = CompUtil.parseEverything_fromFile(A4Reporter.NOP, text.takeSnapshot(), opt.originalFilename, resolutionMode);
-            } catch (Err er) {
-                text.shade(er.pos);
-                log.logRed(er.toString() + "\n\n");
-                return null;
-            }
-            cp=world.getcolorfulSigSet();
-            sigs=cp;
-            //寻找some none 语句
-           facts=  world.getAllFacts();
-            //求解全集
-            ArrayList<Set> featSet=new ArrayList<>();
-            getAllFeatSets(CompModule.feats, featSet);
-            featSet.add(new HashSet());
+                String source = text.get().getText();
+                if(!text.get().getText().equals("")){
+                    world = CompUtil.parseEverything_fromFile(A4Reporter.NOP, text.takeSnapshot(), opt.originalFilename, resolutionMode);
+                    cp=world.getcolorfulSigSet();
+                    facts=  world.getAllFacts();
 
 
+                    //求解全集
+                    ArrayList<Set> featSet=new ArrayList<>();
+                    getAllFeatSets(CompModule.feats, featSet);
+                    featSet.add(new HashSet());
 
-            for (Pair fac: facts){
-               if(fac.b instanceof ExprUnary) {
-                  if(((ExprUnary) fac.b).sub instanceof ExprUnary){
-                      Expr body=((ExprUnary) ((ExprUnary) fac.b).sub).sub;
-                          if(body instanceof ExprList){
-                            for(Expr e: ((ExprList) body).args){
-                                if (e.toString().equals("some none")){
-                                    Map<Integer,Pos> col=e.color;
-                                    if(col!=null)
-                                        incompatibleFeats.addAll(getIncompatible(col,featSet,redundantOld2new));
+                    // 计算可以进行合并的sig ,Map <sig,Arraylist>
+                    for(Map m:cp.values()){
+                        sigSafeList.addAll(m.values());
+                    }
+
+                    Iterator<Map.Entry<String, Map<Map<Integer,Pos>,Sig>>> entries = cp.entrySet().iterator();
+                    while (entries.hasNext()) {
+                        Map.Entry<String, Map<Map<Integer,Pos>,Sig>> entry = entries.next();
+                        for(Sig s:sigSafeList){
+                            ArrayList<Sig> sigArray=new ArrayList<>();
+                            if(entry.getKey().equals(s.label.substring(5))){
+                                for (Map.Entry<Map<Integer,Pos>, Sig> en : entry.getValue().entrySet()){
+                                    if(!en.getValue().equals(s))
+                                        if(compare((en.getValue().color.keySet()),s.color.keySet(),new HashSet<>())){
+                                            Sig temp=en.getValue();
+                                            if ((en.getValue().isAbstract==null && s.isAbstract==null)||(en.getValue().isAbstract!=null && s.isAbstract!=null))
+                                                if((en.getValue().isLone==null && s.isLone==null)||(en.getValue().isLone!=null && s.isLone!=null))
+                                                    if((en.getValue().isOne==null && s.isOne==null)||(en.getValue().isOne!=null && s.isOne!=null))
+                                                        if((en.getValue().isSome==null && s.isSome==null)||(en.getValue().isSome!=null && s.isSome!=null))
+                                                            sigArray.add(en.getValue());
+                                        }
 
                                 }
                             }
-                          }
-                          else if(body instanceof ExprUnary && body.toString().equals("some none")){
-                              Map<Integer,Pos> col=body.color;
-                              if(col!=null)
-                                  incompatibleFeats.addAll(getIncompatible(col,featSet,redundantOld2new));
-                          }
-                   }
-               }
-           }
+                            if(sigArray.size()>0)
+                                sigList.put(s,sigArray);
+                        }
+                        //计算可以merge的Field
+                        for (Map.Entry<Map<Integer,Pos>, Sig> en : entry.getValue().entrySet()){
+                            //计算可以merge的Field
+                            if(en.getValue().getFields().size()>1){
+                                for (Field f: en.getValue().getFields()){
+                                    ArrayList<Field>  fieldArray=new ArrayList<>();
+                                    for(Field f2: en.getValue().getFields()){
+                                        if(!f2.equals(f))
+                                            if(f.label.equals(f2.label))
+                                                //表达式相同
+                                                if(f.decl().expr.isSame(f2.decl().expr))
+                                                    if(f.color.keySet().equals(f2.color.keySet())||
+                                                            compare(f.color.keySet(),f2.color.keySet(),new HashSet<>()))
+                                                        fieldArray.add(f2);
+                                    }
+                                    if(!fieldArray.isEmpty())
+                                        fieldList.put(f,fieldArray);
+                                }
+                            }
+                        }
+                    }
+
+                    if(facts!=null)
+                        for (Pair fac: facts){
+                            if(fac.b instanceof ExprUnary) {
+                                if(((ExprUnary) fac.b).sub instanceof ExprUnary){
+                                    Expr body=((ExprUnary) ((ExprUnary) fac.b).sub).sub;
+                                    if(body instanceof ExprList){
+                                        for(Expr e: ((ExprList) body).args){
+                                            if (e.toString().equals("some none")){
+                                                Map<Integer,Pos> col=e.color;
+                                                if(col!=null)
+                                                    incompatibleFeats.addAll(getIncompatible(col,featSet,redundantOld2new));
+
+                                            }
+                                        }
+                                    }
+                                    else if(body instanceof ExprUnary && body.toString().equals("some none")){
+                                        Map<Integer,Pos> col=body.color;
+                                        if(col!=null)
+                                            incompatibleFeats.addAll(getIncompatible(col,featSet,redundantOld2new));
+                                    }
+                                }
+                            }
+                        }
+
+                    for(Sig s:sigSafeList){
+                        if(s.isLone!=null){
+                            multSig.add(s);
+                        }
+                        if(s.isOne!=null){
+                            multSig.add(s);
+                        }
+                        if(s.isSome!=null){
+                            multSig.add(s);
+                        }
+                        if(s.isAbstract!=null){
+                            abstractSig.add(s);
+                        }
+                        for(Field fie:s.getFields()){
+                            Expr e=fie.decl().expr;
+                            if(e instanceof ExprUnary &&((ExprUnary) e).op.equals(ExprUnary.Op.NOOP)){
+                                Expr exprSub=((ExprUnary) e).sub;
+                                if(exprSub instanceof ExprUnary){
+                                    if(((ExprUnary) exprSub).op.equals(ExprUnary.Op.LONE)||
+                                            ((ExprUnary) exprSub).op.equals(ExprUnary.Op.ONE)||
+                                            ((ExprUnary) exprSub).op.equals(ExprUnary.Op.SOME) )
+                                        multFie.add(fie);
+                                }else if(exprSub instanceof ExprBinary){
+                                    if(((ExprBinary) exprSub).op.isArrow){
+                                        if(!((ExprBinary) exprSub).op.equals(ExprBinary.Op.ARROW))
+                                            multFie.add(fie);
+                                    }
+                                }
+                            }
+                        }
+
+                        //计算 不兼容的sigs
+                        Set<Integer> sig_colore=new HashSet();
+                        for(Integer i: s.color.keySet())
+                            sig_colore.add(i>0? i: -i);
+
+                        if(incompatibleFeats.contains(sig_colore)){
+                            incompatibleSigs.add(s);
+                        }
+
+                        for(Map.Entry<Set<Integer>, Set<Integer>> entry:redundantOld2new.entrySet()){
+                            if(s.color.keySet().containsAll(entry.getKey())){
+                                redundantSigs.add(s);
+                                break;
+                            }
+                        }
+                    }
+
+                }
+            } catch (Err er) {
+                    log.logRed(er.toString() + "\n\n");
+                    return null;
+            }catch (Throwable e) {
+                log.logRed("Cannot parse the model.\n" + e.toString() + "\n\n");
+                return null;
+            }
+
+            sigs=cp;
+            //寻找some none 语句
+
+
         }
 
         text.clearShade();
@@ -1066,111 +1182,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
         mergemenu.add(remIncompatibleSigs);
         mergemenu.add(remRedundantFeat);
 
-        // 计算可以进行合并的sig ,Map <sig,Arraylist>
-        for(Map m:cp.values()){
-            sigSafeList.addAll(m.values());
-        }
-        Iterator<Map.Entry<String, Map<Map<Integer,Pos>,Sig>>> entries = cp.entrySet().iterator();
-        Map<Sig, ArrayList<Sig>> sigList=new HashMap();
-        Map<Field, ArrayList<Field>> fieldList=new HashMap();
-        Set <Sig> multSig=new HashSet<>();
-        Set <Sig> abstractSig=new HashSet<>();
-        Set<Field> multFie=new HashSet<>();
-        //to creat incompatible sig menu
-        Set<Sig> incompatibleSigs =new HashSet<>();
-        Set<Sig> redundantSigs=new HashSet<>();
-
-
-        while (entries.hasNext()) {
-            Map.Entry<String, Map<Map<Integer,Pos>,Sig>> entry = entries.next();
-            for(Sig s:sigSafeList){
-                ArrayList<Sig> sigArray=new ArrayList<>();
-                if(entry.getKey().equals(s.label.substring(5))){
-                    for (Map.Entry<Map<Integer,Pos>, Sig> en : entry.getValue().entrySet()){
-                        if(!en.getValue().equals(s))
-                        if(compare((en.getValue().color.keySet()),s.color.keySet(),new HashSet<>())){
-                            Sig temp=en.getValue();
-                            if ((en.getValue().isAbstract==null && s.isAbstract==null)||(en.getValue().isAbstract!=null && s.isAbstract!=null))
-                                if((en.getValue().isLone==null && s.isLone==null)||(en.getValue().isLone!=null && s.isLone!=null))
-                                    if((en.getValue().isOne==null && s.isOne==null)||(en.getValue().isOne!=null && s.isOne!=null))
-                                        if((en.getValue().isSome==null && s.isSome==null)||(en.getValue().isSome!=null && s.isSome!=null))
-                                            sigArray.add(en.getValue());
-                        }
-
-                    }
-                }
-                if(sigArray.size()>0)
-                    sigList.put(s,sigArray);
-            }
-            //计算可以merge的Field
-            for (Map.Entry<Map<Integer,Pos>, Sig> en : entry.getValue().entrySet()){
-                //计算可以merge的Field
-                if(en.getValue().getFields().size()>1){
-                    for (Field f: en.getValue().getFields()){
-                        ArrayList<Field>  fieldArray=new ArrayList<>();
-                        for(Field f2: en.getValue().getFields()){
-                            if(!f2.equals(f))
-                                if(f.label.equals(f2.label))
-                                    //表达式相同
-                                    if(f.decl().expr.isSame(f2.decl().expr))
-                                        if(f.color.keySet().equals(f2.color.keySet())||
-                                                compare(f.color.keySet(),f2.color.keySet(),new HashSet<>()))
-                                            fieldArray.add(f2);
-                        }
-                        if(!fieldArray.isEmpty())
-                            fieldList.put(f,fieldArray);
-                    }
-                }
-            }
-        }
-
-        for(Sig s:sigSafeList){
-            if(s.isLone!=null){
-                multSig.add(s);
-            }
-            if(s.isOne!=null){
-                multSig.add(s);
-            }
-            if(s.isSome!=null){
-                multSig.add(s);
-            }
-            if(s.isAbstract!=null){
-                abstractSig.add(s);
-            }
-            for(Field fie:s.getFields()){
-                Expr e=fie.decl().expr;
-                if(e instanceof ExprUnary &&((ExprUnary) e).op.equals(ExprUnary.Op.NOOP)){
-                    Expr exprSub=((ExprUnary) e).sub;
-                    if(exprSub instanceof ExprUnary){
-                        if(((ExprUnary) exprSub).op.equals(ExprUnary.Op.LONE)||
-                                ((ExprUnary) exprSub).op.equals(ExprUnary.Op.ONE)||
-                                ((ExprUnary) exprSub).op.equals(ExprUnary.Op.SOME) )
-                            multFie.add(fie);
-                    }else if(exprSub instanceof ExprBinary){
-                        if(((ExprBinary) exprSub).op.isArrow){
-                            if(!((ExprBinary) exprSub).op.equals(ExprBinary.Op.ARROW))
-                                multFie.add(fie);
-                        }
-                    }
-                }
-            }
-
-            //计算 不兼容的sigs
-            Set<Integer> sig_colore=new HashSet();
-            for(Integer i: s.color.keySet())
-                sig_colore.add(i>0? i: -i);
-
-            if(incompatibleFeats.contains(sig_colore)){
-                incompatibleSigs.add(s);
-            }
-
-            for(Map.Entry<Set<Integer>, Set<Integer>> entry:redundantOld2new.entrySet()){
-                if(s.color.keySet().containsAll(entry.getKey())){
-                    redundantSigs.add(s);
-                    break;
-                }
-            }
-        }
 
         //根据sigList生成菜单，
         if(sigList.isEmpty())
@@ -1213,9 +1224,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
         }
         
         //生成 remove multiplicity 菜单
-
-
-
         if(multSig.isEmpty()&&multFie.isEmpty())
             mergemenu.remove(remMultiplicity);
         for(Sig sMul:multSig){
