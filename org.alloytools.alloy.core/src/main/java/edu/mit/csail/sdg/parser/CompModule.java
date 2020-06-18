@@ -203,8 +203,8 @@ public final class CompModule extends Browsable implements Module {
     /** Each macro name is mapped to a MacroAST object. */
     private final Map<String,Macro>           macros      = new LinkedHashMap<String,Macro>();
 
-    /** Each assertion name is mapped to its Expr. */
-    private final Map<String,Expr>            asserts     = new LinkedHashMap<String,Expr>();
+    /** Each assertion name is mapped to its Expr. */ //colorful merge
+    private final Map<String,ArrayList<Expr>>            asserts     = new LinkedHashMap<String,ArrayList<Expr>>();
 
     /**
      * The list of facts; each fact is either an untypechecked Exp or a typechecked
@@ -705,7 +705,7 @@ public final class CompModule extends Browsable implements Module {
 
             //Expr obj = resolve(x.pos, x.label);
             Expr obj = resolve(x.pos, x.label,x.color); //colorful merge
-            obj.paint(x.color); // [HASLab] colorful Alloy
+           // obj.paint(x.color); // [HASLab] colorful Alloy
             if(obj instanceof ExprUnary)
             //colorful Alloy
             if(!contextFeats.containsAll(((ExprUnary) obj).sub.color.keySet())){
@@ -1009,9 +1009,12 @@ public final class CompModule extends Browsable implements Module {
         }
         if (asserts.size() > 0) {
             x = new ArrayList<Browsable>(asserts.size());
-            for (Map.Entry<String,Expr> e : asserts.entrySet()) {
-                Pos sp = e.getValue().span();
-                x.add(make(sp, sp, "<b>assert</b> " + e.getKey(), e.getValue()));
+            //colorful merge
+            for (Map.Entry<String,ArrayList<Expr>> list : asserts.entrySet()) {
+                for(Expr e: list.getValue()){
+                    Pos sp = e.span();
+                    x.add(make(sp, sp, "<b>assert</b> " + list.getKey(), e));
+                }
             }
             ans.add(make("<b>" + x.size() + (x.size() > 1 ? " asserts</b>" : " assert</b>"), x));
         }
@@ -1216,6 +1219,7 @@ public final class CompModule extends Browsable implements Module {
         // (r&1)!=0 => Sig, (r&2) != 0 => assertion, (r&4)!=0 => Func
         List<Object> ans = new ArrayList<Object>();
         ArrayList<Sig> resultSig=new ArrayList<>();
+       // ArrayList<Field> resultField=new ArrayList<>();
         for (CompModule m : getAllNameableModules()) {
             if ((r & 1) != 0) {
                 //Sig x = m.sigs.get(name);
@@ -1229,8 +1233,6 @@ public final class CompModule extends Browsable implements Module {
                             break;
                         }
                     }
-
-
                     if(x==null){
                         Set<Set<Set<Integer>>> featsets = computingFeatSets(color.keySet());
 
@@ -1273,9 +1275,14 @@ public final class CompModule extends Browsable implements Module {
                 }
             }
             if ((r & 2) != 0) {
-                Expr x = m.asserts.get(name);
-                if (x != null)
-                    ans.add(x);
+                //resolve assert
+                //colorful merge
+                ArrayList<Expr> x=m.asserts.get(name);
+                if(x!=null){
+                    for(Expr e:x)
+                        if(checkColor(color.keySet(),e.color.keySet()))
+                            ans.add(e);
+                }
             }
             if ((r & 4) != 0) {
                 ArrayList<Func> x = m.funcs.get(name);
@@ -1344,9 +1351,11 @@ public final class CompModule extends Browsable implements Module {
                     }
                 }
                 if ((r & 2) != 0) {
-                    Expr x = u.asserts.get(name);
+                    ArrayList<Expr> x=u.asserts.get(name);
                     if (x != null)
-                        ans.add(x);
+                        for(Expr e: x)
+                            if(checkColor(color.keySet(),e.color.keySet()))
+                                ans.add(e);
                 }
                 if ((r & 4) != 0) {
                     ArrayList<Func> x = u.funcs.get(name);
@@ -2069,11 +2078,24 @@ public final class CompModule extends Browsable implements Module {
         if (name == null || name.length() == 0)
             name = "assert$" + (1 + asserts.size());
         dup(pos, name, false);
-        Expr old = asserts.put(name, ExprUnary.Op.NOOP.make(value.span().merge(pos), value));
-        if (old != null) {
-            asserts.put(name, old);
-            throw new ErrorSyntax(pos, "\"" + name + "\" is already the name of an assertion in this module.");
-        }
+        //colorful merge
+         if(asserts.get(name)!=null){
+             for(Expr e: asserts.get(name)){
+                 if(e.color.keySet().equals(value.color.keySet()))
+                     throw new ErrorSyntax(pos, "\"" + name + "\" is already the name of an assertion in this module.");
+             }
+             asserts.get(name).add(ExprUnary.Op.NOOP.make(value.span().merge(pos), value,value.color));
+         }else{
+             ArrayList<Expr> e=new ArrayList<>();
+             e.add(ExprUnary.Op.NOOP.make(value.span().merge(pos), value,value.color));
+             asserts.put(name,e);
+         }
+
+       // Expr old = asserts.put(name, ExprUnary.Op.NOOP.make(value.span().merge(pos), value));
+       // if (old != null) {
+       //     asserts.put(name, old);
+      //      throw new ErrorSyntax(pos, "\"" + name + "\" is already the name of an assertion in this module.");
+      //  }
         return name;
     }
 
@@ -2081,19 +2103,22 @@ public final class CompModule extends Browsable implements Module {
      * Each assertion name now points to a typechecked Expr rather than an
      * untypechecked Exp.
      */
+    //to support multiple asserts with the same name, change asert to <name,Arraylist<Expr>>
     private JoinableList<Err> resolveAssertions(A4Reporter rep, JoinableList<Err> errors, List<ErrorWarning> warns) throws Err {
         Context cx = new Context(this, warns);
-        for (Map.Entry<String,Expr> e : asserts.entrySet()) {
-            Expr expr = e.getValue();
-            Context.contextFeats.clear();//colorful Alloy
-            Context.contextFeats.addAll(expr.color.keySet());//colorful Alloy
-            CompModule.feats.addAll(expr.color.keySet()); //colorful Alloy
-            expr = cx.check(expr).resolve_as_formula(warns);
-            if (expr.errors.isEmpty()) {
-                e.setValue(expr);
-                rep.typecheck("Assertion " + e.getKey() + ": " + expr.type() + "\n");
-            } else
-                errors = errors.make(expr.errors);
+        for (Map.Entry<String,ArrayList<Expr>> en : asserts.entrySet()) { //colorful merge
+            for(int i=0;i< en.getValue().size();i++){
+                Expr expr = en.getValue().get(i);
+                Context.contextFeats.clear();//colorful Alloy
+                Context.contextFeats.addAll(expr.color.keySet());//colorful Alloy
+                CompModule.feats.addAll(expr.color.keySet()); //colorful Alloy
+                expr = cx.check(expr).resolve_as_formula(warns);
+                if (expr.errors.isEmpty()) {
+                    en.getValue().set(i,expr);
+                    rep.typecheck("Assertion " + en.getKey() + ": " + expr.type() + "\n");
+                } else
+                    errors = errors.make(expr.errors);
+            }
         }
         return errors;
     }
@@ -2104,8 +2129,9 @@ public final class CompModule extends Browsable implements Module {
     @Override
     public ConstList<Pair<String,Expr>> getAllAssertions() {
         TempList<Pair<String,Expr>> ans = new TempList<Pair<String,Expr>>(asserts.size());
-        for (Map.Entry<String,Expr> e : asserts.entrySet()) {
-            ans.add(new Pair<String,Expr>(e.getKey(), e.getValue()));
+        for (Map.Entry<String,ArrayList<Expr>> e : asserts.entrySet()) {
+            for(Expr expr:e.getValue())
+            ans.add(new Pair<String,Expr>(e.getKey(), expr));
         }
         return ans.makeConst();
     }
@@ -2128,6 +2154,7 @@ public final class CompModule extends Browsable implements Module {
         for (int i = 0; i < facts.size(); i++) {
             String name = facts.get(i).a;
             Expr expr = facts.get(i).b;
+            expr.color.putAll( ((ExprUnary) expr).sub.color); //colorful merge
             Context.contextFeats.clear(); //colorful Alloy
             Context.contextFeats.addAll(expr.color.keySet());//colorful Alloy
            // Context.contextFeats.addAll(((ExprUnary) expr).sub.color.keySet());//colorful Alloy
@@ -2297,9 +2324,16 @@ public final class CompModule extends Browsable implements Module {
         Expr e;
         Clause declaringClause = null;
         if (cmd.check) {
+            List<Object> m;
             //colorful merge
-            List<Object> m = getRawQS(2, cname,cmd.color); // We prefer assertion in the
-                                                // topmost module
+            if(cmd.feats!=null){
+                Map map=new HashMap();
+                for(Integer i:cmd.feats.feats)
+                    map.put(i,cmd.feats.pos);
+                m = getRawQS(2, cname,map); // We prefer assertion in the topmost module
+            }else
+                m = getRawQS(2, cname,cmd.color);
+
             if (m.size() == 0 && cname.indexOf('/') < 0)
                 m = getRawNQS(this, 2, cname,cmd.color);//colorful merge
             if (m.size() > 1)
@@ -2812,20 +2846,20 @@ public final class CompModule extends Browsable implements Module {
 
                     if(mf.containsKey(name)){
                         ArrayList<Field> resultField= new ArrayList() ;
-                        //查找feature 相同的
-
+                        //find a field that with exactly the same features.
                         for(Field ftem: mf.get(name)){
                             if(ftem.isMeta == null && (m == this || ftem.isPrivate == null) && checkColor(color.keySet(),ftem.color.keySet()) ){
                                //boolean match= checkColor(color.keySet(),ftem.color.keySet());
                                 resultField.add(ftem);
                             }
                         }
+
                         if(resultField.isEmpty()){
-                            //查找FM 推出的
-                            //查找 + - feature的
-                            //所有可能的set组合
+                            //find a set of fields that satisify the features
+                            // (e.g. find ➀r➀ , but we have ➀➁➌r➌➁, ➀➁➂r➂➁➀, ➀➋➌r➌➋➀, ➀➋➂r➂➋➀
+                            // the result will be:
+                            //➀➁➌r➌➁➀+ ➀➁➂r➂➁➀ +➀➋➌r➌➋➀ + ➀➋➂r➂➋➀)
                             Set<Set<Set<Integer>>> featsets = computingFeatSets(color.keySet());
-                            //找到对应的Field
                             for(Set<Set<Integer>> fcolset:featsets){
                                 if(mf.get(name).size()>=fcolset.size()){
                                     for(Set<Integer>col: fcolset){
@@ -2847,28 +2881,28 @@ public final class CompModule extends Browsable implements Module {
                             Expr x = null;
                             if (rootsig == null) {
                                 if(resultField.size()==1){
-                                    x = ExprUnary.Op.NOOP.make(pos, resultField.get(0), null, 0);
+                                    x = ExprUnary.Op.NOOP.make(pos, resultField.get(0), null, 0,color);
                                 }else{
                                     for (Field f: resultField){
                                         if(x==null)
-                                            x = ExprUnary.Op.NOOP.make(pos, f, null, 0);
+                                            x = ExprUnary.Op.NOOP.make(pos, f, null, 0,color);
                                         else{
-                                            Expr e = ExprUnary.Op.NOOP.make(pos, f, null, 0);
-                                            x=ExprBinary.Op.PLUS.make(pos,null,x,e);
+                                            Expr e = ExprUnary.Op.NOOP.make(pos, f, null, 0,color);
+                                            x=ExprBinary.Op.PLUS.make(pos,null,x,e,color);
                                         }
                                     }
                                 }
 
                             } else if (rootsig.isSameOrDescendentOf(resultField.get(0).sig)) {
                                 if(resultField.size()==1){
-                                    x = ExprUnary.Op.NOOP.make(pos, resultField.get(0), null, 0);
+                                    x = ExprUnary.Op.NOOP.make(pos, resultField.get(0), null, 0,color);
                                 } else{
                                     for (Field f: resultField){
                                         if(x==null)
-                                            x = ExprUnary.Op.NOOP.make(pos, f, null, 0);
+                                            x = ExprUnary.Op.NOOP.make(pos, f, null, 0,color);
                                         else{
-                                            Expr e = ExprUnary.Op.NOOP.make(pos, f, null, 0);
-                                            x=ExprBinary.Op.PLUS.make(pos,null,x,e);
+                                            Expr e = ExprUnary.Op.NOOP.make(pos, f, null, 0,color);
+                                            x=ExprBinary.Op.PLUS.make(pos,null,x,e,color);
                                         }
                                     }
                                 }
@@ -2876,14 +2910,14 @@ public final class CompModule extends Browsable implements Module {
                                     x = THIS.join(x);
                             } else if (rootfield == null || rootfield.expr.mult() == ExprUnary.Op.EXACTLYOF) {
                                 if(resultField.size()==1){
-                                    x = ExprUnary.Op.NOOP.make(pos, resultField.get(0), null, 1);
+                                    x = ExprUnary.Op.NOOP.make(pos, resultField.get(0), null, 1,color);
                                 } else{
                                     for (Field f: resultField){
                                         if(x==null)
-                                            x = ExprUnary.Op.NOOP.make(pos, f, null, 1);
+                                            x = ExprUnary.Op.NOOP.make(pos, f, null, 1,color);
                                         else{
-                                            Expr e = ExprUnary.Op.NOOP.make(pos, f, null, 1);
-                                            x=ExprBinary.Op.PLUS.make(pos,null,x,e);
+                                            Expr e = ExprUnary.Op.NOOP.make(pos, f, null, 1,color);
+                                            x=ExprBinary.Op.PLUS.make(pos,null,x,e,color);
                                         }
                                     }
                                 }
@@ -2895,14 +2929,14 @@ public final class CompModule extends Browsable implements Module {
                         } else if (rootfield == null || rootsig.isSameOrDescendentOf(resultField.get(0).sig)) {
                                 Expr x0=null;
                                 if(resultField.size()==1){
-                                     x0 = ExprUnary.Op.NOOP.make(pos, resultField.get(0), null, 0);
+                                     x0 = ExprUnary.Op.NOOP.make(pos, resultField.get(0), null, 0,color);
                                 } else{
                                     for (Field f: resultField){
                                         if(x0==null)
-                                            x0 = ExprUnary.Op.NOOP.make(pos, f, null, 0);
+                                            x0 = ExprUnary.Op.NOOP.make(pos, f, null, 0,color);
                                         else{
-                                            Expr e = ExprUnary.Op.NOOP.make(pos, f, null, 0);
-                                            x0=ExprBinary.Op.PLUS.make(pos,null,x0,e);
+                                            Expr e = ExprUnary.Op.NOOP.make(pos, f, null, 0,color);
+                                            x0=ExprBinary.Op.PLUS.make(pos,null,x0,e,color);
                                         }
                                     }
                                 }
@@ -3154,7 +3188,7 @@ public final class CompModule extends Browsable implements Module {
             fact.b.accept(visitor);
         });
         asserts.values().forEach(assrt -> {
-            assrt.accept(visitor);
+            assrt.forEach(as->{as.accept(visitor);});
         });
         commands.forEach(cmd -> {
             if (cmd.nameExpr != null)

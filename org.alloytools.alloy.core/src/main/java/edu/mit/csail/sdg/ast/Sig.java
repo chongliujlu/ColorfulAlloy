@@ -224,7 +224,8 @@ public abstract class Sig extends Expr implements Clause {
     /**
      * The label for this sig; this name does not need to be unique.
      */
-    public final String          label;
+    //colorful merge, remove final
+    public String          label;
 
     /**
      * The declaration that quantifies over each atom in this sig.

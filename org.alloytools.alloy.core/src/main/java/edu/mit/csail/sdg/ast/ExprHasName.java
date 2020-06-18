@@ -30,7 +30,8 @@ public abstract class ExprHasName extends Expr {
      * The label associated with this object; it's used for pretty-printing and does
      * not have to be unique.
      */
-    public final String label;
+    //colorful merge, remove final
+    public String label;
 
     /** Constructs an ExprHasName object */
     // [HASLab] colorful Alloy

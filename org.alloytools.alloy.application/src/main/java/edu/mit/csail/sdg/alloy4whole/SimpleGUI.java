@@ -47,10 +47,8 @@ import static edu.mit.csail.sdg.alloy4.A4Preferences.Welcome;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menu;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menuItem;
 import static edu.mit.csail.sdg.alloy4.Pos.UNKNOWN;
-import static edu.mit.csail.sdg.ast.ExprUnary.Op.NOOP;
 import static edu.mit.csail.sdg.ast.ExprUnary.Op.SOMEOF;
 import static edu.mit.csail.sdg.ast.Sig.UNIV;
-import static java.awt.event.InputEvent.getMaskForButton;
 import static java.awt.event.KeyEvent.VK_A;
 import static java.awt.event.KeyEvent.VK_ALT;
 import static java.awt.event.KeyEvent.VK_E;
@@ -80,9 +78,7 @@ import javax.swing.text.html.HTMLDocument;
 import edu.mit.csail.sdg.alloy4.*;
 import edu.mit.csail.sdg.ast.*;
 import edu.mit.csail.sdg.parser.CompModule;
-import edu.mit.csail.sdg.printExpr.*;
 import edu.mit.csail.sdg.translator.*;
-import kodkod.engine.bool.Int;
 import org.alloytools.alloy.core.AlloyCore;
 
 //import com.apple.eawt.Application;
@@ -236,6 +232,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
     private  Map<String,Map<Map<Integer,Pos>,Sig>>       sigs               = null;
     //colorful merge
     private Set<Set>        incompatibleFeats;
+    private Set<Integer> incompatiblefeatures =new HashSet<>();
+    private List<Set> compatibleFeatureSets=new ArrayList();
 
     /** The latest executed command. */
     private int                   latestCommand          = 0;
@@ -996,13 +994,15 @@ public final class SimpleGUI implements ComponentListener, Listener {
         SafeList<Pair<String, Expr>> facts=null;
         //存储冗余feature对，old2new redundant
         Map<Set<Integer>,Set<Integer>> redundantOld2new=new HashMap<>();
-        JMenu mergeSigs,mergeField,remMultiplicity,remAbstract,remIncompatibleSigs,remRedundantFeat;
-         mergeSigs=new JMenu("Merge Sigs");
-         mergeField=new JMenu("Merge Field");
-         remMultiplicity=new JMenu("Remove Multiplicity");
-         remAbstract=new JMenu("Remove Abstract");
+        JMenu mergeSigs,mergeField,remMultiplicity,remAbstract,remIncompatibleSigs,remRedundantFeat,addRedundantFeats;
+        mergeSigs=new JMenu("Merge Sigs");
+        mergeField=new JMenu("Merge Fields");
+        remMultiplicity=new JMenu("Remove Multiplicity");
+        remAbstract=new JMenu("Remove Abstract");
+
         remIncompatibleSigs=new JMenu("Remove Redundant Sigs");
         remRedundantFeat=new JMenu("Remove Redundant Features");
+        addRedundantFeats=new JMenu("Add Redundant Features");
         //存储所有的sig
         SafeList<Sig> sigSafeList=new SafeList<>();
         Map<Sig, ArrayList<Sig>> sigList=new HashMap();
@@ -1093,20 +1093,37 @@ public final class SimpleGUI implements ComponentListener, Listener {
                                         for(Expr e: ((ExprList) body).args){
                                             if (e.toString().equals("some none")){
                                                 Map<Integer,Pos> col=e.color;
-                                                if(col!=null)
-                                                    incompatibleFeats.addAll(getIncompatible(col,featSet,redundantOld2new));
+                                                if(col!=null) {
+                                                    incompatiblefeatures.addAll(col.keySet());
+                                                    for(Integer i:col.keySet()){
+                                                        Set set=new HashSet();
+                                                        for(Integer j:col.keySet())
+                                                            set.add(j==i?i:-i);
+                                                        compatibleFeatureSets.add(set);
+                                                    }
+                                                    incompatibleFeats.addAll(getIncompatible(col, featSet, redundantOld2new));
+                                                }
 
                                             }
                                         }
                                     }
                                     else if(body instanceof ExprUnary && body.toString().equals("some none")){
                                         Map<Integer,Pos> col=body.color;
-                                        if(col!=null)
-                                            incompatibleFeats.addAll(getIncompatible(col,featSet,redundantOld2new));
+                                        if(col!=null){
+                                            incompatiblefeatures.addAll(col.keySet());
+                                            for(Integer i:col.keySet()){
+                                                Set set=new HashSet();
+                                                for(Integer j:col.keySet())
+                                                    set.add(j==i?i:-i);
+                                                compatibleFeatureSets.add(set);
+                                            }
+                                            incompatibleFeats.addAll(getIncompatible(col,featSet,redundantOld2new));}
                                     }
                                 }
                             }
                         }
+
+
 
                     for(Sig s:sigSafeList){
                         if(s.isLone!=null){
@@ -1140,13 +1157,16 @@ public final class SimpleGUI implements ComponentListener, Listener {
                         }
 
                         //计算 不兼容的sigs
-                        Set<Integer> sig_colore=new HashSet();
-                        for(Integer i: s.color.keySet())
-                            sig_colore.add(i>0? i: -i);
-
-                        if(incompatibleFeats.contains(sig_colore)){
+                        if(s.color.keySet().containsAll(incompatiblefeatures)){
                             incompatibleSigs.add(s);
                         }
+                      //  Set<Integer> sig_colore=new HashSet();
+                      //  for(Integer i: s.color.keySet())
+                         //   sig_colore.add(i>0? i: -i);
+
+                      //  if(incompatibleFeats.contains(sig_colore)){
+                       //     incompatibleSigs.add(s);
+                       // }
 
                         for(Map.Entry<Set<Integer>, Set<Integer>> entry:redundantOld2new.entrySet()){
                             if(s.color.keySet().containsAll(entry.getKey())){
@@ -1179,8 +1199,10 @@ public final class SimpleGUI implements ComponentListener, Listener {
         mergemenu.add(mergeField);
         mergemenu.add(remMultiplicity);
         mergemenu.add(remAbstract);
+
         mergemenu.add(remIncompatibleSigs);
         mergemenu.add(remRedundantFeat);
+        mergemenu.add(addRedundantFeats);
 
 
         //根据sigList生成菜单，
@@ -1302,6 +1324,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
             });
             remMultiplicity.add(y);
         }
+
+        mergemenu.remove(addRedundantFeats);
 
         if(abstractSig.isEmpty())
             mergemenu.remove(remAbstract);
@@ -1462,7 +1486,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
             powerSet.add(s);
             //powerSet.add(new HashSet(){{add(i);}});
         }
-
     }
 //colorful merge
     /**

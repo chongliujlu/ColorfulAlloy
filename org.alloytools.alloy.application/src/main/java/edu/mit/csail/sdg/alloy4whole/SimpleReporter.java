@@ -22,12 +22,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import edu.mit.csail.sdg.alloy4.*;
 import edu.mit.csail.sdg.ast.*;
@@ -52,6 +47,7 @@ import static edu.mit.csail.sdg.ast.Sig.UNIV;
 
 final class SimpleReporter extends A4Reporter {
     public static final class SimpleCallback1 implements WorkerCallback {
+
 
         private final SimpleGUI         gui;
         private final VizGUI            viz;
@@ -885,6 +881,15 @@ final class SimpleReporter extends A4Reporter {
 
             if(cmd!=null)
                 addAuxiliarySignatures(allFeats,print);
+            for(Map.Entry<String, Map<Map<Integer, Pos>, Sig>> sig_map:((CompModule) world).sigs.entrySet()){
+                if(sig_map.getValue().size()>1){
+                    int i=0;
+                    for(Map.Entry<Map<Integer, Pos>, Sig> sig_old:sig_map.getValue().entrySet()){
+                        sig_old.getValue().label=sig_old.getValue().label+"_"+i+"_";
+                        i++;
+                    }
+                }
+            }
 
             printAmalgamatedSigs(print,world,printExprs,printAmalgamatedExpr);
 
@@ -1138,7 +1143,6 @@ final class SimpleReporter extends A4Reporter {
          * @param printAmalgamatedExpr visitor, used to print the amalgamated expression
          */
         private void printAmalgamatedfact(StringBuilder print, Module world, AmalgamatedExprPrinterVisitor printAmalgamatedExpr){
-
             for (Pair<String, Expr> f: world.getAllFacts()){
                 print.append("\r\nfact ");
                 print.append(f.a.startsWith("fact$")? "{\r\n" : f.a+ "{\r\n");
@@ -1216,6 +1220,17 @@ final class SimpleReporter extends A4Reporter {
 
                 //print fields
                 print.append("{");
+                //如果存在同名field,改名
+                ArrayList<String> field_names=new ArrayList<>();
+                int j=1;
+                for (Decl f:s.getFieldDecls()){
+                    if(field_names.contains( f.names.toString())){
+                        for(ExprHasName exp:f.names)
+                            exp.label=exp.label+"_"+j+"_";
+                        j++;
+                    }
+                    field_names.add( f.names.toString());
+                }
 
                 for (Decl f:s.getFieldDecls()){
                     print.append(f.disjoint!=null? "\r\n        disj ": "\r\n        ");
@@ -1346,7 +1361,9 @@ final class SimpleReporter extends A4Reporter {
             ExprPrinterVisitor printUnionModule=new ExprPrinterVisitor();
             Set<Integer> NFeatures=new HashSet<>();
             Set<Integer> PFeatures=new HashSet<>();
-            for(Integer i: f.color.keySet()){
+            Set<Integer> feats_field=new HashSet<>(f.color.keySet());
+            feats_field.removeAll(f.sig.color.keySet());
+            for(Integer i: feats_field){
                 if(i<0)
                     NFeatures.add(-i);
                 else PFeatures.add(i);
@@ -1357,10 +1374,10 @@ final class SimpleReporter extends A4Reporter {
 
                 // F in P implies
                 addFeatureprefix(NFeatures,print,"in","or");
-                print.append( " no " + f.label);
+                print.append( " no " + f.sig.label.substring(5) +"<: "+f.label);
                 print.append(" else ");
 
-                print.append(f.label+" in " +f.sig.label.substring(5) +" ->");
+                print.append(f.sig.label.substring(5) +"<: "+f.label+" in " +f.sig.label.substring(5) +" ->");
                 print.append(f.decl().expr.accept(printUnionModule));
 
                 print.append("\r\n\r\n        }");
@@ -1373,10 +1390,10 @@ final class SimpleReporter extends A4Reporter {
                 //F in P implies
                 addFeatureprefix(PFeatures,print,"in","and");
 
-                print.append( f.label +" in "+ f.sig.label.substring(5)+" ->" );
+                print.append( f.sig.label.substring(5) +"<: "+f.label +" in "+ f.sig.label.substring(5)+" ->" );
                 print.append(f.decl().expr.accept(printUnionModule));
 
-                print.append( " else no " + f.label);
+                print.append( " else no " + f.sig.label.substring(5) +"<: "+f.label);
                 print.append("\r\n        }");
             }
 
