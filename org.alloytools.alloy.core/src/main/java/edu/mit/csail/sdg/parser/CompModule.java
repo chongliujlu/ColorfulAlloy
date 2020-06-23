@@ -348,7 +348,7 @@ public final class CompModule extends Browsable implements Module {
             if (match != null) {
                 if (match instanceof Macro)
                     return ((Macro) match).changePos(pos);
-                match = ExprUnary.Op.NOOP.make(pos, match);
+                match = ExprUnary.Op.NOOP.make(pos, match,color); //colorful merge
                 return ExprChoice.make(isIntsNotUsed, pos, asList(match), asList(name));
             }
             Expr th = env.get("this");
@@ -434,20 +434,18 @@ public final class CompModule extends Browsable implements Module {
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprList x) throws Err {
-            //colorful merge
-            for(Expr e: x.args)
-                e.color.putAll(x.color);
-
-            contextFeats.addAll(x.color.keySet());
-            TempList<Expr> temp = new TempList<Expr>(x.args.size());
+            for(Expr e: x.args)//colorful Alloy
+                e.color.putAll(x.color);//colorful Alloy
+            contextFeats.addAll(x.color.keySet());//colorful Alloy
+            TempList<Expr> temp = new TempList<Expr>(x.args.size());//colorful Alloy
             Set<Integer> tempfeats=new HashSet<>(); //colorful Alloy
             tempfeats.addAll(contextFeats);//colorful Alloy
 
-            for (int i = 0; i < x.args.size(); i++){
-                temp.add(visitThis(x.args.get(i)));
+            for (int i = 0; i < x.args.size(); i++){//colorful Alloy
+                temp.add(visitThis(x.args.get(i)));//colorful Alloy
                 contextFeats.clear();     //colorful Alloy
                 contextFeats.addAll(tempfeats);//colorful Alloy
-            }
+                }
 
             CompModule.feats.addAll(x.color.keySet()); //colorful Alloy
             return ExprList.make(x.pos, x.closingBracket, x.op, temp.makeConst(), x.color); // [HASLab] colorful Alloy
@@ -456,34 +454,23 @@ public final class CompModule extends Browsable implements Module {
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprITE x) throws Err {
-            //colorful merge
-            x.cond.color.putAll(x.color);
-            x.left.color.putAll(x.color);
-            x.right.color.putAll(x.color);
-
+            x.cond.color.putAll(x.color);//colorful Alloy
+            x.left.color.putAll(x.color);//colorful Alloy
+            x.right.color.putAll(x.color);//colorful Alloy
             contextFeats.addAll(x.color.keySet());//colorful Alloy
-        //---------------- colorful Alloy----------
-            Expr f,a,b;
-            if(x.color.isEmpty()){ //colorful Alloy
-                 f = visitThis(x.cond);
-                 a = visitThis(x.left);
-                 b = visitThis(x.right);
-            }
-            else {
-                Set<Integer> temp=new HashSet<>(); //colorful Alloy
-                temp.addAll(contextFeats);//colorful Alloy
-                    contextFeats.addAll(x.color.keySet());//colorful Alloy
-                 f = visitThis(x.cond);
 
-                contextFeats.clear();     //colorful Alloy
-                contextFeats.addAll(temp);//colorful Alloy
-                 a = visitThis(x.left);
+            Set<Integer> temp=new HashSet<>(); //colorful Alloy
+            temp.addAll(contextFeats);//colorful Alloy
+            Expr f = visitThis(x.cond);
 
-                contextFeats.clear();     //colorful Alloy
-                contextFeats.addAll(temp);//colorful Alloy
-                b = visitThis(x.right);
-            }
-        //---------------- colorful Alloy----------
+            contextFeats.clear();     //colorful Alloy
+            contextFeats.addAll(temp);//colorful Alloy
+            Expr a = visitThis(x.left);
+
+            contextFeats.clear();     //colorful Alloy
+            contextFeats.addAll(temp);//colorful Alloy
+            Expr b = visitThis(x.right);
+
             CompModule.feats.addAll(x.color.keySet()); //colorful Alloy
             return ExprITE.make(x.pos, f, a, b, x.color); // [HASLab] colorful Alloy
         }
@@ -491,30 +478,16 @@ public final class CompModule extends Browsable implements Module {
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprBadJoin x) throws Err {
-            //colorful merge
-            x.left.color.putAll(x.color);
-            x.right.color.putAll(x.color);
-
-            //---------------- colorful Alloy----------
-            Expr left,right;
-            if(x.color.isEmpty()){ //colorful Alloy
-                left = visitThis(x.left);
-                right = visitThis(x.right);
-            }
-            else {
-                contextFeats.addAll(x.color.keySet());//colorful Alloy
-                CompModule.feats.addAll(x.color.keySet()); //colorful Alloy
-                Set<Integer> temp=new HashSet<>(); //colorful Alloy
-                temp.addAll(contextFeats);//colorful Alloy
-
-                left = visitThis(x.left);
-
-                contextFeats.clear();     //colorful Alloy
-                contextFeats.addAll(temp);//colorful Alloy
-                right = visitThis(x.right);
-            }
-            //---------------- colorful Alloy----------
-
+            Set<Integer> temp=new HashSet<>(); //colorful Alloy used to store the features in current context
+            x.left.color.putAll(x.color);//colorful Alloy
+            x.right.color.putAll(x.color);//colorful Alloy
+            contextFeats.addAll(x.color.keySet());//colorful Alloy
+            CompModule.feats.addAll(x.color.keySet());//colorful Alloy
+            temp.addAll(contextFeats);//colorful Alloy
+            Expr  left = visitThis(x.left);
+            contextFeats.clear();//colorful Alloy
+            contextFeats.addAll(temp);//colorful Alloy
+            Expr  right = visitThis(x.right);
 
             // If it's a macro invocation, instantiate it
             if (right instanceof Macro)
@@ -532,33 +505,23 @@ public final class CompModule extends Browsable implements Module {
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprBinary x) throws Err {
-            //colorful merge
-            x.left.color.putAll(x.color);
-            x.right.color.putAll(x.color) ;
+            x.left.color.putAll(x.color);//colorful Alloy
+            x.right.color.putAll(x.color);//colorful Alloy
 
-            //---------------- colorful Alloy----------
-            if(!x.op.equals(ExprBinary.Op.PLUS)&& !x.op.equals(ExprBinary.Op.INTERSECT))
+            if(!x.op.equals(ExprBinary.Op.PLUS)&& !x.op.equals(ExprBinary.Op.INTERSECT)) //colorful Alloy
                 if(!(x.left.color.keySet().containsAll(x.right.color.keySet())&&x.right.color.keySet().containsAll(x.left.color.keySet())))
                     throw new ErrorColor(x.pos,"Can not paint part of Binary operator  except \" +\" and \"&\" ");
             //sub must makred with all the positive features in parent
 
-            Expr left,right;
-            if(x.color.isEmpty()){ //colorful Alloy
-                 left = visitThis(x.left);
-                 right = visitThis(x.right);
-            }
-            else {
-                contextFeats.addAll(x.color.keySet());//colorful Alloy
+            contextFeats.addAll(x.color.keySet());//colorful Alloy
+            Set<Integer> temp=new HashSet<>(); //colorful Alloy
+            temp.addAll(contextFeats);//colorful Alloy
+            Expr left = visitThis(x.left);
 
-                Set<Integer> temp=new HashSet<>(); //colorful Alloy
-                temp.addAll(contextFeats);//colorful Alloy
-                left = visitThis(x.left);
+            contextFeats.clear();     //colorful Alloy
+            contextFeats.addAll(temp);//colorful Alloy
+            Expr right = visitThis(x.right);
 
-                contextFeats.clear();     //colorful Alloy
-                contextFeats.addAll(temp);//colorful Alloy
-                right = visitThis(x.right);
-            }
-            //---------------- colorful Alloy----------
             if (x.op == ExprBinary.Op.JOIN) {
                 // If it's a macro invocation, instantiate it
                 if (right instanceof Macro)
@@ -579,10 +542,9 @@ public final class CompModule extends Browsable implements Module {
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprLet x) throws Err {
-            //colorful merge
-            x.expr.color.putAll(x.color);
-            x.sub.color.putAll(x.color);
-            x.var.color.putAll(x.color);
+            x.expr.color.putAll(x.color);//colorful Alloy
+            x.sub.color.putAll(x.color);//colorful Alloy
+            x.var.color.putAll(x.color);//colorful Alloy
             contextFeats.addAll(x.color.keySet());//colorful Alloy
 
             Expr right = visitThis(x.expr);
@@ -606,9 +568,8 @@ public final class CompModule extends Browsable implements Module {
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprQt x) throws Err {
-            //colorful merge
-            x.sub.color.putAll(x.color);
-            for(Decl de: x.decls)
+            x.sub.color.putAll(x.color);//colorful Alloy
+            for(Decl de: x.decls)//colorful Alloy
                 de.color.putAll(x.color);
             contextFeats.addAll(x.color.keySet());//colorful Alloy
 
@@ -703,9 +664,7 @@ public final class CompModule extends Browsable implements Module {
             CompModule.feats.addAll(x.color.keySet()); //colorful Alloy
             contextFeats.addAll(x.color.keySet());//colorful Alloy
 
-            //Expr obj = resolve(x.pos, x.label);
             Expr obj = resolve(x.pos, x.label,x.color); //colorful merge
-           // obj.paint(x.color); // [HASLab] colorful Alloy
             if(obj instanceof ExprUnary)
             //colorful Alloy
             if(!contextFeats.containsAll(((ExprUnary) obj).sub.color.keySet())){
@@ -746,9 +705,9 @@ public final class CompModule extends Browsable implements Module {
         @Override
         public Expr visit(ExprUnary x) throws Err {
             x.sub.color.putAll(x.color); //colorful merge
-             contextFeats.addAll(x.color.keySet());//colorful Alloy
+            contextFeats.addAll(x.color.keySet());//colorful Alloy
             CompModule.feats.addAll(x.color.keySet()); //colorful Alloy
-            return x.op.make(x.pos, visitThis(x.sub), x.color);
+            return x.op.make(x.pos, visitThis(x.sub), x.color);//colorful Alloy
         }
 
         /** {@inheritDoc} */
@@ -1258,11 +1217,11 @@ public final class CompModule extends Browsable implements Module {
                             Expr e=null;
                             for(Sig s: resultSig){
                                 if(e==null){
-                                    e=ExprUnary.Op.NOOP.make(s.pos, s, null, 0);
+                                    e=ExprUnary.Op.NOOP.make(s.pos, s, null, 0,color);
                                 }
                                 else{
-                                    Expr e2=ExprUnary.Op.NOOP.make(s.pos, s, null, 0);
-                                    e=ExprBinary.Op.PLUS.make(s.pos, null, e, e2);
+                                    Expr e2=ExprUnary.Op.NOOP.make(s.pos, s, null, 0,color);
+                                    e=ExprBinary.Op.PLUS.make(s.pos, null, e, e2,color);
                                 }
                             }
                             ans.add(e);
@@ -1361,8 +1320,13 @@ public final class CompModule extends Browsable implements Module {
                     ArrayList<Func> x = u.funcs.get(name);
                     if (x != null)
                         for (Func y : x)
-                            if (level == 0 || y.isPrivate == null)
-                                ans.add(y);
+                            if (level == 0 || y.isPrivate == null){
+                                //colorful merge
+                                if(checkColor(color.keySet(),y.color.keySet())){
+                                    ans.add(y);
+                                }
+
+                            }
                 }
                 if (ans.size() == 0)
                     return u.getRawNQS(this, r, name,color); // If nothing at this  module, then do a non-qualified search from this modulech
@@ -2070,7 +2034,11 @@ public final class CompModule extends Browsable implements Module {
             ans.addAll(e);
         return ans.dup();
     }
-
+    //colorful merge
+    @Override
+    public Map<String, ArrayList<Func>> getFunc(){
+        return funcs;
+    }
     // ============================================================================================================================//
     /** Add an ASSERT declaration. */
      String addAssertion(Pos pos, String name, Expr value) throws Err {
@@ -2134,6 +2102,11 @@ public final class CompModule extends Browsable implements Module {
             ans.add(new Pair<String,Expr>(e.getKey(), expr));
         }
         return ans.makeConst();
+    }
+    //colorful merge
+    @Override
+    public Map<String,ArrayList<Expr>> getAssertions(){
+        return asserts;
     }
 
     // ============================================================================================================================//
@@ -2352,8 +2325,13 @@ public final class CompModule extends Browsable implements Module {
             e = expr.not();
         } else {
             //colorful merge
-            List<Object> m = getRawQS(4, cname,cmd.color); // We prefer fun/pred in the
-                                                // topmost module
+            Map cfeats=new HashMap();
+
+            if(cmd.feats!=null)
+            for (Integer i:cmd.feats.feats)
+                cfeats.put(i,cmd.feats.pos);
+
+            List<Object> m = getRawQS(4, cname,cfeats); // We prefer fun/pred in the topmost module
             if (m.size() == 0 && cname.indexOf('/') < 0)
                 m = getRawNQS(this, 4, cname,cmd.color);//colorful merge
             if (m.size() > 1)
@@ -2762,16 +2740,16 @@ public final class CompModule extends Browsable implements Module {
                 //     return ExprUnary.Op.NOOP.make(pos, s);
 
                 // colorful merge
-                if(world.sigs.get(name).containsKey(color)){
-                    Sig s=world.sigs.get(name).get(color);
+                if (world.sigs.get(name).containsKey(color)) {
+                    Sig s = world.sigs.get(name).get(color);
                     if (s != null)
                         return ExprUnary.Op.NOOP.make(pos, s);
                 }
             }
         //colorful merge
-        final List<Object> ans = name.indexOf('/') >= 0 ? getRawQS(fun ? 5 : 1, name,color) : getRawNQS(this, fun ? 5 : 1, name,color);
+        final List<Object> ans = name.indexOf('/') >= 0 ? getRawQS(fun ? 5 : 1, name, color) : getRawNQS(this, fun ? 5 : 1, name, color);
         //colorful merge
-        final Sig param =params.get(name)==null? null: params.get(name).get(color);
+        final Sig param = params.get(name) == null ? null : params.get(name).get(color);
         if (param != null && !ans.contains(param))
             ans.add(param);
         for (Object x : ans) {
@@ -2780,13 +2758,14 @@ public final class CompModule extends Browsable implements Module {
                 ch.add(ExprUnary.Op.NOOP.make(pos, y, null, 0));
                 re.add("sig " + y.label);
                 //colorful merge
-            } else if(x instanceof ExprBinary){
-                ch.add((Expr)x);
-                re.add("sig "+x.toString() );
+            } else if (x instanceof ExprBinary) {
+                ch.add((Expr) x);
+                re.add("sig " + x.toString());
 
-            }else if (x instanceof Func) {
+            } else if (x instanceof Func) {
                 Func f = (Func) x;
-                if(!Context.contextFeats.containsAll(f.color.keySet())) throw new ErrorSyntax(pos,"features are not compatible. \r\n"+(f.isPred? "pred \"":"func \"")+f.label.substring(5)+"\":"+f.color+"\r\n Expression "+Context.contextFeats); //colorful Alloy
+                if (!Context.contextFeats.containsAll(f.color.keySet()))
+                    throw new ErrorSyntax(pos, "features are not compatible. \r\n" + (f.isPred ? "pred \"" : "func \"") + f.label.substring(5) + "\":" + f.color + "\r\n Expression " + Context.contextFeats); //colorful Alloy
                 int fn = f.count();
                 int penalty = 0;
                 if (resolution == 1 && fn > 0 && rootsig != null && THIS != null && THIS.type().hasArity(1) && f.get(0).type().intersects(THIS.type())) {
@@ -2796,8 +2775,8 @@ public final class CompModule extends Browsable implements Module {
                     // fun/pred call
                     ConstList<Expr> t = Util.asList(THIS);
                     ch.add(fn == 1 ? ExprCall.make(pos, null, f, t, 1 + penalty) : ExprBadCall.make(pos, null, f, t, 1 + penalty)); // penalty
-                                                                                                                                   // of
-                                                                                                                                   // 1
+                    // of
+                    // 1
                     re.add((f.isPred ? "pred this." : "fun this.") + f.label);
                 }
                 if (resolution == 1) {
@@ -2830,130 +2809,134 @@ public final class CompModule extends Browsable implements Module {
         // (1) Cannot call
         // (2) But can refer to anything else visible.
         // All else: we can call, and can refer to anything visible.
-        for (CompModule m : getAllNameableModules())
+        for (CompModule m : getAllNameableModules()){
             //colorful merge
-            for (Map<Map<Integer,Pos>,Sig> map: m.sigs.values())
-                for (Sig s : map.values())
-                if (m == this || s.isPrivate == null){
-                    HashMap<String,ArrayList<Field> >mf=new HashMap();
-                    for (Field f : s.getFields()){
-                        //按名字存储，<name,<f>>
-                        if(mf.containsKey(f.label)){
-                            mf.get(f.label).add(f);
-                        }else{
-                            mf.put(f.label, new ArrayList(Util.asList(f)));
-                        }}
-
-                    if(mf.containsKey(name)){
-                        ArrayList<Field> resultField= new ArrayList() ;
-                        //find a field that with exactly the same features.
-                        for(Field ftem: mf.get(name)){
-                            if(ftem.isMeta == null && (m == this || ftem.isPrivate == null) && checkColor(color.keySet(),ftem.color.keySet()) ){
-                               //boolean match= checkColor(color.keySet(),ftem.color.keySet());
-                                resultField.add(ftem);
-                            }
-                        }
-
-                        if(resultField.isEmpty()){
-                            //find a set of fields that satisify the features
-                            // (e.g. find ➀r➀ , but we have ➀➁➌r➌➁, ➀➁➂r➂➁➀, ➀➋➌r➌➋➀, ➀➋➂r➂➋➀
-                            // the result will be:
-                            //➀➁➌r➌➁➀+ ➀➁➂r➂➁➀ +➀➋➌r➌➋➀ + ➀➋➂r➂➋➀)
-                            Set<Set<Set<Integer>>> featsets = computingFeatSets(color.keySet());
-                            for(Set<Set<Integer>> fcolset:featsets){
-                                if(mf.get(name).size()>=fcolset.size()){
-                                    for(Set<Integer>col: fcolset){
-                                        for(Field fitem: mf.get(name)){
-                                            if(fitem.color.keySet().equals(col)){
-                                                resultField.add(fitem);
-                                            }
-                                        }
-                                    }
-                                    if(resultField.size()!=fcolset.size())
-                                        resultField.clear();
-                                    else
-                                        break;
-                                }
-                            }
-                        }
-                        if(resultField.size()>0){
-                            if (resolution == 1) {
-                            Expr x = null;
-                            if (rootsig == null) {
-                                if(resultField.size()==1){
-                                    x = ExprUnary.Op.NOOP.make(pos, resultField.get(0), null, 0,color);
-                                }else{
-                                    for (Field f: resultField){
-                                        if(x==null)
-                                            x = ExprUnary.Op.NOOP.make(pos, f, null, 0,color);
-                                        else{
-                                            Expr e = ExprUnary.Op.NOOP.make(pos, f, null, 0,color);
-                                            x=ExprBinary.Op.PLUS.make(pos,null,x,e,color);
-                                        }
-                                    }
-                                }
-
-                            } else if (rootsig.isSameOrDescendentOf(resultField.get(0).sig)) {
-                                if(resultField.size()==1){
-                                    x = ExprUnary.Op.NOOP.make(pos, resultField.get(0), null, 0,color);
-                                } else{
-                                    for (Field f: resultField){
-                                        if(x==null)
-                                            x = ExprUnary.Op.NOOP.make(pos, f, null, 0,color);
-                                        else{
-                                            Expr e = ExprUnary.Op.NOOP.make(pos, f, null, 0,color);
-                                            x=ExprBinary.Op.PLUS.make(pos,null,x,e,color);
-                                        }
-                                    }
-                                }
-                                if (fullname.charAt(0) != '@')
-                                    x = THIS.join(x);
-                            } else if (rootfield == null || rootfield.expr.mult() == ExprUnary.Op.EXACTLYOF) {
-                                if(resultField.size()==1){
-                                    x = ExprUnary.Op.NOOP.make(pos, resultField.get(0), null, 1,color);
-                                } else{
-                                    for (Field f: resultField){
-                                        if(x==null)
-                                            x = ExprUnary.Op.NOOP.make(pos, f, null, 1,color);
-                                        else{
-                                            Expr e = ExprUnary.Op.NOOP.make(pos, f, null, 1,color);
-                                            x=ExprBinary.Op.PLUS.make(pos,null,x,e,color);
-                                        }
-                                    }
-                                }
-                            } // penalty of 1
-                            if (x != null) {
-                                ch.add(x);
-                                re.add("field " + resultField.get(0).sig.label + " <: " + resultField.get(0).label);
-                            }
-                        } else if (rootfield == null || rootsig.isSameOrDescendentOf(resultField.get(0).sig)) {
-                                Expr x0=null;
-                                if(resultField.size()==1){
-                                     x0 = ExprUnary.Op.NOOP.make(pos, resultField.get(0), null, 0,color);
-                                } else{
-                                    for (Field f: resultField){
-                                        if(x0==null)
-                                            x0 = ExprUnary.Op.NOOP.make(pos, f, null, 0,color);
-                                        else{
-                                            Expr e = ExprUnary.Op.NOOP.make(pos, f, null, 0,color);
-                                            x0=ExprBinary.Op.PLUS.make(pos,null,x0,e,color);
-                                        }
-                                    }
-                                }
-
-
-                            if (resolution == 2 && THIS != null && fullname.charAt(0) != '@' && resultField.get(0).type().firstColumnOverlaps(THIS.type())) {
-                                ch.add(THIS.join(x0));
-                                re.add("field " + resultField.get(0).sig.label + " <: this." + resultField.get(0).label);
-                                if (rootsig != null)
-                                    continue;
-                            }
-                            ch.add(x0);
-                            re.add("field " + resultField.get(0).sig.label + " <: " + resultField.get(0).label);
-                        }
+            HashMap<String, ArrayList<Field>> fieldCandidate = new HashMap();
+            for (Map<Map<Integer, Pos>, Sig> map : m.sigs.values()) {
+                for (Sig s : map.values()) {
+                    if (m == this || s.isPrivate == null) {
+                        for (Field f : s.getFields()) {
+                            if (fieldCandidate.containsKey(f.label)) {
+                                fieldCandidate.get(f.label).add(f);
+                            } else
+                                fieldCandidate.put(f.label, new ArrayList(Util.asList(f)));
                         }
                     }
                 }
+            }
+            if (fieldCandidate.containsKey(name)) {
+                ArrayList<Field> fieldFinal = new ArrayList();
+
+                //find a field that with exactly the same features.
+                for (Field field: fieldCandidate.get(name)) {
+                    if (field.isMeta == null && (m == this || field.isPrivate == null) && checkColor(color.keySet(), field.color.keySet())) {
+                        fieldFinal.add(field);
+                    }
+                }
+
+                //colorful merge
+                if (fieldFinal.isEmpty()) {
+                    //find a set of fields that satisify the features
+                    // (e.g. find ➀r➀ , but we have ➀➁➌r➌➁, ➀➁➂r➂➁➀, ➀➋➌r➌➋➀, ➀➋➂r➂➋➀
+                    // the result will be:
+                    //➀➁➌r➌➁➀+ ➀➁➂r➂➁➀ +➀➋➌r➌➋➀ + ➀➋➂r➂➋➀)
+                    Set<Set<Set<Integer>>> featsets = computingFeatSets(color.keySet());
+                    for (Set<Set<Integer>> fcolset : featsets) {
+                        if (fieldCandidate.get(name).size() >= fcolset.size()) {
+                            for (Set<Integer> col : fcolset) {
+                                for (Field fitem : fieldCandidate.get(name))
+                                    if (fitem.color.keySet().equals(col))
+                                        fieldFinal.add(fitem);
+                            }
+
+                            if (fieldFinal.size() != fcolset.size())
+                                fieldFinal.clear();
+                            else
+                                break;
+                        }
+                    }
+                }
+
+                if (fieldFinal.size() > 0) {
+                    if (resolution == 1) {
+                        Expr x = null;
+                        if (rootsig == null) {
+                            if (fieldFinal.size() == 1) {
+                                x = ExprUnary.Op.NOOP.make(pos, fieldFinal.get(0), null, 0, color);
+                            }else {
+                                for (Field f : fieldFinal) {
+                                    if (x == null)
+                                        x = ExprUnary.Op.NOOP.make(pos, f, null, 0, color);
+                                    else {
+                                        Expr e = ExprUnary.Op.NOOP.make(pos, f, null, 0, color);
+                                        x = ExprBinary.Op.PLUS.make(pos, null, x, e, color);
+                                        }
+                                    }
+                                }
+
+                        }else if (rootsig.isSameOrDescendentOf(fieldFinal.get(0).sig)) {
+                            if (fieldFinal.size() == 1) {
+                                x = ExprUnary.Op.NOOP.make(pos, fieldFinal.get(0), null, 0, color);
+                            } else {
+                                for (Field f : fieldFinal) {
+                                    if (x == null)
+                                        x = ExprUnary.Op.NOOP.make(pos, f, null, 0, color);
+                                    else {
+                                        Expr e = ExprUnary.Op.NOOP.make(pos, f, null, 0, color);
+                                        x = ExprBinary.Op.PLUS.make(pos, null, x, e, color);
+                                    }
+                                }
+                            }
+                            if (fullname.charAt(0) != '@')
+                                x = THIS.join(x);
+                        }else if (rootfield == null || rootfield.expr.mult() == ExprUnary.Op.EXACTLYOF) {
+                            if (fieldFinal.size() == 1) {
+                                x = ExprUnary.Op.NOOP.make(pos, fieldFinal.get(0), null, 1, color);
+                            } else {
+                                for (Field f : fieldFinal) {
+                                    if (x == null)
+                                        x = ExprUnary.Op.NOOP.make(pos, f, null, 1, color);
+                                    else {
+                                        Expr e = ExprUnary.Op.NOOP.make(pos, f, null, 1, color);
+                                        x = ExprBinary.Op.PLUS.make(pos, null, x, e, color);
+                                    }
+                                }
+                            }
+                        } // penalty of 1
+                        if (x != null) {
+                            ch.add(x);
+                            re.add("field " + fieldFinal.get(0).sig.label + " <: " + fieldFinal.get(0).label);
+                        }
+                    } else if (rootfield == null || rootsig.isSameOrDescendentOf(fieldFinal.get(0).sig)) {
+                        Expr x0 = null;
+                        if (fieldFinal.size() == 1) {
+                            x0 = ExprUnary.Op.NOOP.make(pos, fieldFinal.get(0), null, 0, color);
+                        } else {
+                            for (Field f : fieldFinal) {
+                                if (x0 == null)
+                                    x0 = ExprUnary.Op.NOOP.make(pos, f, null, 0, color);
+                                else {
+                                    Expr e = ExprUnary.Op.NOOP.make(pos, f, null, 0, color);
+                                    x0 = ExprBinary.Op.PLUS.make(pos, null, x0, e, color);
+                                }
+                            }
+                        }
+
+
+                        if (resolution == 2 && THIS != null && fullname.charAt(0) != '@' && fieldFinal.get(0).type().firstColumnOverlaps(THIS.type())) {
+                            ch.add(THIS.join(x0));
+                            re.add("field " + fieldFinal.get(0).sig.label + " <: this." + fieldFinal.get(0).label);
+                            if (rootsig != null)
+                                continue;
+                        }
+                        ch.add(x0);
+                        re.add("field " + fieldFinal.get(0).sig.label + " <: " + fieldFinal.get(0).label);
+                    }
+                }
+            }
+    }
+
+
         if (metaSig() != null && (rootsig == null || rootfield == null)) {
             SafeList<PrimSig> children = null;
             try {
@@ -3034,9 +3017,9 @@ public final class CompModule extends Browsable implements Module {
      */
     private Set<Set<Set<Integer>>> computingFeatSets(Set<Integer> color) {
         Set<Set<Set<Integer>>> featsets =new HashSet();
-        Set<Integer> set=new HashSet<>();
+        HashSet<Integer> set=new HashSet<>();
 
-        //features that not refered in colorn(module marked with 1 -1 2 -3,expression 1 2, returns 2 3)
+        //features that not referred in color, but can be remove by merge(module marked with 1 -1 2 -3,expression 2, returns 1 )
         for (Integer i : CompModule.feats){
             if(!color.contains(i) && !color.contains(-i)){
                 if(CompModule.feats.contains(-i))
@@ -3067,6 +3050,7 @@ public final class CompModule extends Browsable implements Module {
             m.add(set1);
             m.add(set2);
             temp.add(m);
+            // for,example if we resolve ➀➅sig A{}➅➀, the set can be: ➁➌sig A{}➌➁, ➁➌sig A{}➌➁,➋➂sig A{}➂➋,➋➌sig A{}➌➋
             for(Set<Integer> se:permu){
                 Set<Integer> set1new=new HashSet<>(set1); set1new.addAll(se);
                 Set<Integer> set2new=new HashSet<>(set2); set2new.addAll(se);
@@ -3077,8 +3061,83 @@ public final class CompModule extends Browsable implements Module {
             }
             featsets.addAll(temp);
         }
+        return computeSubFeatSets(featsets,set);
+    }
+    //colorful merge
+    /**
+     *
+     * @param featsets (➀➁,➀➋)
+     * @param set (➂,➃)
+     * @return (➀➁,➀➋)(➀➁,➀➋➂,➀➋➌), (➀➋, ➀➁➂, ➀➁➌), (➀➁,➀➋➃,➀➋➍),(➀➋,➀➁➃,➀➁➍),
+     * (➀➁,➀➋➂➃,➀➋➌➃,➀➋➂➍,➀➋➌➍)(➀➋,➀➁➂➃,➀➁➌➃,➀➋,➀➁➂➍,➀➁➌➍)
+     */
+    private Set<Set<Set<Integer>>> computeSubFeatSets(Set<Set<Set<Integer>>> featsets, HashSet<Integer> set) {
+        Set<Set<Set<Integer>>> featSetsFinal =new LinkedHashSet(featsets);
 
-        return featsets;
+        for(Set<Set<Integer>> s : featsets){
+            Set<Integer> setClone= (Set<Integer>) set.clone();
+            //computer feature that can be added to feature sets
+            for(Set<Integer> color1:s){
+                for(Integer i:set){
+                    if(color1.contains(i)|| color1.contains(-i)){
+                        setClone.remove(i);
+                    }
+                }
+                break;
+            }
+
+            if(setClone.isEmpty())
+                continue;
+            for(Set<Integer> color1:s){
+                for(Set<Integer> color2:s){
+                    Set<Set<Integer>>  visit=new HashSet<>();
+                    visit.add(color1);
+                    if(visit.contains(color2)) continue;
+                    HashSet <Set<Set<Integer>>>  temp=new HashSet<>();
+                    visit.add(color2);
+                    for(Integer j:setClone) {
+                        //-----------------add new sets-------------------------------------------------------
+                        Set<Set<Set<Integer>>> temp2 = (Set<Set<Set<Integer>>>) temp.clone();
+                        for (Set<Set<Integer>> s2 : temp2) {
+                            Set<Set<Integer>> m3 = new HashSet<>();
+                            for (Set<Integer> in : s2) {
+                                Set e1 = new HashSet<>(in);
+                                e1.add(j);
+                                Set e2 = new HashSet<>(in);
+                                e2.add(-j);
+                                m3.add(e1);
+                                m3.add(e2);
+                            }
+                            temp.add(m3);
+                        }
+
+                        Set<Integer> set1 = new HashSet<>(color2);
+                        Set<Integer> set2 = new HashSet<>(color2);
+
+                        set1.add(j);
+                        set2.add(-j);
+                        Set<Set<Integer>> m2 = new HashSet<>();
+                        m2.add(set1);
+                        m2.add(set2);
+                        temp.add(m2);
+                    }
+                    //------------------------------------------------------------------------
+                    Set<Set<Integer>> m= new HashSet<>();
+                    m.add(color1);
+
+                    for(Set<Integer> color3:s){
+                        if(visit.contains(color3)) continue;
+                        m.add(color3);
+                    }
+                    for(Set<Set<Integer>> setb:temp){
+                        setb.addAll(m);
+                    }
+                    featSetsFinal.addAll(temp);
+                }
+            }
+        }
+
+        return featSetsFinal;
     }
 
     /**

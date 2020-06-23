@@ -513,7 +513,7 @@ public final class OurTabbedSyntaxWidget {
                 else {
                     if(string=="")
                     text.changeText(c,d+2,string);
-                    else text.changeText(c,d,string);
+                    else text.changeText(c,d+1,string);
                 }
             }
 

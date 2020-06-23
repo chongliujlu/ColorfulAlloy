@@ -17,6 +17,7 @@ package edu.mit.csail.sdg.ast;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -77,11 +78,15 @@ public interface Module extends Clause {
      * Return an unmodifiable list of all functions in this module.
      */
     public SafeList<Func> getAllFunc();
+    //colorful merge
+    public Map<String, ArrayList<Func>> getFunc();
 
     /**
      * Return an unmodifiable list of all assertions in this module.
      */
     public ConstList<Pair<String,Expr>> getAllAssertions();
+    //colorful merge
+    public Map<String,ArrayList<Expr>> getAssertions();
 
     /**
      * Return an unmodifiable list of all facts in this module.

@@ -640,8 +640,7 @@ public final class OurSyntaxWidget {
     public void changeText(int c, int d,String text) {
         pane.setSelectionStart(c);
         pane.setSelectionEnd(d);
-
-        String s= pane.getSelectedText();
+        //String s= pane.getSelectedText();
         pane.replaceSelection(text);
         pane.repaint();
     }

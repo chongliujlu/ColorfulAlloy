@@ -1057,82 +1057,95 @@ final class SimpleReporter extends A4Reporter {
          * @param printAmalgamatedExpr Visitor, used to print the amalgamated expression
          */
         private void printAmalgamatedAssert(StringBuilder print, Module world, AmalgamatedExprPrinterVisitor printAmalgamatedExpr) {
-            for(Pair<String,Expr> asser:world.getAllAssertions()){
-                if(asser.a.startsWith("check$"))
+            Map<String,ArrayList<Expr>> ass= world.getAssertions();
+            for(Map.Entry<String,ArrayList<Expr>> entry:ass.entrySet()){
+                if(entry.getKey().startsWith("check$"))
                     continue;
-
                 print.append("\r\n\r\n");
                 print.append("assert ");
-                print.append(asser.a);
+                print.append(entry.getKey());
+                print.append("{");
 
-                print.append("{\r\n");
+                for(Expr e:entry.getValue()){
+                    if((e instanceof ExprUnary) && !(((ExprUnary) e).sub instanceof ExprConstant))
+                        print.append("\r\n        "+e.accept(printAmalgamatedExpr));
+                }
 
-                if((asser.b instanceof ExprUnary) && !(((ExprUnary) asser.b).sub instanceof ExprConstant))
-                    print.append("        "+asser.b.accept(printAmalgamatedExpr));
                 print.append("\r\n        }");
             }
+
+
+//            for(Pair<String,Expr> asser:world.getAllAssertions()){
+//                if(asser.a.startsWith("check$"))
+//                    continue;
+//
+//                print.append("\r\n\r\n");
+//                print.append("assert ");
+//                print.append(asser.a);
+//
+//                print.append("{\r\n");
+//
+//                if((asser.b instanceof ExprUnary) && !(((ExprUnary) asser.b).sub instanceof ExprConstant))
+//                    print.append("        "+asser.b.accept(printAmalgamatedExpr));
+//                print.append("\r\n        }");
+//            }
         }
 
         //colorful Alloy
         /**
-         * convenient method, help to print amalgamated fun and pred
+         * print amalgamated fun and pred
          * @param print used to store the generated code
          * @param world original module(before print)
          * @param printAmalgamatedExpr visitor, used to print the amalgamated expression
          */
         private void printAmalgamatedfuns(StringBuilder print, Module world, AmalgamatedExprPrinterVisitor printAmalgamatedExpr) {
+           Map<String,ArrayList<Func>> map= world.getFunc();
+           for (Map.Entry<String,ArrayList<Func>> enty:map.entrySet()){
 
-            for(Func func: world.getAllFunc()){
+               if(enty.getKey().startsWith("run$"))
+                   continue;
+               if(!(enty.getKey().contains("$$Default"))){
+                   print.append("\r\n");
+                   if(enty.getValue().size()>0){
+                       if (enty.getValue().get(0).isPred )
+                           print.append("pred " +enty.getKey()+" ");
+                       else
+                           print.append("fun "+enty.getKey()+" ");
 
-                if(func.label.startsWith("this/run$"))
-                    continue;
-                if(!(func.label.contains("/$$Default"))){
+                       if(enty.getValue().get(0).decls.size()>0) {
+                           print.append("[");
+                           for (Decl decl :enty.getValue().get(0).decls){
+                               if(decl.disjoint!=null)
+                                   print.append( " disj "); //"disj" key word
 
-                    print.append("\r\n");
-                    if (func.isPred )
-                        print.append("pred " +func.label.substring(5)+" ");
-                    else
-                        print.append("fun "+func.label.substring(5)+" ");
-
-                    if(func.decls.size()>0)
-                    {
-                        print.append("[");
-                        for (Decl decl :func.decls){
-                            if(decl.disjoint!=null)
-                                print.append( " disj "); //"disj" key word
-
-                            for (Expr expr: decl.names){
-                                print.append(expr.accept(printAmalgamatedExpr)+",");
-                            }
-                            print.deleteCharAt(print.length() - 1);
-                            print.append(": ");
-                            print.append(decl.expr.accept(printAmalgamatedExpr)+",");
-                        }
-                        print.deleteCharAt(print.length()-1);
-                        print.append("]");
-                    }
-
-
-                    if(!func.isPred && !func.returnDecl.equals(ExprConstant.Op.FALSE))
-                    {
-                        print.append(":");
-                        print.append(func.returnDecl.accept(printAmalgamatedExpr));
-                    }
-
-                    print.append("{\r\n        ");
+                               for (Expr expr: decl.names){
+                                   print.append(expr.accept(printAmalgamatedExpr)+",");
+                               }
+                               print.deleteCharAt(print.length() - 1);
+                               print.append(": ");
+                               print.append(decl.expr.accept(printAmalgamatedExpr)+",");
+                           }
+                           print.deleteCharAt(print.length()-1);
+                           print.append("]");
+                       }
 
 
-                    //filter cases such as pred show{}: pred show{true }
-                    if(!(func.getBody() instanceof ExprConstant)) {
-                        if (!func.color.isEmpty()) {
-                            addFeatureprefix(func.color.keySet(), print);
-                        }
+                       if(!enty.getValue().get(0).isPred && !enty.getValue().get(0).returnDecl.equals(ExprConstant.Op.FALSE)) {
+                           print.append(":");
+                           print.append(enty.getValue().get(0).returnDecl.accept(printAmalgamatedExpr));
+                       }
+                       print.append("{");
+                       for(Func func: enty.getValue()){
+                           //filter cases such as pred show{}: pred show{true }
+                           if(!(func.getBody() instanceof ExprConstant)) {
+                               print.append("\r\n        "+func.getBody().accept(printAmalgamatedExpr));
+                           }
+                       }
 
-                        print.append(func.getBody().accept(printAmalgamatedExpr));
-                    }
-                    print.append("\r\n        }\r\n");
-                }
-            }
+                       print.append("\r\n        }\r\n");
+                   }
+               }
+           }
         }
 
         //colorful Alloy
@@ -1248,12 +1261,12 @@ final class SimpleReporter extends A4Reporter {
                         {
                             // one  ----> lone
                             if(((ExprUnary) n.decl().expr).op.equals(ExprUnary.Op.ONEOF)) {
-                                print.append( f.color.isEmpty()?"one ":"lone ");
+                                print.append( f.color.keySet().equals(s.color.keySet())?"one ":"lone ");
                                 print.append( ((ExprUnary) n.decl().expr).sub.accept(printExprs)+",");
                             }
                             // some -----> set
                             else if(((ExprUnary) n.decl().expr).op.equals(ExprUnary.Op.SOMEOF)) {
-                                print.append(f.color.isEmpty()? "some ":"set ");
+                                print.append(f.color.keySet().equals(s.color.keySet())? "some ":"set ");
                                 print.append( ((ExprUnary) n.decl().expr).sub.accept(printExprs)+",");
                             }
                             else
@@ -1262,7 +1275,7 @@ final class SimpleReporter extends A4Reporter {
                         }else
                         {
 
-                            if(!f.color.isEmpty())
+                            if(!f.color.keySet().equals(s.color.keySet()))
                             {
                                 // one  ----> lone
                                 String temp=n.decl().expr.accept(printExprs).replace(" one"," lone");
@@ -1310,10 +1323,14 @@ final class SimpleReporter extends A4Reporter {
          * @param print used to store the generated code
          */
         private void addFeatureFact(Sig s, StringBuilder print) {
-
+            if(s.color.keySet().isEmpty())
+                return ;
             String label=s.label.substring(5);
             Set<Integer> NFeatures=new HashSet<>();
             Set<Integer> PFeatures=new HashSet<>();
+
+            print.append("\r\nfact {\r\n        ");
+
             for(Integer i: s.color.keySet()){
                 if(i<0)
                     NFeatures.add(-i);
@@ -1321,33 +1338,29 @@ final class SimpleReporter extends A4Reporter {
             }
 //marked with NF
             if(!NFeatures.isEmpty()){
-                print.append("\r\nfact {\r\n        ");
-
                 // implies none
                 addFeatureprefix(NFeatures,print,"in","or");
-
                 print.append(" no "+ label);
-                if(s.isLone!=null)
-                print.append(" else (some  "+label + " or no "+label +")\r\n        }");
 
+                if(s.isSome!=null | s.isOne!=null)
+                    print.append(" else some  "+label);
                 else
-                print.append( " else (some " +label +") \r\n        }" );
+                    print.append(" else (some " +label +" or no "+label+")");
             }
 
             if(!PFeatures.isEmpty()){
+                if(!NFeatures.isEmpty())
+                    print.append("\r\n        ");
 
-                print.append("\r\nfact{ \r\n        ");
-
-                if(s.isOne!=null){
-                    //F in P implies
-                    addFeatureprefix(PFeatures,print,"in","and");
-                    print.append(" (some  "+label + ") else no "+label+"\r\n        }");
-                }else{
-                    addFeatureprefix(PFeatures,print,"not in","and");
-                    print.append(" no  "+label +"\r\n        }");
-                }
-
+                //F in P implies
+                addFeatureprefix(PFeatures,print,"in","and");
+                if(s.isOne!=null ||s.isSome!=null)
+                    print.append(" (some "+label + ") else no "+label);
+                else
+                    print.append(" (some "+label + " or no "+label+") else no "+label);
             }
+
+            print.append("\r\n       }");
         }
 
         //colorful Alloy
@@ -1509,7 +1522,8 @@ final class SimpleReporter extends A4Reporter {
                 fun.getBody().color.putAll(fun.color);
                 Expr nbody = (fun.getBody()).accept(reconstructExpr);
                 if(nbody==null){
-                    newModule.addFunc(fun.pos(),fun.isPrivate,fun.label.substring(5),null,new ArrayList<Decl>(),null,ExprConstant.TRUE);
+                    Func funNew =newModule.addFunc(fun.pos(),fun.isPrivate,fun.label.substring(5),null,new ArrayList<Decl>(),fun.isPred?null:fun.returnDecl,ExprConstant.TRUE);
+
                     continue;}
 
                 //project decls-------------
@@ -1529,7 +1543,8 @@ final class SimpleReporter extends A4Reporter {
                         }
                     }
                 }
-                newModule.addFunc(fun.pos, fun.isPrivate, fun.label.substring(5), null, decls.makeConst(), fun.returnDecl, nbody);
+                newModule.addFunc(fun.pos, fun.isPrivate, fun.label.substring(5), null, decls.makeConst(), fun.isPred?null:fun.returnDecl, nbody);
+
             }
 
             //print func/pred
@@ -1760,7 +1775,26 @@ final class SimpleReporter extends A4Reporter {
          * @param world original module
          */
         private void printAssert(StringBuilder print, ExprPrinterVisitor printExprs, expressionProject reconstructExpr, Module world,CompModule newModule) {
-            for(Pair<String,Expr> asser:world.getAllAssertions()){
+            Map<String,ArrayList<Expr>> ass= world.getAssertions();
+            for(Map.Entry<String,ArrayList<Expr>> entry:ass.entrySet()) {
+                if (entry.getKey().startsWith("check$"))
+                    continue;
+                print.append("\r\n\r\n");
+                print.append("assert ");
+                print.append(entry.getKey());
+                print.append("{");
+
+                for (Expr e : entry.getValue()) {
+                    Expr temp = e.accept(reconstructExpr);
+                    if ((temp instanceof ExprUnary) && !(((ExprUnary) temp).sub instanceof ExprConstant))
+                        print.append("\r\n        " + temp.accept(printExprs) + "\r\n        ");
+                }
+                print.append("\r\n        }");
+            }
+
+
+
+/*            for(Pair<String,Expr> asser:world.getAllAssertions()){
                 Expr temp=asser.b.accept(reconstructExpr);
 
                 if(temp==null){
@@ -1777,7 +1811,7 @@ final class SimpleReporter extends A4Reporter {
                 if((temp instanceof ExprUnary) && !(((ExprUnary) temp).sub instanceof ExprConstant))
                     print.append("\r\n        "+temp.accept(printExprs)+"\r\n        ");
                 print.append("}");
-            }
+            }*/
         }
 
         //colorful Alloy
@@ -1817,7 +1851,57 @@ final class SimpleReporter extends A4Reporter {
          * @param printExprs visitor, used to print Expr
          */
         private void printFunc(StringBuilder print, CompModule newModule, ExprPrinterVisitor printExprs) {
-            for(Func f: newModule.getAllFunc()){
+            Map<String,ArrayList<Func>> map= newModule.getFunc();
+            for (Map.Entry<String,ArrayList<Func>> enty:map.entrySet()){
+                if(enty.getKey().startsWith("run$"))
+                    continue;
+                if(!(enty.getKey().contains("$$Default"))){
+                    print.append("\r\n");
+                    if(enty.getValue().size()>0){
+                        if (enty.getValue().get(0).isPred )
+                            print.append("pred " +enty.getKey()+" ");
+                        else
+                            print.append("fun "+enty.getKey()+" ");
+
+                        if(enty.getValue().get(0).decls.size()>0) {
+                            print.append("[");
+                            for (Decl d : enty.getValue().get(0).decls) {
+                                if(d.disjoint!=null)
+                                    print.append( " disj "); //"disj" key word
+
+                                for (ExprHasName v : d.names) {
+                                    print.append( v.accept(printExprs)+",");
+                                }
+
+                                print.deleteCharAt(print.length()-1);
+                                print.append(": "+d.expr.accept(printExprs)+",");
+                            }
+                            print.deleteCharAt(print.length()-1);
+                            if(!enty.getValue().get(0).decls.isEmpty())
+                                print.append("]");
+                        }
+
+
+                        if(!(enty.getValue().get(0).returnDecl.equals(ExprConstant.FALSE))){
+                            print.append(":");
+                            if(enty.getValue().get(0).returnDecl instanceof Expr)
+                                print.append(enty.getValue().get(0).returnDecl.accept(printExprs));
+                        }
+
+                        print.append("{");
+                        for(Func func: enty.getValue()){
+                            //filter cases such as pred show{}: pred show{true }
+                            if(!(func.getBody() instanceof ExprConstant)) {
+                                print.append("\r\n        "+func.getBody().accept(printExprs));
+                            }
+                        }
+
+                        print.append("\r\n        }\r\n");
+                    }
+                }
+            }
+
+          /*  for(Func f: newModule.getAllFunc()){
                 if (f.label.startsWith("run$"))
                     continue;
                 if (f.label.startsWith("$$Default"))
@@ -1858,7 +1942,7 @@ final class SimpleReporter extends A4Reporter {
                     print.append("{ \r\n");
                     print.append("        "+f.getBody().accept(printExprs)+" \r\n        }\r\n");
                 }
-            }
+            }*/
         }
 
         //colorful Alloy

@@ -61,7 +61,8 @@ public final class ExprQt extends Expr {
     public final ConstList<Decl> decls;
 
     /** The body of the quantified expression. */
-    public final Expr            sub;
+    //colorful merge remove final
+    public Expr            sub;
 
     /** Caches the span() result. */
     private Pos                  span;

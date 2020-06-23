@@ -17,11 +17,7 @@ package edu.mit.csail.sdg.ast;
 
 import static edu.mit.csail.sdg.ast.Type.EMPTY;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import edu.mit.csail.sdg.alloy4.ConstList;
 import edu.mit.csail.sdg.alloy4.ConstList.TempList;
@@ -223,6 +219,14 @@ public final class ExprList extends Expr {
         list.add(a);
         list.add(b);
         return make(pos, closingBracket, Op.AND, list.makeConst());
+    }
+
+    //colorful merge
+    public static ExprList makeAND(Pos pos, Pos closingBracket, Expr a, Expr b, Map<Integer,Pos> color) {
+        TempList<Expr> list = new TempList<Expr>(2);
+        list.add(a);
+        list.add(b);
+        return make(pos, closingBracket, Op.AND, list.makeConst(),color);
     }
 
     /** Generates the expression (arg1 || arg2) */
