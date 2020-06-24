@@ -1480,14 +1480,15 @@ public final class SimpleGUI implements ComponentListener, Listener {
                         ExprUnary fact2=(ExprUnary)key2.b;
                         Set<Integer> b=new HashSet<>();
                         if(compare(fact1.color.keySet(),fact2.color.keySet(),b)){
+                            Map<Integer,Pos>  colorf1=new HashMap<>(fact1.color);
                             if(b.size()==1){
                                 for(Integer in:b){
-                                    fact1.color.remove(in);
-                                    fact1.color.remove(-in);
+                                    colorf1.remove(in);
+                                    colorf1.remove(-in);
                                 }
 
 
-                                Expr e=mergeExpr((ExprUnary)(fact1.sub),fact2.sub,fact1.color);
+                                Expr e=mergeExpr((ExprUnary)(fact1.sub),fact2.sub,colorf1);
 
                                 //merge feature position with sig position
                                 for (Map.Entry<Integer,Pos> ent:fact1.color.entrySet()){
@@ -4305,7 +4306,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
             print.append(coloF);
 
             print.append(visitThis(x.left));
-            print.append(" "+x.op+" ");
+
+            print.append(x.op==ExprBinary.Op.JOIN? x.op :" "+x.op+" ");
 
             parentFeats=x.color.keySet();
             print.append(visitThis(x.right));

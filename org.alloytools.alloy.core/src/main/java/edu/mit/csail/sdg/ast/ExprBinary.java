@@ -313,9 +313,9 @@ public final class ExprBinary extends Expr {
         public final Expr make(Pos pos, Pos closingBracket, Expr left, Expr right, Map<Integer,Pos> color) {
             switch (this) {
                 case AND :
-                    return ExprList.makeAND(pos, closingBracket, left, right);
+                    return ExprList.makeAND(pos, closingBracket, left, right,color); //colorful merge
                 case OR :
-                    return ExprList.makeOR(pos, closingBracket, left, right);
+                    return ExprList.makeOR(pos, closingBracket, left, right,color);//colorful merge
                 case DOMAIN : {
                     // Special optimization
                     Expr f = right.deNOP();
@@ -441,7 +441,7 @@ public final class ExprBinary extends Expr {
                     case JOIN :
                         type = left.type.join(right.type);
                         if (type == EMPTY)
-                            return ExprBadJoin.make(pos, closingBracket, left, right);
+                            return ExprBadJoin.make(pos, closingBracket, left, right,color); //colorful merge
                         break;
                     case DOMAIN :
                         type = right.type.domainRestrict(left.type);

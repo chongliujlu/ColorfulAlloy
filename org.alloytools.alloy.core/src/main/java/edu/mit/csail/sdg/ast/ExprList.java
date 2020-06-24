@@ -237,6 +237,14 @@ public final class ExprList extends Expr {
         return make(pos, closingBracket, Op.OR, list.makeConst());
     }
 
+    //colorful merge
+    public static ExprList makeOR(Pos pos, Pos closingBracket, Expr a, Expr b,Map<Integer,Pos> color) {
+        TempList<Expr> list = new TempList<Expr>(2);
+        list.add(a);
+        list.add(b);
+        return make(pos, closingBracket, Op.OR, list.makeConst(),color);
+    }
+
     /**
      * Generates the expression pred/totalOrder[arg1, args2, arg3...]
      */

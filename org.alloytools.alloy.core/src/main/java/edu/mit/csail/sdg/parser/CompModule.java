@@ -579,7 +579,7 @@ public final class CompModule extends Browsable implements Module {
                 d.expr.color.putAll(d.color);//colorful Alloy
                 Expr exp = visitThis(d.expr).resolve_as_set(warns);
                 if (exp.mult == 0 && exp.type().arity() == 1)
-                    exp = ExprUnary.Op.ONEOF.make(null, exp);
+                    exp = ExprUnary.Op.ONEOF.make(null, exp,exp.color); //colorful merge
                 if (exp.errors.isEmpty()) {
                     if (exp.type().isSubtypeOf(rootmodule.metaSig().plus(rootmodule.metaField()).type())) {
                         isMetaSig = exp.type().intersects(rootmodule.metaSig().type());
@@ -2130,22 +2130,21 @@ public final class CompModule extends Browsable implements Module {
             expr.color.putAll( ((ExprUnary) expr).sub.color); //colorful merge
             Context.contextFeats.clear(); //colorful Alloy
             Context.contextFeats.addAll(expr.color.keySet());//colorful Alloy
-           // Context.contextFeats.addAll(((ExprUnary) expr).sub.color.keySet());//colorful Alloy
-            Expr checked = cx.check(expr);
-            expr = checked.resolve_as_formula(warns);
+            expr = cx.check(expr).resolve_as_formula(warns);
             if (expr.errors.isEmpty()) {
                 facts.set(i, new Pair<String,Expr>(name, expr));
                 rep.typecheck("Fact " + name + ": " + expr.type() + "\n");
             } else
                 errors = errors.make(expr.errors);
         }
+
         //colorful merge
         for(Map<Map<Integer,Pos>,Sig>map :sigs.values()){
             for(Sig s: map.values()){
-                Context.contextFeats.clear();//colorful Alloy
-                Context.contextFeats.addAll(s.color.keySet());//colorful Alloy
+                Context.contextFeats.clear();
+                Context.contextFeats.addAll(s.color.keySet());
                 Expr f = res.old2appendedfacts.get(res.new2old.get(s));
-                f.color.putAll(s.color); //colorful Alloy
+                f.color.putAll(s.color);
                 if (f == null)
                     continue;
                 if (f instanceof ExprConstant && ((ExprConstant) f).op == ExprConstant.Op.TRUE)
@@ -2155,59 +2154,25 @@ public final class CompModule extends Browsable implements Module {
                 if (s.isOne == null) {
                     cx.put("this", s.decl.get());
 
-                    Context.contextFeats.addAll(f.color.keySet());//colorful Alloy
+                    Context.contextFeats.addAll(f.color.keySet());
                     formula = cx.check(f).resolve_as_formula(warns);
                 } else {
                     cx.put("this", s);
-                    Context.contextFeats.clear();//colorful Alloy
-                    Context.contextFeats.addAll(f.color.keySet());//colorful Alloy
+                    Context.contextFeats.clear();
+                    Context.contextFeats.addAll(f.color.keySet());
                     formula = cx.check(f).resolve_as_formula(warns);
                 }
                 cx.remove("this");
                 if (formula.errors.size() > 0)
                     errors = errors.make(formula.errors);
                 else {
-                    if(!s.color.isEmpty()) //colorful Alloy
-                        formula.paint(s.color); //colorful Alloy
+                    if(!s.color.isEmpty())
+                        formula.paint(s.color);
                     s.addFact(formula);
                     rep.typecheck("Fact " + s + "$fact: " + formula.type() + "\n");
                 }
             }
-
         }
-
-/*        for (Sig s : sigs.values()) {
-            Context.contextFeats.clear();//colorful Alloy
-            Context.contextFeats.addAll(s.color.keySet());//colorful Alloy
-            Expr f = res.old2appendedfacts.get(res.new2old.get(s));
-            f.color.putAll(s.color); //colorful Alloy
-            if (f == null)
-                continue;
-            if (f instanceof ExprConstant && ((ExprConstant) f).op == ExprConstant.Op.TRUE)
-                continue;
-            Expr formula;
-            cx.rootsig = s;
-            if (s.isOne == null) {
-                cx.put("this", s.decl.get());
-
-                Context.contextFeats.addAll(f.color.keySet());//colorful Alloy
-                formula = cx.check(f).resolve_as_formula(warns);
-            } else {
-                cx.put("this", s);
-                Context.contextFeats.clear();//colorful Alloy
-                Context.contextFeats.addAll(f.color.keySet());//colorful Alloy
-                formula = cx.check(f).resolve_as_formula(warns);
-            }
-            cx.remove("this");
-            if (formula.errors.size() > 0)
-                errors = errors.make(formula.errors);
-            else {
-                if(!s.color.isEmpty()) //colorful Alloy
-                    formula.paint(s.color); //colorful Alloy
-                s.addFact(formula);
-                rep.typecheck("Fact " + s + "$fact: " + formula.type() + "\n");
-            }
-          }*/
         return errors;
     }
 
@@ -2755,7 +2720,7 @@ public final class CompModule extends Browsable implements Module {
         for (Object x : ans) {
             if (x instanceof Sig) {
                 Sig y = (Sig) x;
-                ch.add(ExprUnary.Op.NOOP.make(pos, y, null, 0));
+                ch.add(ExprUnary.Op.NOOP.make(pos, y, null, 0,color));
                 re.add("sig " + y.label);
                 //colorful merge
             } else if (x instanceof ExprBinary) {

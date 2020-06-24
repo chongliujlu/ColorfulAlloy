@@ -17,10 +17,7 @@ package edu.mit.csail.sdg.ast;
 
 import static edu.mit.csail.sdg.ast.Type.EMPTY;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.ErrorType;
@@ -77,6 +74,12 @@ public final class ExprBadJoin extends Expr {
         this.left = left;
         this.right = right;
     }
+    //colorful merge
+    private ExprBadJoin(Pos pos, Pos closingBracket, Expr left, Expr right, JoinableList<Err> errors,Map<Integer,Pos> color) {
+        super(pos, closingBracket, (left.ambiguous || right.ambiguous), EMPTY, 0, 0, errors, color); // [HASLab] colorful Alloy
+        this.left = left;
+        this.right = right;
+    }
 
     /** Constructs an ExprBadJoin node. */
     public static Expr make(Pos pos, Pos closingBracket, Expr left, Expr right) {
@@ -92,6 +95,19 @@ public final class ExprBadJoin extends Expr {
         return new ExprBadJoin(pos, closingBracket, left, right, errors);
     }
 
+    //colorful merge
+    public static Expr make(Pos pos, Pos closingBracket, Expr left, Expr right, Map<Integer,Pos> color) {
+        JoinableList<Err> errors = left.errors.make(right.errors);
+        if (errors.isEmpty()) {
+            StringBuilder sb = new StringBuilder("This cannot be a legal relational join where\nleft hand side is ");
+            left.toString(sb, -1);
+            sb.append(" (type = ").append(left.type).append(")\nright hand side is ");
+            right.toString(sb, -1);
+            sb.append(" (type = ").append(right.type).append(")\n");
+            errors = errors.make(new ErrorType(pos, sb.toString()));
+        }
+        return new ExprBadJoin(pos, closingBracket, left, right, errors,color);
+    }
     /** {@inheritDoc} */
     @Override
     public int getDepth() {
