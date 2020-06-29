@@ -198,7 +198,7 @@ public abstract class Sig extends Expr implements Clause {
      * <p>
      * Note: at most one of "lone", "one", "some" can be nonnull for each sig.
      */
-    public final Pos             isSome;
+    public  final Pos             isSome;
 
     /**
      * Nonnull if the user wanted this sig to be private.

@@ -1733,6 +1733,7 @@ public final class CompModule extends Browsable implements Module {
             m.put(obj.color,obj);
             sigs.get(name).put(obj.color,obj);}
         else {
+            //IdentityHashMap  not LinkedHahMap to compare if the colors are equal
             Map<Map<Integer,Pos>,Sig> map=new IdentityHashMap<>();
             map.put(obj.color,obj);
             sigs.put(name,map);

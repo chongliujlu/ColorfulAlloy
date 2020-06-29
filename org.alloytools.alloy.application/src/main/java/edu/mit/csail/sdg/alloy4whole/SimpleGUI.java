@@ -234,6 +234,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
      * The Map of sigs in the module,used for merge menu.
      */
     private  Map<String,Map<Map<Integer,Pos>,Sig>>       sigs               = null;
+    HashMap<String,ArrayList<Expr>>                          asserts            =null;
     //colorful merge
     private Set<Set>        incompatibleFeats;
     private Set<Integer> incompatiblefeatures =new HashSet<>();
@@ -998,12 +999,16 @@ public final class SimpleGUI implements ComponentListener, Listener {
         incompatibleFeats=new HashSet<>();
         //store the sigs after parser
         Map<String,Map<Map<Integer,Pos>,Sig>> sigp = sigs;
+        HashMap<String,ArrayList<Expr>> assertp=asserts;
         //store the facts after parser
         SafeList<Pair<String, Expr>> factp = null;
         //存储冗余feature对，old2new redundant
         Map<Set<Integer>,Set<Integer>> redundantOld2new=new HashMap<>();
 
-        JMenu mergeSigs,mergeField,remMultiplicity,remAbstract,remIncompatibleSigs,remRedundantFeat,addRedundantFeats,autoMerSig,autoMergeFact;
+        JMenu mergeSigs,mergeField,remMultiplicity,remAbstract,remIncompatibleSigs,remRedundantFeat,addRedundantFeats,autoMerSig,autoMergeFact,Mergeassert;
+
+
+
         mergeSigs=new JMenu("Merge Sigs");
         mergeField=new JMenu("Merge Fields");
         remMultiplicity=new JMenu("Remove Multiplicity");
@@ -1013,6 +1018,11 @@ public final class SimpleGUI implements ComponentListener, Listener {
         addRedundantFeats=new JMenu("Add Redundant Features");
         autoMerSig=new JMenu("AutoMerge-Sigs");
         autoMergeFact=new JMenu("Merge-Fact");
+        Mergeassert=new JMenu("Merge-Assert");
+
+        // auto merge
+        JMenu new_sigLists,factLists,assertions;
+        new_sigLists=new JMenu("Merge Sigs");
 
 
         mergemenu.removeAll();
@@ -1026,12 +1036,17 @@ public final class SimpleGUI implements ComponentListener, Listener {
         mergemenu.add(autoMerSig);
         mergemenu.add(autoMergeFact);
 
+        mergemenu.add(new_sigLists);
+        mergemenu.add(Mergeassert);
+
         //a list of all sigs in this module. used for compute the sig that need to merge.
         SafeList<Sig> sigSafeList=new SafeList<>();
 
 
         Map<Sig, ArrayList<Sig>> sig_Merge_List=new LinkedHashMap<>();
         Map<Pair,ArrayList<Pair>>fact_Merge_List=new LinkedHashMap<>();
+        HashMap <String, ArrayList<Expr>> fact_Merge=new LinkedHashMap<>();
+
 
         Map<Field, ArrayList<Field>> field_Merge_List=new HashMap();
         Set <Sig> mult_Refac_Sig=new HashSet<>();
@@ -1041,6 +1056,9 @@ public final class SimpleGUI implements ComponentListener, Listener {
         Set<Sig> incompatibleSigs =new HashSet<>();
         Set<Sig> redundantSigs=new HashSet<>();
 
+
+        Set <String> sigName =new HashSet<>();
+        Set<Sig> new_mergeField =new HashSet<>();
 
 
         //parser the model， get elements that can be merge.
@@ -1059,6 +1077,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                     world = CompUtil.parseEverything_fromFile(A4Reporter.NOP, text.takeSnapshot(), opt.originalFilename, resolutionMode);
                     sigp=world.getcolorfulSigSet();
                     factp=  world.getAllFacts();
+                    assertp= (HashMap<String, ArrayList<Expr>>) world.getAssertions();
                 }
 
                 if(sigp!=null){
@@ -1066,7 +1085,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                     ArrayList<Set> featSet= getPowerSets(CompModule.feats);
                     featSet.add(new HashSet());
 
-
+                    //remove abstract 的时候需要
                     for(Map m:sigp.values())
                         sigSafeList.addAll(m.values());
 
@@ -1074,7 +1093,46 @@ public final class SimpleGUI implements ComponentListener, Listener {
                     Iterator<Map.Entry<String, Map<Map<Integer,Pos>,Sig>>> entries = sigp.entrySet().iterator();
                     while (entries.hasNext()) {
                         Map.Entry<String, Map<Map<Integer,Pos>,Sig>> entry = entries.next();
-                        for(Sig s:sigSafeList){
+
+            //给菜单添加可以merge 的sig 名称：begin
+                        for (Sig s1  : entry.getValue().values()){
+                            for( Sig s2  : entry.getValue().values()){
+                                if(!s1.equals(s2))
+                                    if( compare(s1.color.keySet(),s2.color.keySet(),new HashSet<>())){
+                                        sigName.add(entry.getKey());
+                                        break;
+                                    }
+                            }
+                            if(!sigName.contains(entry.getKey()))
+                                break;
+                        }
+            //给菜单添加可以merge 的sig 名称： end
+
+            //是不是可以直接merge field.
+                        if(!sigName.contains(entry.getKey())){
+                            for (Sig sigF : entry.getValue().values()){
+                                //计算可以merge的Field
+                                if(sigF.getFields().size()>1){
+                                    for (Field f: sigF.getFields()){
+                                        for(Field f2: sigF.getFields()){
+                                            if(!f2.equals(f))
+                                                if(f.label.equals(f2.label))
+                                                        if(f.color.keySet().equals(f2.color.keySet())||
+                                                                compare(f.color.keySet(),f2.color.keySet(),new HashSet<>())){
+                                                            new_mergeField.add(sigF);
+                                                            break;
+                                                        }
+                                        }
+                                        if(new_mergeField.contains(sigF))
+                                            break;
+                                    }
+                                    if(new_mergeField.contains(sigF))
+                                        break;
+                                }
+                            }
+                        }
+
+                     /*   for(Sig s:sigSafeList){
                             ArrayList<Sig> sigArray=new ArrayList<>();
                             if(entry.getKey().equals(s.label.substring(5))){
                                 for (Map.Entry<Map<Integer,Pos>, Sig> en : entry.getValue().entrySet()){
@@ -1091,8 +1149,11 @@ public final class SimpleGUI implements ComponentListener, Listener {
                             }
                             if(sigArray.size()>0)
                                 sig_Merge_List.put(s,sigArray);
-                        }
-                        //计算可以merge的Field
+                        }*/
+
+
+
+                        /*//计算可以merge的Field old
                         for (Map.Entry<Map<Integer,Pos>, Sig> en : entry.getValue().entrySet()){
                             //计算可以merge的Field
                             if(en.getValue().getFields().size()>1){
@@ -1111,7 +1172,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
                                         field_Merge_List.put(f,fieldArray);
                                 }
                             }
-                        }
+                        }*/
+
                     }
 
                     //计算可以进行multiple abstract refactoring 的sig
@@ -1135,21 +1197,33 @@ public final class SimpleGUI implements ComponentListener, Listener {
                         }
                         if(subFactList.size()>0)
                             fact_Merge_List.put(p,subFactList);
-                    }
+                        //计算同名的fact,可以进行merge的。
+                        if(fact_Merge.containsKey(p.a)){
+                            fact_Merge.get(p.a).add((Expr) p.b);
 
+                        }else {
+                            ArrayList<Expr> tempfact=new ArrayList<>();
+                            tempfact.add((Expr) p.b);
+                            fact_Merge.put((String)p.a,tempfact);
+                        }
+
+
+                    }
                 }
 
             } catch (Err er) {
                     log.logRed(er.toString() + "\n\n");
+                    mergemenu.removeAll();
                     return null;
             }catch (Throwable e) {
                 log.logRed("Cannot parse the model.\n" + e.toString() + "\n\n");
+                mergemenu.removeAll();
                 return null;
             }
             sigs=sigp;
         }
 
-        //根据sig_Merge_List生成菜单，
+        /*//根据sig_Merge_List生成菜单，
         if(sig_Merge_List.isEmpty())
             mergemenu.remove(mergeSigs);
         for(Map.Entry<Sig,ArrayList<Sig>> m:sig_Merge_List.entrySet()){
@@ -1167,7 +1241,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                 sig.add(y);
             }
             mergeSigs.add(sig);
-        }
+        }*/
 
         //根据fieldList 生成菜单
         if(field_Merge_List.isEmpty())
@@ -1236,7 +1310,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
                     text.changeText(factPos,"\r\n"+coloF+factString+colorB+"");
 
                     text.changeText(multipos,"");
-                    //text.appendText("\r\n"+coloF+factString+colorB);
                 }
             });
             remMultiplicity.add(y);
@@ -1288,7 +1361,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
                     if (sig.isAbstract!=null){
                         text.changeText(sig.isAbstract);
-                        //text.changeText(sig.isAbstract,"");
                         Set <Sig> children=new HashSet<>();
                         for (Sig s:sigSafeList){
                             if(!sig.equals(s)){
@@ -1312,7 +1384,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
                         Pos factPos=new Pos(sig.pos.filename,sig.pos.x2+1,sig.pos.y2);
 
                         if(children.isEmpty())
-                           // text.appendText("\r\n"+coloF+"fact{no "+sig.label.substring(5)+" }"+colorB);
                             text.changeText(factPos,"\r\n"+coloF+"fact{no "+sig.label.substring(5)+" }"+colorB+"\r\n");
                         else{
                             StringBuilder childString=new StringBuilder();
@@ -1321,7 +1392,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
                             }
                             childString.deleteCharAt(childString.length()-1);
                             text.changeText(factPos,"\r\n"+coloF+"fact{ "+sig.label.substring(5)+"="+childString+"}"+colorB+"\n\r");
-                        //text.appendText("\r\n"+coloF+"fact{ "+sig.label.substring(5)+"="+childString+"}"+colorB);
                         }
                         text.changeText(sig.isAbstract,"");
                     }
@@ -1329,21 +1399,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
                 }
             });
             remAbstract.add(y);
-//            remAbstract.addMenuListener(new MenuListener() {
-//                @Override
-//                public void menuSelected(MenuEvent e) {
-//                    text.get().shade();
-//                }
-//
-//                @Override
-//                public void menuDeselected(MenuEvent e) {
-//
-//                }
-//
-//                @Override
-//                public void menuCanceled(MenuEvent e) {
-//                }
-//            });
         }
 
         //生成 IncompatibleSigs 菜单
@@ -1418,13 +1473,9 @@ public final class SimpleGUI implements ComponentListener, Listener {
                     }
                     private void doAutoSigMerge(Sig key, Sig sigSub) {
                         Set<Integer> k=new HashSet<>();
-                        ArrayList<Sig> tomerge=new ArrayList<>();
-                        tomerge.add(key);
-                        tomerge.add(sigSub);
-
                         if(compare(key.color.keySet(),sigSub.color.keySet(),k))
                         if(k.size()==1){
-                            Sig s= mergeSig(tomerge,k.iterator().next());
+                            Sig s= mergeSig(key,sigSub,k.iterator().next());
                             sigOld2new.put(key,s);
                             sigOld2new.put(sigSub,s);
                             //已经将s替换成了sigBinary.
@@ -1461,6 +1512,204 @@ public final class SimpleGUI implements ComponentListener, Listener {
             autoMerSig.add(sig);
         }
 
+        //
+        if(sigName.isEmpty() && new_mergeField.isEmpty())
+            mergemenu.remove(new_sigLists);
+        else{
+            for(String name:sigName){
+                JMenuItem sig=new JMenuItem(name);
+                new_sigLists.add(sig);
+                Map<String, Map<Map<Integer, Pos>, Sig>> finalSigp = sigp;
+                sig.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        text.clearShade();
+                        log.clearError(); // To clear any residual error message
+
+                        //寻找 pos,
+                        List<Pos> pos=new ArrayList<>();
+                        for(Sig s: finalSigp.get(name).values()){
+                            for (Map.Entry<Integer,Pos> ent:s.color.entrySet()){
+                                s.pos=s.pos.merge(ent.getValue());
+                            }
+                            if(pos.isEmpty())
+                                pos.add(s.pos);
+                            else{
+                                for(Pos p:new ArrayList<>(pos)){
+                                    if(s.pos.y>p.y || (s.pos.y==p.y && s.pos.x>p.x)){
+                                        pos.add(pos.indexOf(p),s.pos);
+                                        break;
+                                    }
+                                }
+                                if(!pos.contains(s.pos))
+                                    pos.add(s.pos);
+                            }
+                        }
+                        if(pos.size()>1)
+                            for(int i=0;i<pos.size()-1;i++)
+                                text.changeText(pos.get(i),"");
+
+
+
+                        boolean notFinish=true;
+                        while(notFinish){
+                            notFinish=  mergeSig(finalSigp.get(name));
+                        }
+
+                        //merge sigs with different quantifier abstract ,lone,some, one quantifier
+                        notFinish=true;
+                        StringBuilder attributefact=new StringBuilder();
+                        while(notFinish){
+                            notFinish=  mergeSig(finalSigp.get(name),sigSafeList,attributefact);
+                        }
+
+                        text.get().appendText(attributefact.toString());
+                       // text.appendText(attributefact.toString());
+                        //根据FM merge Sigs.
+
+
+                        //打印sigs
+                        StringBuilder print = new StringBuilder();
+                        printsigs(new ArrayList<>(finalSigp.get(name).values()),print);
+
+                        text.changeText(pos.get(pos.size()-1),print.toString());
+                    }
+                });
+
+            }
+        }
+
+        for(Map.Entry<String,ArrayList<Expr>> f: ((Map<String,ArrayList<Expr>>)fact_Merge.clone()).entrySet()){
+            if(f.getValue().size()<2)
+                fact_Merge.remove(f.getKey());
+        }
+
+        //根据fact_Merge 生成菜单
+        if(fact_Merge.isEmpty())
+            mergeField.remove(autoMergeFact);
+        for(Map.Entry<String,ArrayList<Expr>> f: fact_Merge.entrySet()){
+            JMenuItem factitem=new JMenuItem(f.getKey());
+            autoMergeFact.add(factitem);
+            factitem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    text.clearShade();
+                    log.clearError(); // To clear any residual error message
+                    ArrayList<Pos> pos=new ArrayList<>();
+                    ArrayList<Expr> list=new ArrayList<>();
+                    for(Expr fa: f.getValue()){
+
+                        for (Map.Entry<Integer,Pos> ent:fa.color.entrySet()){
+                            fa.pos=fa.pos.merge(ent.getValue());
+                        }
+                        if(pos.isEmpty())
+                            pos.add(fa.pos);
+                        else{
+                            for(Pos p:new ArrayList<>(pos)){
+                                if(fa.pos.y>p.y || (fa.pos.y==p.y && fa.pos.x>p.x)){
+                                    pos.add(pos.indexOf(p),fa.pos);
+                                    break;
+                                }
+                            }
+                            if(!pos.contains(fa.pos))
+                                pos.add(fa.pos);
+                        }
+
+
+                        if(fa instanceof ExprUnary)
+                            fa=((ExprUnary) fa).sub;
+
+                        list.add( (fa instanceof ExprUnary && ((ExprUnary) fa).op.equals(ExprUnary.Op.NOOP)? ((ExprUnary) fa).sub: fa));
+
+                    }
+
+                    if(pos.size()>1)
+                        for(int i=0;i<pos.size()-1;i++)
+                            text.changeText(pos.get(i),"");
+
+                        Expr enew=ExprList.make(pos.get(0), pos.get(0), ExprList.Op.AND,  list, new HashMap<Integer,Pos>());
+                    VisitRefactor refactorExpr=new VisitRefactor();
+                    enew= enew.accept(refactorExpr);
+
+                    StringBuilder print = new StringBuilder();
+                    print.append("fact "+f.getKey() +"{\r\n        ");
+                    VisitprintmergeExpr visitprintmergeExpr=new VisitprintmergeExpr();
+                    print.append(enew.accept(visitprintmergeExpr));
+
+                    print.append("\r\n        }");
+                    text.changeText(pos.get(pos.size()-1),print.toString());
+                }
+            });
+        }
+
+        //merge assert
+        if(assertp!=null)
+        for(Map.Entry<String,ArrayList<Expr>> ass:((Map<String, ArrayList<Expr>>) assertp.clone()).entrySet()){
+            if(ass.getValue().size()<2)
+                assertp.remove(ass.getKey());
+        }
+
+        if(assertp==null || assertp!=null && assertp.isEmpty())
+            mergemenu.remove(Mergeassert);
+        else{
+            for(Map.Entry<String,ArrayList<Expr>> ass: assertp.entrySet()){
+                JMenuItem assertitem=new JMenuItem(ass.getKey());
+                Mergeassert.add(assertitem);
+                assertitem.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        text.clearShade();
+                        log.clearError(); // To clear any residual error message
+                        ArrayList<Pos> pos=new ArrayList<>();
+                        ArrayList<Expr> list=new ArrayList<>();
+                        for(Expr ass1: ass.getValue()){
+
+                            for (Map.Entry<Integer,Pos> ent:ass1.color.entrySet()){
+                                ass1.pos=ass1.pos.merge(ent.getValue());
+                            }
+                            if(pos.isEmpty())
+                                pos.add(ass1.pos);
+                            else{
+                                for(Pos p:new ArrayList<>(pos)){
+                                    if(ass1.pos.y>p.y || (ass1.pos.y==p.y && ass1.pos.x>p.x)){
+                                        pos.add(pos.indexOf(p),ass1.pos);
+                                        break;
+                                    }
+                                }
+                                if(!pos.contains(ass1.pos))
+                                    pos.add(ass1.pos);
+                            }
+
+
+                            if(ass1 instanceof ExprUnary)
+                                ass1=((ExprUnary) ass1).sub;
+
+                            list.add( (ass1 instanceof ExprUnary && ((ExprUnary) ass1).op.equals(ExprUnary.Op.NOOP)? ((ExprUnary) ass1).sub: ass1));
+
+                        }
+
+                        if(pos.size()>1)
+                            for(int i=0;i<pos.size()-1;i++)
+                                text.changeText(pos.get(i),"");
+
+                        Expr enew=ExprList.make(pos.get(0), pos.get(0), ExprList.Op.AND,  list, new HashMap<Integer,Pos>());
+                        VisitRefactor refactorExpr=new VisitRefactor();
+                        enew= enew.accept(refactorExpr);
+
+                        StringBuilder print = new StringBuilder();
+                        print.append("assert "+ass.getKey() +"{\r\n        ");
+                        VisitprintmergeExpr visitprintmergeExpr=new VisitprintmergeExpr();
+                        print.append(enew.accept(visitprintmergeExpr));
+
+                        print.append("\r\n        }");
+                        text.changeText(pos.get(pos.size()-1),print.toString());
+                    }
+                });
+            }
+
+        }
+
+/*
       //根据fact_Merge_List 生成菜单
         if(fact_Merge_List.isEmpty())
             mergeField.remove(autoMergeFact);
@@ -1510,8 +1759,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
                                 VisitprintmergeExpr visitprintmergeExpr=new VisitprintmergeExpr();
                                 print.append(e.accept(visitprintmergeExpr));
 
-                               // printsigs(new ArrayList<Sig>(){{add(sigBinaryField);}},print);
-
                                 print.append("\r\n        }"+colorB);
 
                                 if(fact1.pos.y<fact2.pos.y || (fact1.pos.y==fact2.pos.y && fact1.pos.x<fact2.pos.x)){
@@ -1525,7 +1772,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
                         }
 
-                        /*
+                        */
+/*
 
                         ArrayList<Sig> tomerge=new ArrayList<>();
                         tomerge.add(key);
@@ -1557,7 +1805,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
                                     text.changeText(sigSub.pos,print.toString());
                                 }
 
-                            }*/
+                            }*//*
+
                     }
                 });
                 factitem.add(y);
@@ -1565,6 +1814,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
             autoMergeFact.add(factitem);
         }
 
+*/
 
 
         return null;
@@ -1892,14 +2142,10 @@ public final class SimpleGUI implements ComponentListener, Listener {
     //colorful merge
     private void domerge(Sig key, Sig sigSub) {
         Set<Integer> k=new HashSet<>();
-        ArrayList<Sig> tomerge=new ArrayList<>();
-        tomerge.add(key);
-        tomerge.add(sigSub);
-
             if(compare(key.color.keySet(),sigSub.color.keySet(),k));
             if(k.size()==1){
                 //位置问题
-                Sig s= mergeSig(tomerge,k.iterator().next());
+                Sig s= mergeSig(key,sigSub,k.iterator().next());
 
                 StringBuilder print = new StringBuilder();
                 printsigs(new ArrayList<Sig>(){{add(s);}},print);
@@ -2721,7 +2967,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
             }
 
             print.append(colorB);
-            //print.append("\r\n");
+            print.append("\r\n");
         }
     }
 
@@ -2816,7 +3062,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
         return;
     }
 
-    private ActionListener doRefactor(Map map,ArrayList<Sig> toMerge,Map <String,Map<Map<Integer,Pos>,Sig> >sigs) {
+  /*  private ActionListener doRefactor(Map map,ArrayList<Sig> toMerge,Map <String,Map<Map<Integer,Pos>,Sig> >sigs) {
         if (wrap)
             return wrapMe();
         Set<Integer> k=new HashSet<>();
@@ -2825,7 +3071,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
             Sig sig2=toMerge.get(1);
             if(compare(toMerge.get(0).color.keySet(),toMerge.get(1).color.keySet(),k));
             if(k.size()==1){
-                Sig s= mergeSig(toMerge,k.iterator().next());
+                Sig s= mergeSig(sig1,sig2,k.iterator().next());
                 if(s!=null)
                     map.put(s.color,s);
 
@@ -2853,19 +3099,17 @@ public final class SimpleGUI implements ComponentListener, Listener {
             }
         }
         return null;
-    }
+    }*/
 
     /**
      * merge top-level sigs,
      * ( a b sig n { ds0,...,dsk}ba,  a -b sig n { ds′0,...,ds′l}-b a) =
      * a sig n {b ds0 b,...,b dsk b, b ds′0 b,...,b ds′l b } a
-     * @param sigs two sigs need to be merge
+     * @param sig1  Sig to be merge
+     * @param sig2  Sig to be merge
      * @param b  feature to be remove
      */
-    private static Sig mergeSig(ArrayList<Sig> sigs, Integer b){
-        if(sigs.size()==2) {
-            Sig sig1 = sigs.get(0);
-            Sig sig2 = sigs.get(1);
+    private  Sig mergeSig(Sig sig1,Sig sig2, Integer b){
             //used to generate new Sig
             Attr[] attributes = new Attr[sig1.attributes.size()];
             for (int i = 0; i < sig1.attributes.size(); i++) {
@@ -2876,8 +3120,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
                 signew = new Sig.PrimSig(sig1.label, ((Sig.PrimSig) sig1).parent, attributes);
             else if (sig1 instanceof Sig.SubsetSig)
                 signew=new Sig.SubsetSig(sig1.label,((Sig.SubsetSig) sig1).parents,attributes);
-
-
 
             Map<Integer,Pos> feats=new HashMap<>(sig1.color);
             feats.remove(b);
@@ -2976,8 +3218,221 @@ public final class SimpleGUI implements ComponentListener, Listener {
             }
 
             return signew;
+    }
+
+
+    //colorful merge
+    /**
+     * merge sigs, find a pair of sigs that can be merge in the group. sigs with different quantifier must be removed in advance
+     * @param values a map of sigs to be merge
+     * @return return true means the process is not finish, false means there is no sigs can be merge in the given group
+     */
+    private boolean mergeSig(Map<Map<Integer, Pos>, Sig> values){
+        Boolean change=false;
+        Set<Sig> visit=new HashSet();
+        Map<Map<Integer, Pos>, Sig> valuesClone= new HashMap<>();
+        valuesClone.putAll(values);
+        for(Map.Entry<Map<Integer, Pos>, Sig> sig1: valuesClone.entrySet()){
+            if(visit.contains(sig1.getValue()))
+                continue;
+            visit.add(sig1.getValue());
+            for(Map.Entry<Map<Integer, Pos>, Sig> sig2: valuesClone.entrySet()){
+                if(visit.contains(sig2.getValue()))
+                    continue;
+                Set<Integer> k=new HashSet<>();
+
+                //compare if the two sigs with the same quantifier
+                if ((sig1.getValue().isAbstract==null && sig2.getValue().isAbstract==null)||(sig1.getValue().isAbstract!=null && sig2.getValue().isAbstract!=null))
+                    if((sig1.getValue().isLone==null && sig2.getValue().isLone==null)||(sig1.getValue().isLone!=null && sig2.getValue().isLone!=null))
+                        if((sig1.getValue().isOne==null && sig2.getValue().isOne==null)||(sig1.getValue().isOne!=null && sig2.getValue().isOne!=null))
+                            if((sig1.getValue().isSome==null && sig2.getValue().isSome==null)||(sig1.getValue().isSome!=null && sig2.getValue().isSome!=null))
+                                if(compare(sig1.getValue().color.keySet(),sig2.getValue().color.keySet(),k)){
+                                    if(k.size()==1){
+                                        Sig s= mergeSig(sig1.getValue(),sig2.getValue(),k.iterator().next());
+                                        visit.add(sig2.getValue());
+                                        change=true;
+                                        updateSigOld2newList(sig1.getValue(),s);
+                                        updateSigOld2newList(sig2.getValue(),s);
+
+                                        //merge field
+                                        Sig sigBinaryField=mergeBinaryField(s);
+                                        values.put(sigBinaryField.color,sigBinaryField);
+                                        values.remove(sig1.getKey());
+                                        values.remove(sig2.getKey());
+                                        break;
+                                    }
+                                }
+            }
         }
-        return null;
+
+        if(change)
+            return true;
+        else
+            return false;
+    }
+
+    private boolean mergeSig(Map<Map<Integer, Pos>, Sig> values,SafeList<Sig> sigSafeList,StringBuilder sigfact){
+        Boolean change=false;
+        Set<Sig> visit=new HashSet();
+        Map<Map<Integer, Pos>, Sig> valuesClone= new HashMap<>();
+        valuesClone.putAll(values);
+        for(Map.Entry<Map<Integer, Pos>, Sig> sig1: valuesClone.entrySet()){
+            if(visit.contains(sig1.getValue()))
+                continue;
+            visit.add(sig1.getValue());
+            for(Map.Entry<Map<Integer, Pos>, Sig> sig2: valuesClone.entrySet()){
+                if(visit.contains(sig2.getValue()))
+                    continue;
+                Set<Integer> k=new HashSet<>();
+                if(compare(sig1.getValue().color.keySet(),sig2.getValue().color.keySet(),k)){
+                    if(k.size()==1){
+                        sigfact.append("\r\nfact RemoveQualtifier {");
+
+                        //remove abstract quantifier
+                        if(sig1.getValue().isAbstract==null && sig2.getValue().isAbstract!=null){
+                            addAbstractFact(sig2.getValue(),sigSafeList,sigfact);
+                        }
+                        if(sig1.getValue().isAbstract!=null && sig2.getValue().isAbstract==null) {
+                            addAbstractFact(sig1.getValue(),sigSafeList,sigfact);
+                            ConstList.TempList attributes = new ConstList.TempList(sig1.getValue().attributes.size());
+                            for (int i = 0; i < sig1.getValue().attributes.size(); i++) {
+                                Attr attr = sig1.getValue().attributes.get(i);
+                                if (attr!=null && !attr.type.name().equals("ABSTRACT"))
+                                    attributes.add(attr) ;
+                            }
+                            sig1.getValue().attributes=attributes.makeConst();
+                        }
+                        //remove lone quantifier
+                        if(sig1.getValue().isLone==null && sig2.getValue().isLone!=null){
+                            addLoneFact(sig2.getValue(),sigfact);
+                        }
+                        if(sig1.getValue().isLone!=null && sig2.getValue().isLone==null) {
+                            addLoneFact(sig1.getValue(),sigfact);
+                            ConstList.TempList attributes = new ConstList.TempList(sig1.getValue().attributes.size());
+                            for (int i = 0; i < sig1.getValue().attributes.size(); i++) {
+                                Attr attr = sig1.getValue().attributes.get(i);
+                                if (attr!=null && !attr.type.name().equals("LONE"))
+                                    attributes.add(attr) ;
+                            }
+                            sig1.getValue().attributes=attributes.makeConst();
+                        }
+
+                        //remove one quantifier
+                        if(sig1.getValue().isOne==null && sig2.getValue().isOne!=null){
+                            addOneFact(sig2.getValue(),sigfact);
+                        }
+                        if(sig1.getValue().isOne!=null && sig2.getValue().isOne==null) {
+                            addOneFact(sig1.getValue(),sigfact);
+                            ConstList.TempList attributes = new ConstList.TempList(sig1.getValue().attributes.size());
+                            for (int i = 0; i < sig1.getValue().attributes.size(); i++) {
+                                Attr attr = sig1.getValue().attributes.get(i);
+                                if (attr!=null && !attr.type.name().equals("ONE"))
+                                    attributes.add(attr) ;
+                            }
+                            sig1.getValue().attributes=attributes.makeConst();
+                        }
+
+                        //remove some quantifier
+                        if(sig1.getValue().isSome==null && sig2.getValue().isSome!=null){
+                            addSomeFact(sig2.getValue(),sigfact);
+                        }
+                        if(sig1.getValue().isSome!=null && sig2.getValue().isSome==null) {
+                            addSomeFact(sig1.getValue(),sigfact);
+                            ConstList.TempList attributes = new ConstList.TempList(sig1.getValue().attributes.size());
+                            for (int i = 0; i < sig1.getValue().attributes.size(); i++) {
+                                Attr attr = sig1.getValue().attributes.get(i);
+                                if (attr!=null && !attr.type.name().equals("SOME"))
+                                    attributes.add(attr) ;
+                            }
+                            sig1.getValue().attributes=attributes.makeConst();
+                        }
+
+                        Sig s= mergeSig(sig1.getValue(),sig2.getValue(),k.iterator().next());
+
+                        visit.add(sig2.getValue());
+                        change=true;
+                        updateSigOld2newList(sig1.getValue(),s);
+                        updateSigOld2newList(sig2.getValue(),s);
+
+                        //merge field
+                        Sig sigBinaryField=mergeBinaryField(s);
+                        values.put(sigBinaryField.color,sigBinaryField);
+                        values.remove(sig1.getKey());
+                        values.remove(sig2.getKey());
+
+
+                        sigfact.append("\r\n        }");
+                        break;
+                    }
+                }
+            }
+        }
+
+        if(change)
+            return true;
+        else
+            return false;
+    }
+
+    private void addSomeFact(Sig sig, StringBuilder sigfact) {
+        StringBuilder coloF, colorB;
+        coloF = new StringBuilder();
+        colorB = new StringBuilder();
+        if (sig.color != null)
+            printcolor(coloF, colorB, sig.color.keySet());
+
+        sigfact.append("\r\n      "+coloF+"some "+ sig.label.substring(5)+colorB);
+    }
+
+    private void addOneFact(Sig sig, StringBuilder sigfact) {
+        StringBuilder coloF, colorB;
+        coloF = new StringBuilder();
+        colorB = new StringBuilder();
+        if (sig.color != null)
+            printcolor(coloF, colorB, sig.color.keySet());
+
+        sigfact.append("\r\n      "+coloF+"one "+ sig.label.substring(5)+colorB);
+    }
+
+    private void addLoneFact(Sig sig, StringBuilder sigfact) {
+        StringBuilder coloF, colorB;
+        coloF = new StringBuilder();
+        colorB = new StringBuilder();
+        if (sig.color != null)
+            printcolor(coloF, colorB, sig.color.keySet());
+
+        sigfact.append("\r\n      "+coloF+"lone "+ sig.label.substring(5)+colorB);
+    }
+
+    private void addAbstractFact(Sig sig, SafeList<Sig> sigSafeList, StringBuilder sigfact) {
+        Set<Sig> children = new HashSet<>();
+        for (Sig s : sigSafeList) {
+            if (!sig.equals(s)) {
+                if (s instanceof Sig.PrimSig) {
+                    if (((Sig.PrimSig) s).parent.equals(sig)) {
+                        children.add(s);
+                    }
+                }
+            }
+        }
+
+        StringBuilder coloF, colorB;
+        coloF = new StringBuilder();
+        colorB = new StringBuilder();
+        if (sig.color != null)
+            printcolor(coloF, colorB, sig.color.keySet());
+
+        if (children.isEmpty())
+            sigfact.append("\r\n      " + coloF + "no " + sig.label.substring(5) + colorB);
+        else {
+            StringBuilder childString = new StringBuilder();
+            for (Sig child : children) {
+                childString.append(child.label.substring(5) + "+");
+            }
+            childString.deleteCharAt(childString.length() - 1);
+            sigfact.append("\r\n      " + coloF + sig.label.substring(5) + "=" + childString + colorB);
+        }
+
     }
 //colorful merge
     /**
@@ -3984,8 +4439,60 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
         @Override
         public Expr visit(ExprBinary x) throws Err {
-            visitThis(x.left);
-            visitThis(x.right);
+            if(x.op.equals(ExprBinary.Op.INTERSECT)){
+                featB=new HashSet<>();
+                if(x.left instanceof ExprBinary && ((ExprBinary) x.left).op==ExprBinary.Op.JOIN &&
+                        x.right instanceof ExprBinary && ((ExprBinary) x.right).op==ExprBinary.Op.JOIN &&
+                        ((ExprBinary) x.left).left.toString().equals(((ExprBinary) x.right).left.toString())&&
+                        compare(x.left.color.keySet(),x.right.color.keySet(),featB)){
+                    VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
+                    ((ExprBinary) x.left).left.accept(visiterRemoveFeatB);
+                   Expr er= ExprBinary.Op.INTERSECT.make(((ExprBinary) x.left).left.pos,
+                           ((ExprBinary) x.left).left.closingBracket,((ExprBinary) x.left).right,((ExprBinary) x.right).right,((ExprBinary) x.left).left.color);
+
+                 x= (ExprBinary) ExprBinary.Op.JOIN.make(((ExprBinary) x.left).left.pos,((ExprBinary) x.left).left.closingBracket,((ExprBinary) x.left).left,er,((ExprBinary) x.left).left.color);
+
+
+                }else if(x.left instanceof ExprBinary && ((ExprBinary) x.left).op==ExprBinary.Op.JOIN &&
+                        x.right instanceof ExprBinary && ((ExprBinary) x.right).op==ExprBinary.Op.JOIN &&
+                        ((ExprBinary) x.left).right.toString().equals(((ExprBinary) x.right).right.toString())&&
+                        compare(x.left.color.keySet(),x.right.color.keySet(),featB)){
+                    VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
+                    ((ExprBinary) x.left).right.accept(visiterRemoveFeatB);
+                    Expr er= ExprBinary.Op.INTERSECT.make(((ExprBinary) x.left).right.pos,
+                            ((ExprBinary) x.left).right.closingBracket,((ExprBinary) x.left).left,((ExprBinary) x.right).left,((ExprBinary) x.left).right.color);
+
+                     x= (ExprBinary) ExprBinary.Op.JOIN.make(((ExprBinary) x.left).right.pos,((ExprBinary) x.left).right.closingBracket,er,((ExprBinary) x.left).right,((ExprBinary) x.left).right.color);
+
+                }
+            }else if(x.op.equals(ExprBinary.Op.AND)){
+                  if(x.left instanceof ExprBinary && ((ExprBinary) x.left).op==ExprBinary.Op.JOIN &&
+                        x.right instanceof ExprBinary && ((ExprBinary) x.right).op==ExprBinary.Op.JOIN &&
+                        ((ExprBinary) x.left).left.toString().equals(((ExprBinary) x.right).left.toString())){
+                    VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
+                    ((ExprBinary) x.left).left.accept(visiterRemoveFeatB);
+                    Expr er= ExprBinary.Op.AND.make(((ExprBinary) x.left).left.pos,
+                            ((ExprBinary) x.left).left.closingBracket,((ExprBinary) x.left).right,((ExprBinary) x.right).right,((ExprBinary) x.left).left.color);
+
+                      x= (ExprBinary) ExprBinary.Op.JOIN.make(((ExprBinary) x.left).left.pos,((ExprBinary) x.left).left.closingBracket,((ExprBinary) x.left).left,er,((ExprBinary) x.left).left.color);
+
+                } else if(x.left instanceof ExprBinary && ((ExprBinary) x.left).op==ExprBinary.Op.JOIN &&
+                        x.right instanceof ExprBinary && ((ExprBinary) x.right).op==ExprBinary.Op.JOIN &&
+                        ((ExprBinary) x.left).right.toString().equals(((ExprBinary) x.right).right.toString())){
+                    VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
+                    ((ExprBinary) x.left).right.accept(visiterRemoveFeatB);
+                    Expr er= ExprBinary.Op.AND.make(((ExprBinary) x.left).right.pos,
+                            ((ExprBinary) x.left).right.closingBracket,((ExprBinary) x.left).left,((ExprBinary) x.right).left,((ExprBinary) x.left).right.color);
+
+                     x= (ExprBinary) ExprBinary.Op.JOIN.make(((ExprBinary) x.left).right.pos,((ExprBinary) x.left).right.closingBracket,er,((ExprBinary) x.left).right,((ExprBinary) x.left).right.color);
+
+                }
+
+
+            }
+
+                visitThis(x.left);
+                visitThis(x.right);
             return x;
         }
 
@@ -4001,6 +4508,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                     for(Expr e2:x.args){
                         if(visit.contains(e2)) continue;
 
+                        featB=new HashSet<>();
                         if(e.toString().equals(e2.toString()) && compare(e.color.keySet(),e2.color.keySet(),featB)){
                             VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
                             e.accept(visiterRemoveFeatB);
@@ -4213,7 +4721,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
                     visitThis(d.expr);
                 }
                 visitThis(x.sub);
-
                 return x;
             }
 
@@ -4332,7 +4839,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
             if(name.equals("OR")) name=" or";
 
             for(Expr e: x.args){
-                print.append(visitThis(e));
+                print.append(visitThis(e)+"\r\n      ");
                 print.append(name);
             }
 
