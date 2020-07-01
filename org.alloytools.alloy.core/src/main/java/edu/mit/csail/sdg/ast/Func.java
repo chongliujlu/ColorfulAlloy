@@ -51,7 +51,8 @@ public final class Func extends Browsable implements Clause {
      * The location in the original file where this predicate/function is declared;
      * never null.
      */
-    public final Pos             pos;
+    //colorful merge remove final
+    public Pos             pos;
 
     /**
      * If nonnull, then this predicate/function is private (and this.isPrivate is

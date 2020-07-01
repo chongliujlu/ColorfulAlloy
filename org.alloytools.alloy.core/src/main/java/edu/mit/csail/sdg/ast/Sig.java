@@ -129,6 +129,8 @@ public abstract class Sig extends Expr implements Clause {
         }
     }
 
+
+
     /** {@inheritDoc} */
     @Override
     public final Pos span() {
@@ -595,6 +597,8 @@ public abstract class Sig extends Expr implements Clause {
                     return UNIV;
             }
         }
+
+
     }
 
     // ==============================================================================================================//
@@ -706,6 +710,8 @@ public abstract class Sig extends Expr implements Clause {
                     return true;
             return false;
         }
+
+
     }
 
     // ==============================================================================================================//
@@ -776,6 +782,8 @@ public abstract class Sig extends Expr implements Clause {
                 out.append("field ").append(sig.label).append(" <: ").append(label).append(" with type=").append(type).append('\n');
             }
         }
+
+
 
         /** {@inheritDoc} */
         @Override

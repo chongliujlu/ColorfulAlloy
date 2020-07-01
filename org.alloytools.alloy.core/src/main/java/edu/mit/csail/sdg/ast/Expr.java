@@ -18,12 +18,7 @@ package edu.mit.csail.sdg.ast;
 import static edu.mit.csail.sdg.ast.ExprUnary.Op.NOOP;
 import static edu.mit.csail.sdg.ast.Type.EMPTY;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.ErrorType;

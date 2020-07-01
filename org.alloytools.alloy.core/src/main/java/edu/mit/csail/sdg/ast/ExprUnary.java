@@ -114,7 +114,6 @@ public final class ExprUnary extends Expr {
             sub.toString(out, indent + 2);
         }
     }
-
     // ============================================================================================================//
 
     /** Constructs an unary expression. */

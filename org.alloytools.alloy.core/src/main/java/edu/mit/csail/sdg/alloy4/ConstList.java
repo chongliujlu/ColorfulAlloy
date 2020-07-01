@@ -168,6 +168,14 @@ public final class ConstList<T> extends AbstractList<T> implements Serializable,
                 clist = (list.isEmpty() ? emptylist : new ConstList<T>(list));
             return clist;
         }
+        //colorful merge
+        public int indexOf(Object o){
+            return list.indexOf(o);
+        }
+        //colorful merge
+        public TempList<T> clone(){
+            return new TempList<T>(this.list);
+        }
     }
 
     /** This ensures this class can be serialized reliably. */
@@ -251,4 +259,5 @@ public final class ConstList<T> extends AbstractList<T> implements Serializable,
     public int size() {
         return list.size();
     }
+
 }

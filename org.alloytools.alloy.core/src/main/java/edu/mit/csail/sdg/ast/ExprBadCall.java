@@ -87,6 +87,8 @@ public final class ExprBadCall extends Expr {
         }
     }
 
+
+
     /** Constructs an ExprBadCall object. */
     private ExprBadCall(Pos pos, Pos closingBracket, boolean ambiguous, Func fun, ConstList<Expr> args, JoinableList<Err> errors, long extraWeight, long weight) {
         super(pos, closingBracket, ambiguous, EMPTY, 0, weight, errors, new HashMap<Integer,Pos>()); // [HASLab] colorful Alloy

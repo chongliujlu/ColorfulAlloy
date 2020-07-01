@@ -47,6 +47,8 @@ public final class ExprVar extends ExprHasName implements Clause {
         }
     }
 
+
+
     /** Constructs an ExprVar object */
     // [HASLab] colorful Alloy
     private ExprVar(Pos pos, String label, Type type, Map<Integer,Pos> color) {
@@ -63,6 +65,10 @@ public final class ExprVar extends ExprHasName implements Clause {
      */
     public static ExprVar make(Pos pos, String label) {
         return new ExprVar(pos, label, Type.EMPTY, new HashMap<Integer,Pos>()); // [HASLab] colorful Alloy
+    }
+    //colorful merge
+    public static ExprVar make(Pos pos, String label,Map<Integer,Pos> color) {
+        return new ExprVar(pos, label, Type.EMPTY, color); // [HASLab] colorful Alloy
     }
 
     /**

@@ -118,6 +118,8 @@ final class Macro extends ExprCustom {
         }
     }
 
+
+
     /** {@inheritDoc} */
     @Override
     public int getDepth() {
