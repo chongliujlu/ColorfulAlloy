@@ -47,7 +47,7 @@ import static edu.mit.csail.sdg.alloy4.A4Preferences.Welcome;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menu;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menuItem;
 import static edu.mit.csail.sdg.alloy4.Pos.UNKNOWN;
-import static edu.mit.csail.sdg.ast.ExprUnary.Op.SOMEOF;
+import static edu.mit.csail.sdg.ast.ExprUnary.Op.*;
 import static edu.mit.csail.sdg.ast.Sig.UNIV;
 import static java.awt.event.KeyEvent.VK_A;
 import static java.awt.event.KeyEvent.VK_ALT;
@@ -1419,7 +1419,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                             sigOld2new.put(key,s);
                             sigOld2new.put(sigSub,s);
                             //已经将s替换成了sigBinary.
-                            Sig sigBinaryField=mergeBinaryField(s);
+                            Sig sigBinaryField=mergeBinaryField(s,new StringBuilder());
 
                             StringBuilder print = new StringBuilder();
                             printsigs(new ArrayList<Sig>(){{add(sigBinaryField);}},print);
@@ -1439,11 +1439,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
                                 text.changeText(sigSub.pos,print.toString());
                             }
 
-
-                            // sig 位置添加为空白
-                           // text.changeText(key.pos,sigSub.pos);
-                            //text.changeText(key.pos,print.toString());
-                            //text.changeText(sigSub.pos,"");
                         }
                     }
                 });
@@ -1492,13 +1487,14 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
 
                         boolean notFinish=true;
+                        StringBuilder attributefact=new StringBuilder();
                         while(notFinish){
-                            notFinish=  mergeSig(finalSigp.get(name));
+                            notFinish=  mergeSig(finalSigp.get(name),attributefact);
                         }
 
                         //merge sigs with different quantifier abstract ,lone,some, one quantifier
                         notFinish=true;
-                        StringBuilder attributefact=new StringBuilder();
+                         //attributefact=new StringBuilder();
                         while(notFinish){
                             notFinish=  mergeSig(finalSigp.get(name),sigSafeList,attributefact);
                         }
@@ -1759,7 +1755,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
       * @param s
      * @return
      */
-    private Sig mergeBinaryField(Sig s) {
+    private Sig mergeBinaryField(Sig s,StringBuilder fact) {
         Set<Integer> b=new HashSet<>();
         //used to generate new Sig
         Attr[] attributes = new Attr[s.attributes.size()];
@@ -1800,35 +1796,52 @@ public final class SimpleGUI implements ComponentListener, Listener {
                     b=new HashSet<>();
                     if (compare(d.color.keySet(), d2.color.keySet(),b)) {
                         merged=true;
-
-                        for(Integer remCol:b){
-                            d.color.remove(remCol);
-                            d.color.remove(-remCol);
-                        }
-
                         Expr exprNew = d.expr.accept(sigFieldOld2newVisitor);
 
                             if(d.expr instanceof ExprUnary && d2.expr instanceof ExprUnary){
-                                if(((ExprUnary) d.expr).op.equals(((ExprUnary) d2.expr).op)){
-                                    exprNew=ExprBinary.Op.PLUS.make(exprNew.pos,null,((ExprUnary)exprNew).sub,((ExprUnary) d2.expr).sub,d.color);
-                                    if(ExprUnary.Op.ONEOF.equals(((ExprUnary) d.expr).op))
-                                        exprNew=ExprUnary.Op.ONEOF.make(d.expr.pos,exprNew,null,0,d.color);
-                                    else if(ExprUnary.Op.ONE.equals(((ExprUnary) d.expr).op))
-                                        exprNew=ExprUnary.Op.ONE.make(d.expr.pos,exprNew,null,0,d.color);
-                                    else if(SOMEOF.equals(((ExprUnary) d.expr).op))
-                                        exprNew= SOMEOF.make(d.expr.pos,exprNew,null,0,d.color);
-                                    else if(ExprUnary.Op.SOME.equals(((ExprUnary) d.expr).op))
-                                        exprNew=ExprUnary.Op.SOME.make(d.expr.pos,exprNew,null,0,d.color);
-                                    else if(ExprUnary.Op.SETOF.equals(((ExprUnary) d.expr).op))
-                                        exprNew=ExprUnary.Op.SETOF.make(d.expr.pos,exprNew,null,0,d.color);
-                                    else if(ExprUnary.Op.LONEOF.equals(((ExprUnary) d.expr).op))
-                                        exprNew=ExprUnary.Op.LONEOF.make(d.expr.pos,exprNew,null,0,d.color);
-                                    else if(ExprUnary.Op.LONE.equals(((ExprUnary) d.expr).op))
-                                        exprNew=ExprUnary.Op.LONE.make(d.expr.pos,exprNew,null,0,d.color);
-                                    else if(ExprUnary.Op.NOOP.equals(((ExprUnary) d.expr).op))
-                                        exprNew=ExprUnary.Op.NOOP.make(d.expr.pos,exprNew,null,0,d.color);
+
+                                ExprUnary.Op op=((ExprUnary) d.expr).op;
+                                if(!((ExprUnary) d.expr).op.equals(((ExprUnary) d2.expr).op)){// 修改multiplicity
+                                    op= ExprUnary.Op.SETOF;
+                                    if(!((ExprUnary) d.expr).op.equals(ExprUnary.Op.SETOF)){
+                                        StringBuilder coloF, colorB;
+                                        String name = "set";
+                                        if(((ExprUnary) d.expr).op.equals(LONEOF))
+                                            name="lone";
+                                        else if(((ExprUnary) d.expr).op.equals(ONEOF))
+                                            name="one";
+                                        else if(((ExprUnary) d.expr).op.equals(SOMEOF))
+                                            name="some";
+
+                                        coloF = new StringBuilder();
+                                        colorB = new StringBuilder();
+                                        if (d.expr.color != null)
+                                            printcolor(coloF, colorB, d.expr.color.keySet());
+                                        fact.append("\r\n        "+coloF+"all s:"+s.label.substring(5)+" | "+ name+" s."+d.names.get(0).label+colorB);
+                                    }
+                                    if(!((ExprUnary) d2.expr).op.equals(ExprUnary.Op.SETOF)){
+                                        String name = "set";
+                                        if(((ExprUnary) d2.expr).op.equals(LONEOF))
+                                            name="lone";
+                                        else if(((ExprUnary) d2.expr).op.equals(ONEOF))
+                                            name="one";
+                                        else if(((ExprUnary) d2.expr).op.equals(SOMEOF))
+                                            name="some";
+                                        StringBuilder coloF, colorB;
+                                        coloF = new StringBuilder();
+                                        colorB = new StringBuilder();
+                                        if (d2.expr.color != null)
+                                            printcolor(coloF, colorB, d2.expr.color.keySet());
+                                        fact.append("\r\n        "+coloF+"all s:"+s.label.substring(5)+" | "+ name+" s."+d2.names.get(0).label+colorB);
+                                    }
                                 }
-                                //else 修改multiplicity
+
+                                for(Integer remCol:b){
+                                    d.color.remove(remCol);
+                                    d.color.remove(-remCol);
+                                }
+                                exprNew=ExprBinary.Op.PLUS.make(exprNew.pos,null,((ExprUnary)exprNew).sub,((ExprUnary) d2.expr).sub,d.color);
+                                exprNew=op.make(d.expr.pos,exprNew,null,0,d.color);
                             }
 
                         VisitRefactor refactor =new VisitRefactor();
@@ -2645,7 +2658,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                     //get the first Field
                     Sig.Field n= (Sig.Field)f.names.get(0);
                     VisitprintmergeExpr visitprintmergeExpr=new VisitprintmergeExpr();
-
+                    visitprintmergeExpr.setParentFeats(n.decl().color.keySet());
                     print.append(n.decl().expr.accept(visitprintmergeExpr));
                     print.append(colorFieldB);
                     print.append(",");
@@ -2895,7 +2908,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
      * @param values a map of sigs to be merge
      * @return return true means the process is not finish, false means there is no sigs can be merge in the given group
      */
-    private boolean mergeSig(Map<Map<Integer, Pos>, Sig> values){
+    private boolean mergeSig(Map<Map<Integer, Pos>, Sig> values,StringBuilder sigfact){
         Boolean change=false;
         Set<Sig> visit=new HashSet();
         Map<Map<Integer, Pos>, Sig> valuesClone= new HashMap<>();
@@ -2923,7 +2936,13 @@ public final class SimpleGUI implements ComponentListener, Listener {
                                         updateSigOld2newList(sig2.getValue(),s);
 
                                         //merge field
-                                        Sig sigBinaryField=mergeBinaryField(s);
+
+                                        StringBuilder fact=new StringBuilder();
+                                        Sig sigBinaryField=mergeBinaryField(s, fact);
+                                        if(fact.length()>0){
+                                            sigfact.append("fact RemoveMultiplicity {"+fact+"\r\n        }");
+                                        }
+
                                         values.put(sigBinaryField.color,sigBinaryField);
                                         values.remove(sig1.getKey());
                                         values.remove(sig2.getKey());
@@ -3023,7 +3042,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                         updateSigOld2newList(sig2.getValue(),s);
 
                         //merge field
-                        Sig sigBinaryField=mergeBinaryField(s);
+                        Sig sigBinaryField=mergeBinaryField(s,sigfact);
                         values.put(sigBinaryField.color,sigBinaryField);
                         values.remove(sig1.getKey());
                         values.remove(sig2.getKey());
@@ -4253,7 +4272,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                                                         if(d1i.names.toString().equals(d2j.names.toString())){
                                                             ConstList.TempList<ExprVar> n = new ConstList.TempList<ExprVar>(d1i.names.size());
                                                             for (ExprHasName v : d1i.names)
-                                                                n.add(ExprVar.make(v.pos, v.label, cl)); // [HASLab] colorful Alloy
+                                                                n.add(ExprVar.make(v.pos, v.label, cl));
                                                             Expr exp=null;
                                                             if(d1i.expr instanceof ExprUnary && d2j.expr instanceof ExprUnary){
                                                                 Expr expnew=ExprBinary.Op.PLUS.make(d1i.span(),d1i.expr.closingBracket,((ExprUnary) d1i.expr).sub,((ExprUnary) d2j.expr).sub,cl);
@@ -4262,7 +4281,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                                                                 exp=ExprBinary.Op.PLUS.make(d1i.span(),d1i.expr.closingBracket, d1i.expr,d2j.expr,cl);
                                                             }
 
-                                                            Decl dd = new Decl(d1i.isPrivate, d1i.disjoint,d1i.disjoint2, n.makeConst(), visitThis(exp),cl); // [HASLab] colorful Alloy
+                                                            Decl dd = new Decl(d1i.isPrivate, d1i.disjoint,d1i.disjoint2, n.makeConst(), visitThis(exp),cl);
                                                             decls.add(dd);
                                                             break;
                                                         }
@@ -4606,7 +4625,11 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
 
       private class VisitprintmergeExpr extends VisitReturn<String> {
-        public Set<Integer> parentFeats=new HashSet<>();
+          public void setParentFeats(Set<Integer> parentFeats) {
+              this.parentFeats = parentFeats;
+          }
+
+          public Set<Integer> parentFeats=new HashSet<>();
         @Override
         public  String visit(ExprCall x) {
             StringBuilder print=new StringBuilder();
@@ -4835,9 +4858,9 @@ public final class SimpleGUI implements ComponentListener, Listener {
                 print.append(" set ");
             else if(x.op.equals(ExprUnary.Op.SOMEOF))
                 print.append(" some ");
-            else if(x.op.equals(ExprUnary.Op.LONEOF))
+            else if(x.op.equals(LONEOF))
                 print.append(" lone ");
-            else if(x.op.equals(ExprUnary.Op.ONEOF))
+            else if(x.op.equals(ONEOF))
                 print.append(" one ");
             else if(x.op.equals(ExprUnary.Op.EXACTLYOF))
                 print.append(" exactly ");
