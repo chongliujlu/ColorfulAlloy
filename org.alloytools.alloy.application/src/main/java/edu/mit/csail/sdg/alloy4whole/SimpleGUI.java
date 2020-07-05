@@ -1808,7 +1808,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
                         Expr exprNew = d.expr.accept(sigFieldOld2newVisitor);
 
-                        if(!d.expr.toString().equals(d2.expr.toString())){
                             if(d.expr instanceof ExprUnary && d2.expr instanceof ExprUnary){
                                 if(((ExprUnary) d.expr).op.equals(((ExprUnary) d2.expr).op)){
                                     exprNew=ExprBinary.Op.PLUS.make(exprNew.pos,null,((ExprUnary)exprNew).sub,((ExprUnary) d2.expr).sub,d.color);
@@ -1831,9 +1830,9 @@ public final class SimpleGUI implements ComponentListener, Listener {
                                 }
                                 //else 修改multiplicity
                             }
-                        }
 
-                        signew.addTrickyField(d.span(), d.isPrivate, d.disjoint, d.disjoint2, null, labels, exprNew, d.color);
+                        VisitRefactor refactor =new VisitRefactor();
+                        signew.addTrickyField(d.span(), d.isPrivate, d.disjoint, d.disjoint2, null, labels, exprNew.accept(refactor), d.color);
                         fieldVisited.add(d2);
                         break;
                     }
@@ -1846,6 +1845,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
                 signew.addTrickyField(d.span(), d.isPrivate, d.disjoint, d.disjoint2, null, labels, exprNew, d.color);
             }
         }
+
+
 
         return signew;
     }
@@ -2643,7 +2644,9 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
                     //get the first Field
                     Sig.Field n= (Sig.Field)f.names.get(0);
-                    print.append( n.decl().expr.toString().replace("this/",""));
+                    VisitprintmergeExpr visitprintmergeExpr=new VisitprintmergeExpr();
+
+                    print.append(n.decl().expr.accept(visitprintmergeExpr));
                     print.append(colorFieldB);
                     print.append(",");
                 }
@@ -4602,7 +4605,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
     }
 
 
-    private  class VisitprintmergeExpr extends VisitReturn<String> {
+      private class VisitprintmergeExpr extends VisitReturn<String> {
         public Set<Integer> parentFeats=new HashSet<>();
         @Override
         public  String visit(ExprCall x) {
@@ -4902,4 +4905,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
         }
         return new HashSet<Integer>(result);
     }
+
+
+
 }
