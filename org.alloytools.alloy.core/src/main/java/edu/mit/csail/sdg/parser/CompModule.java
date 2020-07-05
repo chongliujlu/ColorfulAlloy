@@ -1201,7 +1201,7 @@ public final class CompModule extends Browsable implements Module {
                             if(map.values().size()>=fcolset.size()){
                                 for(Set<Integer>col: fcolset){
                                     for(Sig s: map.values()){
-                                        if(s.color.keySet().equals(col)){
+                                        if(checkColor(col,s.color.keySet())){
                                             resultSig.add(s);
                                         }
                                     }
@@ -2811,7 +2811,7 @@ public final class CompModule extends Browsable implements Module {
                         if (fieldCandidate.get(name).size() >= fcolset.size()) {
                             for (Set<Integer> col : fcolset) {
                                 for (Field fitem : fieldCandidate.get(name))
-                                    if (fitem.color.keySet().equals(col))
+                                if (checkColor(col,fitem.color.keySet()))
                                         fieldFinal.add(fitem);
                             }
 
