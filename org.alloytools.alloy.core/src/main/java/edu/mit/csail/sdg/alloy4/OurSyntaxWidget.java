@@ -15,27 +15,13 @@
 
 package edu.mit.csail.sdg.alloy4;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Shape;
-import java.awt.event.ActionEvent;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
+import java.awt.*;
+import java.awt.event.*;
 import java.io.File;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Objects;
+import java.util.*;
+import java.util.List;
 
-import javax.swing.AbstractAction;
-import javax.swing.JComponent;
-import javax.swing.JScrollPane;
-import javax.swing.JTextPane;
-import javax.swing.KeyStroke;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
@@ -52,12 +38,11 @@ import javax.swing.text.View;
 import javax.swing.text.ViewFactory;
 
 import edu.mit.csail.sdg.alloy4.Listener.Event;
-import edu.mit.csail.sdg.ast.Clause;
-import edu.mit.csail.sdg.ast.Expr;
-import edu.mit.csail.sdg.ast.ExprBad;
-import edu.mit.csail.sdg.ast.ExprConstant;
+import edu.mit.csail.sdg.ast.*;
 import edu.mit.csail.sdg.parser.CompModule;
 import edu.mit.csail.sdg.parser.CompUtil;
+
+import static java.awt.event.MouseEvent.BUTTON3;
 
 /**
  * Graphical syntax-highlighting editor.
@@ -91,6 +76,11 @@ public final class OurSyntaxWidget {
     /** The underlying JTextPane being displayed. */
     private final JTextPane                 pane             = OurAntiAlias.pane(this::getTooltip, Color.BLACK, Color.WHITE, new EmptyBorder(6, 6, 6, 6));
 
+    //colorful merge
+    /**
+     * The right-click context menu associated with this JPanel.
+     */
+    public final JPopupMenu   pop              = new JPopupMenu();
     /**
      * The filename for this JTextPane (changes will trigger the STATUS_CHANGE
      * event)
@@ -363,6 +353,171 @@ public final class OurSyntaxWidget {
                 listeners.fire(me, Event.CARET_MOVED);
             }
         });
+
+        //colorful merge,right click
+        pane.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+               //  rightClick or ctrl+leftClick
+                if(e.getButton()==BUTTON3 || (e.getButton() == MouseEvent.BUTTON1 && e.isControlDown())){
+                    int offset = pane.getCaretPosition();
+                    CompModule module = null;
+                    try {
+                        A4Reporter reporter = new A4Reporter();
+                        module = CompUtil.parseEverything_fromString(reporter, getText());
+
+                    } catch (Err err) {
+                        // TODO Auto-generated catch block
+                        err.printStackTrace();
+                    }
+
+                   if (module != null){
+                       String text = pane.getText();
+                       Pos pos = Pos.toPos(text, offset, offset + 1);
+                       //position to show the popup button
+                       Point point=pane.getCaret().getMagicCaretPosition();
+
+                       //help store the full features of this expression, since Integer parameter will keep.
+                       StringBuilder colString=new StringBuilder();
+
+                       //return the annotated sig/fact/assert/Expr/ Func according to the caret
+                       Browsable     er=module.findElementPos(module,pos,colString);
+                       List <Integer> tempColor = new ArrayList<>();
+                       if(colString.length()>0){
+                           String [] strs=colString.toString().split(",");
+                           for(int i = 0;i<strs.length;i++){
+                               tempColor.add(Integer.parseInt(strs[i]));
+                           }
+                       }
+                       //features before merge
+                       Set featsBefore=new HashSet(tempColor);
+
+                       if(er !=null){
+                           //use a map to store the features that can be removed
+                           Map<Set<Integer>,Integer> featRmSet=new HashMap<>();//<feature cannbe removed, full feature set>
+                           Expr facts=module.getAllReachableFacts();
+                           if(facts instanceof ExprList)
+                               for(Expr f:((ExprList) facts).args){
+                                   if(f.toString().equals("some none")){
+                                       if(f instanceof ExprUnary && ((ExprUnary) f).op.equals(ExprUnary.Op.NOOP))
+                                           f=((ExprUnary) f).sub;
+                                       if(f.color.entrySet().size()==2){
+                                           for(Integer i: f.color.keySet()){
+                                               for(Integer j: f.color.keySet()){
+                                                   if(j==i) continue;
+                                                   else{
+                                                       Set temp=new HashSet<>();
+                                                       temp.add(i);
+                                                       temp.add(-j);
+                                                       featRmSet.put(temp,-j);
+                                                   }
+                                               }
+                                           }
+                                       }
+                                   }
+                               }
+
+                          if (!featRmSet.isEmpty()){
+                              if(er instanceof Sig){
+                                  for(Sig.Field field: ((Sig) er).getFields()){
+                                      Map<Integer,Pos> col=new HashMap(field.color);
+                                      for(Map.Entry<Integer,Pos> c:field.color.entrySet()){
+                                          if(er.color.containsKey(c.getKey()))
+                                              if(er.color.get(c.getKey()).equals(c.getValue()))
+                                                  col.remove(c.getKey());
+                                      }
+                                      for(Map.Entry<Integer, Pos> map:col.entrySet()){
+                                          if(field.pos!=null)
+                                              field.pos=field.pos.merge(map.getValue());
+                                      }
+                                      //delete a feature for Field
+                                      if(field.pos!=null && field.pos.contains(pos) && !col.isEmpty()){
+                                          featsBefore.addAll(field.color.keySet());
+                                          //doFeatRemove(featRmSet,featsBefore,col,point.x, point.y);
+                                          er.color=col;
+                                          break;
+                                      }
+                                  }
+                                  //deleter a feature of a sig
+                                  doFeatRemove(featRmSet,featsBefore,er.color,point.x, point.y);
+                              }else if(er instanceof Expr){
+                                  //delete features for facts/assert/Expr
+                                  doFeatRemove(featRmSet,new HashSet<>(featsBefore),er.color,point.x, point.y);
+                              }else if(er instanceof Func){
+                                  //delete features for the whole pred/fun
+                                  doFeatRemove(featRmSet,er.color.keySet(),er.color,point.x, point.y);
+                              }
+                          }
+                       }
+                   }
+                }
+            }
+
+            //colorful merge
+            /**
+             * show popUp menu
+             * @param featRmSet feats sets that can be removed
+             * @param featsBefore feats begore remove
+             * @param col Explicit feature annotation of the expr
+             * @param x x position to show the popup menu
+             * @param y y position to show the popup menu
+             */
+            private void doFeatRemove(Map<Set<Integer>, Integer> featRmSet, Set<Integer> featsBefore, Map<Integer, Pos> col, int x, int y) {
+                pop.removeAll();
+                Set <Integer> menu=new HashSet<>();
+                for(Map.Entry<Set<Integer>, Integer> entry:featRmSet.entrySet()){
+                   if(featsBefore.containsAll(entry.getKey()) && col.keySet().contains(entry.getValue())){
+                       if(!menu.contains(entry.getValue())){
+                           menu.add(entry.getValue());
+                           JMenuItem item = new JMenuItem("Remove "+getColorString(entry.getValue()));
+                           pop.add(item);
+                           item.addActionListener(new ActionListener() {
+                               @Override
+                               public void actionPerformed(ActionEvent e) {
+                                   Pos pos=col.get(entry.getValue());
+                                   int c = getLineStartOffset(pos.y2 - 1) + pos.x2 - 1;
+                                   int d= getLineStartOffset(pos.y - 1) + pos.x - 1;
+                                   changeText(c,c+1,"");
+                                   changeText(d,d+1,"");
+                                   getComponent().repaint();
+                               }
+                           });
+                       }
+                   }
+               }
+
+                pop.show(pane, x, y);
+            }
+
+            /**
+             * change integer to colorful annotation
+             * @param i
+             * @return
+             */
+            private String getColorString(Integer i) {
+                String color=null;
+                if(i==1) color ="\u2780";
+                else if(i==2) color ="\u2781";
+                else if(i==3) color ="\u2782" ;
+                else if(i==4) color ="\u2783" ;
+                else if(i==5) color ="\u2784" ;
+                else if(i==6) color ="\u2785" ;
+                else if(i==7) color ="\u2786" ;
+                else if(i==8) color ="\u2787" ;
+                else if(i==9) color ="\u2788" ;
+                else if(i==-1) color ="\u278A" ;
+                else if(i==-2) color ="\u278B" ;
+                else if(i==-3) color ="\u278C" ;
+                else if(i==-4) color ="\u278D" ;
+                else if(i==-5) color ="\u278E" ;
+                else if(i==-6) color ="\u278F" ;
+                else if(i==-7) color ="\u2790" ;
+                else if(i==-8) color ="\u2791" ;
+                else if(i==-9) color ="\u2792" ;
+                return color;
+            }
+        });
+
         component.addFocusListener(new FocusAdapter() {
 
             @Override
@@ -548,7 +703,7 @@ public final class OurSyntaxWidget {
             A4Reporter reporter = new A4Reporter();
             CompModule module = this.module;
             if (module == null)
-                module = CompUtil.parseEverything_fromString(reporter, pane.getText());
+                module = CompUtil.parseEverything_fromString(reporter, getText());
             this.module = module;
             return module;
         } catch (Err e) {
@@ -640,7 +795,6 @@ public final class OurSyntaxWidget {
     public void changeText(int c, int d,String text) {
         pane.setSelectionStart(c);
         pane.setSelectionEnd(d);
-        //String s= pane.getSelectedText();
         pane.replaceSelection(text);
         pane.repaint();
     }
@@ -931,8 +1085,7 @@ public final class OurSyntaxWidget {
     }
 
     public String getTooltip(MouseEvent event) {
-        try {
-            int offset = pane.viewToModel(event.getPoint());
+        try { int offset = pane.viewToModel(event.getPoint());
             CompModule module = getModule();
             if (module == null)
                 return null;
@@ -957,14 +1110,189 @@ public final class OurSyntaxWidget {
                         if (!Objects.equals(token, match))
                             return match;
                     }
-                }
+                }/* else{//colorful merge
+                    Pos col=findColor(expr,module,pos);
+                    if(col!=null && col!=Pos.UNKNOWN){
+                        System.out.println(col);
+                        JPopupMenu popupMenu = new JPopupMenu();
+                        JMenuItem remove = new JMenuItem("Remove");
+                        popupMenu.add(remove);
+                        int cha=getCaret();
+                        popupMenu.show( this.pane, cha, cha);
+                        remove.addActionListener(new AbstractAction() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                int c = getLineStartOffset(col.y2 - 1) + col.x2 - 1;
+                                int d= getLineStartOffset(col.y - 1) + col.x - 1;
+                                changeText(c,c+1,"");
+                                changeText(d,d+1,"");
+                            }
+                        });
+                        return pos.toString();
+                    }
+                }*/
             }
         } catch (Exception e) {
-            // e.printStackTrace();
+             e.printStackTrace();
             // ignore compile errors etc.
         }
         return null;
     }
+/*//colorful merge
+    private Pos findColor(Expr expr, CompModule module, Pos pos) {
+        boolean find=false;
+        Pos col=null;
+        Map<Integer,Set<Integer>> map=new HashMap<>();//<feature canbe removed, full feature set>
+        Expr facts=module.getAllReachableFacts();
+
+        if(facts instanceof ExprList)
+        for(Expr f:((ExprList) facts).args){
+            if(f.toString().equals("some none")){
+                if(f instanceof ExprUnary && ((ExprUnary) f).op.equals(ExprUnary.Op.NOOP))
+                    f=((ExprUnary) f).sub;
+                if(f.color.entrySet().size()==2){
+                    for(Integer i: f.color.keySet()){
+                        for(Integer j: f.color.keySet()){
+                            if(j==i) continue;
+                            else{
+                                Set temp=new HashSet<>();
+                                temp.add(i);
+                                temp.add(-j);
+                                map.put(-j,temp);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        VisitQuery<Pos> findColor = new VisitQuery<Pos>(){
+            @Override
+            public Pos visit(ExprBinary x) throws Err {
+
+                for(Map.Entry<Integer, Pos> co:x.color.entrySet()){
+                    Pos p=find(x,co,pos);
+                    if(p!=null)
+                        return p;
+                }
+                Pos left=visitThis(x.left);
+                return left!=null? left: visitThis(x.right);
+            }
+
+            private Pos find(Expr x, Map.Entry<Integer, Pos> value, Pos pos) {
+                Pos po=null;
+                if(value.getValue().x==pos.x && value.getValue().y==pos.y||value.getValue().x2==pos.x2 && value.getValue().y2==pos.y2 ){
+                    //计算
+
+                    if(x.color.keySet().containsAll(map.get(value.getKey())))
+                        return value.getValue();
+                   else{
+                   Integer a=value.getKey();
+                  Set b=  map.get(a);
+                  Set c=x.color.keySet();
+                  boolean d= c.containsAll(b);
+                    //is a feature of this Expr, but can not remove
+                        return Pos.UNKNOWN;}
+
+                }
+                //not a feature of this expr
+                return po;
+            }
+
+            @Override
+            public Pos visit(ExprList x) throws Err {
+                for(Map.Entry<Integer, Pos> co:x.color.entrySet()){
+                    Pos p=find(x,co,pos);
+                    if(p!=null)
+                        return p;
+                }
+                for(Expr e: x.args){
+                   Pos psub= visitThis(e);
+                   if(psub !=null)
+                       return psub;
+                }
+            return null;
+            }
+
+            @Override
+            public Pos visit(ExprCall x) throws Err {
+                for(Map.Entry<Integer, Pos> co:x.color.entrySet()){
+                    Pos p=find(x,co,pos);
+                    if(p!=null)
+                        return p;
+                }
+                return super.visit(x);
+            }
+
+            @Override
+            public Pos visit(ExprConstant x) throws Err {
+                for(Map.Entry<Integer, Pos> co:x.color.entrySet()){
+                    Pos p=find(x,co,pos);
+                    if(p!=null)
+                        return p;
+                }
+                return super.visit(x);
+            }
+
+            @Override
+            public Pos visit(ExprITE x) throws Err {
+                for(Map.Entry<Integer, Pos> co:x.color.entrySet()){
+                    Pos p=find(x,co,pos);
+                     if(p!=null)
+                        return p;
+                }
+                Pos e=visitThis(x.left);
+                return e==null?visitThis(x.right):e;
+            }
+
+            @Override
+            public Pos visit(ExprLet x) throws Err {
+                for(Map.Entry<Integer, Pos> co:x.color.entrySet()){
+                    Pos p=find(x,co,pos);
+                    if(p!=null)
+                        return p;
+                }
+                return visitThis(x.sub);
+            }
+
+            @Override
+            public Pos visit(ExprQt x) throws Err {
+                for(Map.Entry<Integer, Pos> co:x.color.entrySet()){
+                    Pos p=find(x,co,pos);
+                    if(p!=null)
+                        return p;
+                }
+                return visitThis(x.sub);
+            }
+
+            @Override
+            public Pos visit(ExprUnary x) throws Err {
+                for(Map.Entry<Integer, Pos> co:x.color.entrySet()){
+                    Pos p=find(x,co,pos);
+                   if(p!=null)
+                        return p;
+                }
+                return visitThis(x.sub);
+            }
+
+            @Override
+            public Pos visit(ExprVar x) throws Err {
+                return null;
+            }
+
+            @Override
+            public Pos visit(Sig x) throws Err {
+                return null;
+            }
+
+            @Override
+            public Pos visit(Sig.Field x) throws Err {
+                return null;
+            }
+        };
+       col= expr.accept(findColor);
+        return col;
+    }*/
 
     /** Retrieve the Pos of the selected text in the editor. */
     // [HASLab] colorful Alloy
@@ -975,8 +1303,6 @@ public final class OurSyntaxWidget {
         int x2 = pane.getSelectionEnd() - getLineStartOffset(y2 - 1);
         return new Pos(getFilename(), x1, y1, x2, y2);
     }
-
-
 
     /** A label view with the ability to strike out text with colors. */
     // [HASLab] colorful Alloy
@@ -1016,4 +1342,7 @@ public final class OurSyntaxWidget {
     public static Color C[] = {
                                new Color(255, 225, 205), new Color(255, 205, 225), new Color(205, 255, 225), new Color(225, 255, 205), new Color(225, 205, 255), new Color(205, 225, 255), new Color(225, 255, 225), new Color(225, 225, 255), new Color(255, 225, 225)
     };
+
+
+
 }

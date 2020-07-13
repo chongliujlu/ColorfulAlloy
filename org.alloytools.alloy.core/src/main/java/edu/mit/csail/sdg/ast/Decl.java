@@ -64,9 +64,9 @@ public final class Decl {
 
     /** The value that the list of names are bound to. */
     public final Expr                              expr;
-
+    //colorful merge remove public
     /** Caches the span() result. */
-    private Pos                                    span;
+    public Pos                                    span;
 
     /**
      * Returns a Pos object representing the entire span of this expression and all

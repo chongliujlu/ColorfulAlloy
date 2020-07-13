@@ -273,7 +273,9 @@ public final class VizGraphPanel extends JPanel {
                 // since many Mac mouses do not have a right button.
                 if (viewer == null)
                     return;
-                else if (ev.getButton() == MouseEvent.BUTTON3) {} else if (ev.getButton() == MouseEvent.BUTTON1 && ev.isControlDown()) {} else
+                else if (ev.getButton() == MouseEvent.BUTTON3) {}
+                else if (ev.getButton() == MouseEvent.BUTTON1 && ev.isControlDown()) {}
+                else
                     return;
                 viewer.alloyPopup(graphPanel, ev.getX(), ev.getY());
             }

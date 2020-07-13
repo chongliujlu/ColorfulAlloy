@@ -15,9 +15,9 @@
 
 package edu.mit.csail.sdg.alloy4;
 
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.WeakHashMap;
 import java.util.function.Function;
@@ -101,8 +101,10 @@ public final class OurAntiAlias {
      */
 
     public static JTextPane pane(Function<MouseEvent,String> tooltip, Object... attributes) {
+
         JTextPane ans = new JTextPane() {
 
+            boolean pos=false;
             static final long serialVersionUID = 0;
 
             @Override
@@ -114,14 +116,23 @@ public final class OurAntiAlias {
             }
 
             @Override
-            public String getToolTipText(MouseEvent event) {
-                if (tooltip != null) {
+            public String getToolTipText(MouseEvent event) { if (tooltip != null) {
+                //String s=tooltip.apply(event);
+
                     return tooltip.apply(event);
                 }
                 return super.getToolTipText(event);
             }
 
+            @Override
+            public Point getPopupLocation(MouseEvent event) {
+                return super.getPopupLocation(event);
+            }
+
         };
+
+
+
         if (tooltip != null)
             ToolTipManager.sharedInstance().registerComponent(ans);
 

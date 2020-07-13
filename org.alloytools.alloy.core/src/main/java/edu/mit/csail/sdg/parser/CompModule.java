@@ -34,38 +34,10 @@ import java.util.*;
 
 import edu.mit.csail.sdg.alloy4.*;
 import edu.mit.csail.sdg.alloy4.ConstList.TempList;
-import edu.mit.csail.sdg.ast.Attr;
-import edu.mit.csail.sdg.ast.Browsable;
-import edu.mit.csail.sdg.ast.Clause;
-import edu.mit.csail.sdg.ast.Command;
-import edu.mit.csail.sdg.ast.CommandScope;
-import edu.mit.csail.sdg.ast.Decl;
-import edu.mit.csail.sdg.ast.Expr;
-import edu.mit.csail.sdg.ast.ExprBad;
-import edu.mit.csail.sdg.ast.ExprBadCall;
-import edu.mit.csail.sdg.ast.ExprBadJoin;
-import edu.mit.csail.sdg.ast.ExprBinary;
-import edu.mit.csail.sdg.ast.ExprCall;
-import edu.mit.csail.sdg.ast.ExprChoice;
-import edu.mit.csail.sdg.ast.ExprConstant;
-import edu.mit.csail.sdg.ast.ExprHasName;
-import edu.mit.csail.sdg.ast.ExprITE;
-import edu.mit.csail.sdg.ast.ExprLet;
-import edu.mit.csail.sdg.ast.ExprList;
-import edu.mit.csail.sdg.ast.ExprQt;
-import edu.mit.csail.sdg.ast.ExprUnary;
-import edu.mit.csail.sdg.ast.ExprVar;
-import edu.mit.csail.sdg.ast.FeatureScope;
-import edu.mit.csail.sdg.ast.Func;
-import edu.mit.csail.sdg.ast.Module;
-import edu.mit.csail.sdg.ast.ModuleReference;
-import edu.mit.csail.sdg.ast.Sig;
+import edu.mit.csail.sdg.ast.*;
 import edu.mit.csail.sdg.ast.Sig.Field;
 import edu.mit.csail.sdg.ast.Sig.PrimSig;
 import edu.mit.csail.sdg.ast.Sig.SubsetSig;
-import edu.mit.csail.sdg.ast.Type;
-import edu.mit.csail.sdg.ast.VisitQueryOnce;
-import edu.mit.csail.sdg.ast.VisitReturn;
 
 /**
  * Mutable; this class represents an Alloy module; equals() uses object
@@ -217,6 +189,115 @@ public final class CompModule extends Browsable implements Module {
      * are allowed.
      */
     private final List<Command>               commands    = new ArrayList<Command>();
+
+    //colorful merge
+    /**
+     * find the Elements for the right click menu. return
+     * @param module current module
+     * @param pos the Pos of the caret
+     * @param colString featurs of this expression
+     * @return the element that can be remove features
+     */
+    public Browsable findElementPos(CompModule module, Pos pos, StringBuilder colString) {
+        Set col;
+        //if caret pos is a Sig
+        for(Sig sig:module.getAllSigs()){
+            mergeColorPos(sig);
+            if(sig.pos!=null)
+                if(sig.pos.contains(pos)){
+                    col= sig.color.keySet();
+                    change2String(colString,col);
+                    return sig;
+            }
+        }
+
+        VisitPosQuery findExprPos = new VisitPosQuery();
+        if(module.getAllReachableFacts() instanceof ExprList)
+        for(Expr fact: ((ExprList) module.getAllReachableFacts()).args){
+            mergeColorPos(fact);
+            if(fact.pos.contains(pos)){
+                findExprPos.parentFeats=new HashMap<>();
+                findExprPos.setPos(pos);
+                Expr e= fact.accept(findExprPos);
+                col= findExprPos.getParentFeats().keySet();
+                change2String(colString,col);
+                return e;
+            }
+        }
+
+       for(Func func:module.getAllFunc()){
+           mergeColorPos(func);
+           if(func.pos.contains(pos)){
+                Expr e=func.getBody();
+                if(e instanceof ExprUnary && ((ExprUnary) e).op.equals(ExprUnary.Op.NOOP)){
+                    if(((ExprUnary) e).sub instanceof ExprList){
+                        for(Expr arg:((ExprList) ((ExprUnary) e).sub).args){
+                            findExprPos.parentFeats=new HashMap<>(func.color);
+                            findExprPos.setPos(pos);
+                            Expr find=arg.accept(findExprPos);
+                            if(find!=null){
+                                col=findExprPos.getParentFeats().keySet();
+                                change2String(colString,col);
+                                return find;
+                            }
+                        }
+                    }
+                }
+
+               col=func.color.keySet();
+               change2String(colString,col);
+               return  func;
+           }
+       }
+       for(Pair<String,Expr> ass:module.getAllAssertions()){
+           mergeColorPos(ass.b);
+           if(ass.b.pos.contains(pos)){
+               findExprPos.parentFeats=new HashMap<>();
+               findExprPos.setPos(pos);
+               Expr e=ass.b.accept(findExprPos);
+               col=e!=null?findExprPos.getParentFeats().keySet():ass.b.color.keySet();
+               change2String(colString,col);
+               return e!=null?e: ass.b;
+           }
+       }
+
+        return null;
+    }
+
+    //colorful merge
+    /**
+     * store feats of the element before merge
+     * @param colString
+     * @param col feature set
+     */
+    private void change2String(StringBuilder colString, Set<Integer> col) {
+        for(Integer i: col){
+            colString.append(i+",");
+        }
+        if(colString.length()>0)
+            colString.deleteCharAt(colString.length()-1);
+    }
+
+    //colorful merge
+    /**
+     * merge the feat Pos with the element.
+     * @param expr
+     */
+    private void mergeColorPos(Expr expr) {
+        for(Map.Entry<Integer, Pos> map:expr.color.entrySet()){
+           expr.pos= expr.pos.merge(map.getValue());
+        }
+    }
+    //colorful merge
+    /**
+     * merge the feat Pos with the Func.
+     * @param func
+     */
+    private void mergeColorPos(Func func) {
+        for(Map.Entry<Integer, Pos> map:func.color.entrySet()){
+            func.pos.merge(map.getValue());
+        }
+    }
 
     // ============================================================================================================================//
 
@@ -3277,12 +3358,191 @@ public final class CompModule extends Browsable implements Module {
             }
         });
 
-        return holder.expr;
+            return holder.expr;
     }
+
 
     @Override
     public String explain() {
         return "module " + moduleName;
     }
 
+    public class VisitPosQuery extends VisitReturn<Expr>{
+        public Map<Integer, Pos> getParentFeats() {
+            return parentFeats;
+        }
+
+        Map<Integer,Pos> parentFeats = new HashMap<>();
+
+        public void setPos(Pos p) {
+            this.p = p;
+        }
+
+        Pos p=null;
+
+        @Override
+        public Expr visit(ExprBinary x) throws Err {
+            HashMap<Integer,Pos> tempFeats = new HashMap<>(parentFeats);
+
+            Map col=new HashMap(x.color);
+            removeCol(col,x.color);
+            parentFeats.putAll(x.color);
+            x.pos=x.span();
+            mergeColorPos(x);
+            if(x.pos.contains(p)){
+                Expr left=visitThis(x.left);
+                if(left!=null)
+                    return left;
+                parentFeats= (Map<Integer, Pos>) tempFeats.clone();
+                Expr right=visitThis(x.right);
+                if(right!=null)
+                    return right;
+                if(!x.color.isEmpty())
+                    return  x;
+            }
+            return null;
+
+        }
+
+        @Override
+        public Expr visit(ExprList x) throws Err {
+            HashMap<Integer,Pos> tempFeats = new HashMap<>(parentFeats);
+            Map col=new HashMap(x.color);
+            removeCol(col,x.color);
+            parentFeats.putAll(x.color);
+            x.pos=x.span();
+            mergeColorPos(x);
+            if(x.pos.contains(p)){
+                for(Expr e: x.args){
+                    parentFeats= (Map<Integer, Pos>) tempFeats.clone();
+                    Expr sub=visitThis(e);
+                    if(sub!=null)
+                        return sub;
+                }
+                if(!x.color.isEmpty())
+                    return x;
+            }
+            return null;
+        }
+
+        @Override
+        public Expr visit(ExprCall x) throws Err {
+
+            Map col=new HashMap(x.color);
+            removeCol(col,x.color);
+            parentFeats.putAll(x.color);
+            x.pos=x.span();
+            mergeColorPos(x);
+            if(x.pos.contains(p) && !x.color.isEmpty()){
+                return x;
+            }
+            return null;
+        }
+
+        @Override
+        public Expr visit(ExprConstant x) throws Err {
+            return null;
+        }
+
+        @Override
+        public Expr visit(ExprITE x) throws Err {
+            HashMap<Integer,Pos> tempFeats = new HashMap<>(parentFeats);
+            Map col=new HashMap(x.color);
+            removeCol(col,x.color);
+            parentFeats.putAll(x.color);
+            x.pos=x.span();
+            mergeColorPos(x);
+            if(x.pos.contains(p)){
+                Expr cond=visitThis(x.cond);
+                if(cond!=null)
+                    return cond;
+                parentFeats= (Map<Integer, Pos>) tempFeats.clone();
+                Expr left=visitThis(x.left);
+                if(left!=null)
+                    return left;
+                parentFeats= (Map<Integer, Pos>) tempFeats.clone();
+                Expr right=visitThis(x.right);
+                if(right!=null)
+                    return left;
+                if(!x.color.isEmpty())
+                return x;
+            }
+            return null;
+        }
+
+        @Override
+        public Expr visit(ExprLet x) throws Err {
+            Map col=new HashMap(x.color);
+            removeCol(col,x.color);
+            parentFeats.putAll(x.color);
+            x.pos=x.span();
+            mergeColorPos(x);
+            if(x.pos.contains(p)){
+                Expr sub=visitThis(x.sub);
+                if(sub!=null)
+                    return sub;
+
+                else if(!x.color.isEmpty()) return x;
+            }
+            return null;
+        }
+
+        @Override
+        public Expr visit(ExprQt x) throws Err {
+            Map col=new HashMap(x.color);
+            removeCol(col,x.color);
+            parentFeats.putAll(x.color);
+            x.pos=x.span();
+            mergeColorPos(x);
+            if(x.pos.contains(p)){
+                Expr sub=visitThis(x.sub);
+                if(sub!=null)
+                    return sub;
+                else if(!x.color.isEmpty()) return x;
+            }
+            return null;
+        }
+
+        @Override
+        public Expr visit(ExprUnary x) throws Err {
+            Map col=new HashMap(x.color);
+            removeCol(col,x.color);
+            parentFeats.putAll(x.color);
+            x.pos=x.span();
+            mergeColorPos(x);
+            if(x.pos.contains(p)){
+                Expr sub=visitThis(x.sub);
+                if(sub!=null)
+                    return sub;
+                else if(!x.color.isEmpty())
+                    return x;
+            }
+            return null;
+        }
+
+        private void removeCol(Map<Integer,Pos>  col1,Map<Integer,Pos>  col2) {
+            for(Map.Entry<Integer,Pos> entry:parentFeats.entrySet()){
+                if(col1.containsKey(entry.getKey()))
+                if(col1.get(entry.getKey()).equals(entry.getValue()))
+                    col2.remove(entry.getKey());
+            }
+        }
+
+        @Override
+        public Expr visit(ExprVar x) throws Err {
+            return null;
+        }
+
+        @Override
+        public Expr visit(Sig x) throws Err {
+            return null;
+        }
+
+        @Override
+        public Expr visit(Sig.Field x) throws Err {
+            return null;
+        }
+    }
+
 }
+

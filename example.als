@@ -75,25 +75,12 @@ fact FeatureModel {
 ➀➁➂fact Thumbnails{
      	all c : Catalog | c. thumbnails in (category.( ^inside ).c).images
 	}➂➁➀
-➊➋➌pred Scenario {
-	some Product.images
-	}➌➋➊
-➀➋➌pred Scenario {
-	some Product.images
-	some Category
-	}➌➋➀
-➀➁➌pred Scenario {
-	some Product.images
-	some Category
-	}➌➁➀
-➀➋➂pred Scenario {
-	some Product.images
-	some Category
-	}➂➋➀
-➀➁➂pred Scenario {
-	some Product.images
-	some Category
-	}➂➁➀
+pred Scenario{
+        ➋➀➂ some Product.images➂➀➋
+	 ➋➌ some Product.images➌➋
+	 ➀➁ some Product.images➁➀
+	 ➀ some Category➀
+        }
 ➊➋➌assert AllCataloged {}➌➋➊
 ➀➋➌assert AllCataloged {}➌➋➀
 ➀➁➌assert AllCataloged {
@@ -111,3 +98,4 @@ run Scenario with ➀,➁,➂ for 10
 check AllCataloged with ➀,➁,➌ for 10
 check AllCataloged with ➀,➁,➂ for 10
 
+➀pred a {➀➁➂some Product➂➁➀}➀

@@ -505,6 +505,7 @@ public final class OurTabbedSyntaxWidget {
         int c = 0, d;
         for (Pos p : set)
             if (p != null && p.filename.length() > 0 && p.y > 0 && p.x > 0 && newtab(p.filename)) {
+
                 text = get();
                 c = text.getLineStartOffset(p.y - 1) + p.x - 1;
                 d = text.getLineStartOffset(p.y2 - 1) + p.x2 - 1;
@@ -526,9 +527,6 @@ public final class OurTabbedSyntaxWidget {
         listeners.fire(this, Event.STATUS_CHANGE);
     }
 
-    public void appendText(String string) {
-         get().appendText(string);
-    }
     public void changeText(Pos... pos) {
         changeText(Util.asList(pos), new Color(0.9f, 0.4f, 0.4f), true,null);
     }
