@@ -260,6 +260,12 @@ public final class CompModule extends Browsable implements Module {
                return e!=null?e: ass.b;
            }
        }
+       for(Command com: module.commands){
+        if(com.pos.contains(pos)){
+            return com;
+        }
+
+       }
 
         return null;
     }

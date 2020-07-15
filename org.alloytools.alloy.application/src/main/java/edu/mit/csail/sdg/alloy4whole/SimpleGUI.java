@@ -1002,13 +1002,15 @@ public final class SimpleGUI implements ComponentListener, Listener {
         Map<String,Map<Map<Integer,Pos>,Sig>> sigp = sigs;
         HashMap<String,ArrayList<Expr>> assertp=asserts;
         HashMap<String,ArrayList<Func>> funp=funs;
+        HashMap<String,ArrayList<Command>> commandP=null;
+        ArrayList<String> commandmergeName=new ArrayList<>();
         //store the facts after parser
         SafeList<Pair<String, Expr>> factp = null;
         //存储冗余feature对，old2new redundant
         Map<Set<Integer>,Set<Integer>> redundantOld2new=new HashMap<>();
 
         //JMenu mergeSigs,mergeField,remMultiplicity,remAbstract,remIncompatibleSigs,remRedundantFeat,addRedundantFeats,autoMerSig,autoMergeFact,mergeassert;
-        JMenu autoMerSig,autoMergeFact,mergeassert,mergefun;
+        JMenu autoMerSig,autoMergeFact,mergeassert,mergefun,mergecommands;
 
 
         //mergeSigs=new JMenu("Merge Sigs");
@@ -1022,6 +1024,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
         autoMergeFact=new JMenu("Fact");
         mergeassert=new JMenu("Assert");
         mergefun=new JMenu("Fun/Pred");
+        mergecommands=new JMenu("Command");
 
         // auto merge
         JMenu new_sigLists,factLists,assertions;
@@ -1042,6 +1045,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
         mergemenu.add(autoMergeFact);
         mergemenu.add(mergeassert);
         mergemenu.add(mergefun);
+        mergemenu.add(mergecommands);
 
         //a list of all sigs in this module. used for compute the sig that need to merge.
         SafeList<Sig> sigSafeList=new SafeList<>();
@@ -1082,6 +1086,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                     factp=  world.getAllFacts();
                     assertp= (HashMap<String, ArrayList<Expr>>) world.getAssertions();
                     funp=(HashMap<String, ArrayList<Func>>)world.getFunc();
+                    commandP=compCommand(world.getAllCommands());
                 }
 
                 if(sigp!=null){
@@ -1167,6 +1172,31 @@ public final class SimpleGUI implements ComponentListener, Listener {
                             ArrayList<Expr> tempfact=new ArrayList<>();
                             tempfact.add((Expr) p.b);
                             fact_Merge.put((String)p.a,tempfact);
+                        }
+                    }
+                }
+
+                if(commandP!=null){
+                    commandmergeName=new ArrayList<>();
+                    for(Map.Entry<String,ArrayList<Command>> entry: commandP.entrySet()){
+                        Set<Command> visit=new HashSet<>();
+                        for(Command c:entry.getValue()){
+                            if(visit.contains(c))
+                                continue;
+                            visit.add(c);
+                            for(Command c2: entry.getValue()){
+                                if(visit.contains(c2)) continue;
+                                if(c.feats!=null && c2.feats!=null){
+                                    if(compare(new HashSet<>(c.feats.feats),new HashSet<>(c2.feats.feats),new HashSet<>())){
+                                        commandmergeName.add(entry.getKey());
+                                        visit.add(c2);
+                                        break;
+                                    }
+
+                                }
+                            }
+
+                            if(!commandmergeName.isEmpty()) break;
                         }
                     }
                 }
@@ -1734,7 +1764,244 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
         }
 
+        if(commandmergeName.isEmpty())
+            mergemenu.remove(mergecommands);
+        else{
+            for(String name: commandmergeName){
+
+                JMenuItem commandtitem=new JMenuItem(name);
+                mergefun.add(commandtitem);
+                HashMap<String, ArrayList<Command>> finalCommandP = commandP;
+
+
+                HashMap<String, ArrayList<Expr>> finalAssertp = assertp;
+                HashMap<String, ArrayList<Func>> finalFunp = funp;
+                commandtitem.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        ArrayList<Pos>  pos=new ArrayList<>();
+                        for(Command comfinal: finalCommandP.get(name)){
+                            if(pos.isEmpty())
+                                pos.add(comfinal.pos);
+                            else{
+                                for(Pos p:new ArrayList<>(pos)){
+                                    if(comfinal.pos.y>p.y || (comfinal.pos.y==p.y && comfinal.pos.x>p.x)){
+                                        pos.add(pos.indexOf(p),comfinal.pos);
+                                        break;
+                                    }
+                                }
+                                if(!pos.contains(comfinal.pos))
+                                    pos.add(comfinal.pos);
+                            }
+                        }
+
+
+
+
+
+                        boolean notFinish=true;
+
+                        while(notFinish){
+                            ArrayList<Command> temp= (ArrayList<Command>) finalCommandP.get(name).clone();
+                            ArrayList<Command> visit =new ArrayList<>();
+                            boolean changed=false;
+
+                            for(Command com: temp){
+                                if(visit.contains(com)) continue;
+                                visit.add(com);
+                                for(Command com2:temp){
+                                    if(visit.contains(com2)) continue;
+                                    if(com.feats!=null && com2.feats!=null){
+                                        Set<Integer> b=new HashSet<>();
+                                        if(compare(new HashSet<>(com.feats.feats),new HashSet<>(com2.feats.feats),b)){
+                                            visit.add(com2);
+                                            if(com.feats.feats.containsAll(b)){
+                                                com.feats.feats.removeAll(b);
+                                                finalCommandP.get(name).remove(com2);
+                                            }else{
+                                                com2.feats.feats.removeAll(b);
+                                                finalCommandP.get(name).remove(com);
+                                            }
+
+
+                                            changed=true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            if(!changed) notFinish=false;
+                        }
+
+
+                       for(int i=0;i<pos.size()-1;i++){
+                           text.changeText(pos.get(i),"");
+                       }
+
+                       StringBuilder print=new StringBuilder();
+                       printCommand(finalCommandP.get(name),print, finalAssertp, finalFunp);
+
+
+                       text.changeText(pos.get(pos.size()-1),print.toString());
+
+                    }
+
+                    private void printCommand(ArrayList<Command> commands, StringBuilder print, HashMap<String, ArrayList<Expr>> finalAssertp, HashMap<String, ArrayList<Func>> finalFunp) {
+                        for(Command cmd:commands){
+                            print.append(cmd.check ? "\r\ncheck " : "\r\nrun ");
+
+                            if (cmd.label.startsWith("run$") || cmd.label.startsWith("check$")) {
+                                print.append("{");
+                                if(cmd.check){
+                                    for (Map.Entry<String, ArrayList<Expr>> ass : finalAssertp.entrySet()) {
+                                        if (cmd.label.equals(ass.getKey())) {
+                                            if(ass.getValue().size()>1){
+
+                                                ArrayList<Pos> pos=new ArrayList<>();
+                                                ArrayList<Expr> list=new ArrayList<>();
+                                                for(Expr ass1: ass.getValue()){
+
+                                                    for (Map.Entry<Integer,Pos> ent:ass1.color.entrySet()){
+                                                        ass1.pos=ass1.pos.merge(ent.getValue());
+                                                    }
+                                                    if(pos.isEmpty())
+                                                        pos.add(ass1.pos);
+                                                    else{
+                                                        for(Pos p:new ArrayList<>(pos)){
+                                                            if(ass1.pos.y>p.y || (ass1.pos.y==p.y && ass1.pos.x>p.x)){
+                                                                pos.add(pos.indexOf(p),ass1.pos);
+                                                                break;
+                                                            }
+                                                        }
+                                                        if(!pos.contains(ass1.pos))
+                                                            pos.add(ass1.pos);
+                                                    }
+
+
+                                                    if(ass1 instanceof ExprUnary)
+                                                        ass1=((ExprUnary) ass1).sub;
+
+                                                    list.add( (ass1 instanceof ExprUnary && ((ExprUnary) ass1).op.equals(ExprUnary.Op.NOOP)? ((ExprUnary) ass1).sub: ass1));
+
+                                                }
+
+
+
+                                                Expr enew=ExprList.make(pos.get(0), pos.get(0), ExprList.Op.AND,  list, new HashMap<Integer,Pos>());
+                                                VisitRefactor refactorExpr=new VisitRefactor();
+                                                enew= enew.accept(refactorExpr);
+
+                                                VisitprintmergeExpr visitprintmergeExpr=new VisitprintmergeExpr();
+                                                print.append(enew.accept(visitprintmergeExpr));
+                                            }else if(ass.getValue().size()==1){
+                                                if(!(ass.getValue().get(0) instanceof ExprUnary && ((ExprUnary) ass.getValue().get(0) ).sub.isSame(ExprConstant.TRUE))){
+                                                    VisitprintmergeExpr visitprintmergeExpr=new VisitprintmergeExpr();
+                                                    print.append(ass.getValue().get(0).accept(visitprintmergeExpr));
+                                                }
+                                            }
+
+
+                                            //print.append(ass.b.accept(printAmalgamatedExpr));
+
+
+                                        }
+                                    }
+
+                                }else{
+                                    for (Map.Entry<String, ArrayList<Func>> runFunc : finalFunp.entrySet()) {
+                                        if (cmd.label.equals(runFunc.getKey())){
+
+                                            ArrayList<Expr> list=new ArrayList<>();
+                                            for(Func fun1: runFunc.getValue()){
+
+                                                for (Map.Entry<Integer,Pos> ent:fun1.color.entrySet()){
+                                                    fun1.pos=fun1.pos.merge(ent.getValue());
+                                                }
+
+
+                                                if ( fun1.getBody() instanceof ExprUnary&&((ExprUnary) fun1.getBody()).op.equals(ExprUnary.Op.NOOP))
+                                                    list.add(((ExprUnary) ((ExprUnary) fun1.getBody())));
+
+                                            }
+                                            Expr enew=ExprList.make(cmd.pos, cmd.pos, ExprList.Op.AND,  list, new HashMap<Integer,Pos>());
+                                            VisitRefactor refactorExpr=new VisitRefactor();
+                                            enew= enew.accept(refactorExpr);
+
+
+                                            VisitprintmergeExpr visitprintmergeExpr=new VisitprintmergeExpr();
+                                            print.append(enew.accept(visitprintmergeExpr));
+
+                                        }
+
+                                    }
+                                }
+                                print.append("}");
+                            } else{
+                                print.append(cmd.label);
+                                //print assert or pred in command
+                                if(cmd.nameExpr!=null){
+                                    if (cmd.nameExpr.isSame(ExprConstant.TRUE))
+                                        print.append("{}");
+                                    else{
+                                        Expr e =null;
+                                        if(!(cmd.nameExpr instanceof ExprVar)){
+                                            e=cmd.nameExpr;
+                                            print.append(e==null? "{}":("{ " +e  + " }"));
+                                        }
+                                    }
+                                }
+                            }
+                            if(cmd.feats!=null && cmd.feats.feats.size()!=0)
+                                print.append(" with "+getComandColorString(new HashSet<>(cmd.feats.feats)));
+
+                            print.append(" for ");
+                            print.append(cmd.overall > 0 ? cmd.overall + " " : 4 + " ");
+
+                            if (cmd.scope.size() >= 1 || cmd.bitwidth != -1)
+                                print.append(" but ");
+                            if (cmd.bitwidth != -1) {
+                                print.append(cmd.bitwidth + " Int ");
+                                if(!cmd.scope.isEmpty() )
+                                    print.append(",");
+                            }
+
+                            for (CommandScope cs : cmd.scope) {
+
+                                if (cs.isExact)
+                                    print.append(" exactly ");
+                                print.append(cs.startingScope + " ");
+                                print.append(cs.sig.label.substring(5) + ",");
+                            }
+
+                            print.deleteCharAt(print.length() - 1);
+
+                            if (cmd.expects >= 0)
+                                print.append(" expect ").append(cmd.expects);
+
+                        }
+                    }
+                });
+                mergecommands.add(commandtitem);
+            }
+        }
+
         return null;
+    }
+
+    private HashMap<String, ArrayList<Command>> compCommand(ConstList<Command> allCommands) {
+        HashMap<String, ArrayList<Command>> command=new HashMap<>();
+        for(Command com:allCommands){
+            if(com.feats!=null && com.feats.isExact)continue;
+
+            if(command.containsKey(com.label)){
+                command.get(com.label).add(com);
+            }else{
+                ArrayList<Command> temp =new ArrayList<Command>();
+                temp.add(com);
+                command.put(com.label,temp);
+            }
+        }
+        return command;
     }
 
     private Expr mergeExpr(Expr sub, Expr sub1,Map<Integer,Pos> color) {
@@ -3183,6 +3450,33 @@ public final class SimpleGUI implements ComponentListener, Listener {
         return name;
     }
 
+    private String getComandColorString(Set<Integer> key) {
+        String name=null;
+        for (Integer i:key){
+            String color=null;
+            if(i==1) color ="\u2780";
+            else if(i==2) color ="\u2781";
+            else if(i==3) color ="\u2782" ;
+            else if(i==4) color ="\u2783" ;
+            else if(i==5) color ="\u2784" ;
+            else if(i==6) color ="\u2785" ;
+            else if(i==7) color ="\u2786" ;
+            else if(i==8) color ="\u2787" ;
+            else if(i==9) color ="\u2788" ;
+            else if(i==-1) color ="\u278A" ;
+            else if(i==-2) color ="\u278B" ;
+            else if(i==-3) color ="\u278C" ;
+            else if(i==-4) color ="\u278D" ;
+            else if(i==-5) color ="\u278E" ;
+            else if(i==-6) color ="\u278F" ;
+            else if(i==-7) color ="\u2790" ;
+            else if(i==-8) color ="\u2791" ;
+            else if(i==-9) color ="\u2792" ;
+
+            name=name==null? color : name+","+color;
+        }
+        return name;
+    }
     // ===============================================================================================================//
 
     /** This method displays the about box. */

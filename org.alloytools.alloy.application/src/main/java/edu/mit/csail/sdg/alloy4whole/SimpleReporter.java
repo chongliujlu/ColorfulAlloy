@@ -1633,7 +1633,7 @@ final class SimpleReporter extends A4Reporter {
          */
         private void printCommand(StringBuilder print, Module world,expressionProject reconstructExpr, ExprPrinterVisitor printExprs,Command cmd ,Set<Integer> modulefeats) throws ErrorSyntax {
 
-            print.append(cmd.check ? "\r\n\r\ncheck " : "\r\nrun ");
+            print.append(cmd.check ? "\r\ncheck " : "\r\nrun ");
 
             if (cmd.label.startsWith("run$") || cmd.label.startsWith("check$")) {
                 print.append("{");

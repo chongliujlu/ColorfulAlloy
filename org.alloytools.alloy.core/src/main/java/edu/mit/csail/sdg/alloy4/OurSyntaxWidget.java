@@ -446,12 +446,16 @@ public final class OurSyntaxWidget {
                               }else if(er instanceof Func){
                                   //delete features for the whole pred/fun
                                   doFeatRemove(featRmSet,er.color.keySet(),er.color,point.x, point.y);
+                              }else if(er instanceof Command){
+                                  doFeatRemove(featRmSet, (Command) er,point.x, point.y);
                               }
                           }
                        }
                    }
                 }
             }
+
+
 
             //colorful merge
             /**
@@ -488,6 +492,75 @@ public final class OurSyntaxWidget {
 
                 pop.show(pane, x, y);
             }
+            private void doFeatRemove(Map<Set<Integer>, Integer> featRmSet, Command cmd, int x, int y) {
+                pop.removeAll();
+                if(cmd.feats!=null){
+
+
+                Set <Integer> menu=new HashSet<>();
+                for(Map.Entry<Set<Integer>, Integer> entry:featRmSet.entrySet()){
+                    if(cmd.feats.feats.containsAll(entry.getKey())){
+                        if(!menu.contains(entry.getValue())){
+                            menu.add(entry.getValue());
+                            JMenuItem item = new JMenuItem("Remove "+getColorString(entry.getValue()));
+                            pop.add(item);
+                            item.addActionListener(new ActionListener() {
+                                @Override
+                                public void actionPerformed(ActionEvent e) {
+                                    Pos pos=cmd.feats.pos;
+                                    cmd.feats.feats.remove(entry.getValue());
+                                    Pos temp=null;
+                                    StringBuilder featsString= new StringBuilder();
+
+                                    if(cmd.feats==null || (cmd.feats.feats.size()==0)){
+                                        temp=new Pos(cmd.feats.pos.filename,cmd.feats.pos.x,cmd.feats.pos.y,cmd.pos.x2,cmd.pos.y2);
+                                    }else{
+                                         featsString= new StringBuilder(getComandColorString(new HashSet<>(cmd.feats.feats)));
+                                        temp=new Pos(cmd.feats.pos.filename,cmd.feats.pos.x2,cmd.feats.pos.y2,cmd.pos.x2,cmd.pos.y2);
+                                    }
+
+
+                                    featsString.append(" for ");
+                                    featsString.append(cmd.overall > 0 ? cmd.overall + " " : 4 + " ");
+
+                                    if (cmd.scope.size() >= 1 || cmd.bitwidth != -1)
+                                        featsString.append(" but ");
+                                    if (cmd.bitwidth != -1) {
+                                        featsString.append(cmd.bitwidth + " Int ");
+                                        if(!cmd.scope.isEmpty() )
+                                            featsString.append(",");
+                                    }
+
+                                    for (CommandScope cs : cmd.scope) {
+
+                                        if (cs.isExact)
+                                            featsString.append(" exactly ");
+                                        featsString.append(cs.startingScope + " ");
+                                        featsString.append(cs.sig.label.substring(5) + ",");
+                                    }
+
+                                    featsString.deleteCharAt(featsString.length() - 1);
+
+                                    if (cmd.expects >= 0)
+                                        featsString.append(" expect ").append(cmd.expects);
+
+                                    //int c= getLineStartOffset(pos.y - 1) + pos.x - 1;
+                                    //int d = getLineStartOffset(pos.y2 - 1) + pos.x2 - 1;
+
+
+
+                                    int c= getLineStartOffset(temp.y - 1) + temp.x - 1;
+                                    int d = getLineStartOffset(temp.y2 - 1) + temp.x2 - 1;
+                                    changeText(c+1,d+1,featsString.toString());
+                                }
+                            });
+                        }
+                    }
+                }
+
+                pop.show(pane, x, y);
+                }
+            }
 
             /**
              * change integer to colorful annotation
@@ -516,6 +589,36 @@ public final class OurSyntaxWidget {
                 else if(i==-9) color ="\u2792" ;
                 return color;
             }
+            private String getComandColorString(Set<Integer> key) {
+                String name="";
+                for (Integer i:key){
+                    String color=null;
+                    if(i==1) color ="\u2780";
+                    else if(i==2) color ="\u2781";
+                    else if(i==3) color ="\u2782" ;
+                    else if(i==4) color ="\u2783" ;
+                    else if(i==5) color ="\u2784" ;
+                    else if(i==6) color ="\u2785" ;
+                    else if(i==7) color ="\u2786" ;
+                    else if(i==8) color ="\u2787" ;
+                    else if(i==9) color ="\u2788" ;
+                    else if(i==-1) color ="\u278A" ;
+                    else if(i==-2) color ="\u278B" ;
+                    else if(i==-3) color ="\u278C" ;
+                    else if(i==-4) color ="\u278D" ;
+                    else if(i==-5) color ="\u278E" ;
+                    else if(i==-6) color ="\u278F" ;
+                    else if(i==-7) color ="\u2790" ;
+                    else if(i==-8) color ="\u2791" ;
+                    else if(i==-9) color ="\u2792" ;
+
+                    name=name==""? color : name+","+color;
+                }
+                return name;
+            }
+
+
+
         });
 
         component.addFocusListener(new FocusAdapter() {
@@ -913,6 +1016,12 @@ public final class OurSyntaxWidget {
     /** Return the entire text. */
     public String getText() {
         return pane.getText();
+    }
+    //colorful merge
+    public String getText(Pos pos) throws BadLocationException {
+        int c= getLineStartOffset(pos.y - 1) + pos.x - 1 ;
+        int d = getLineStartOffset(pos.y2 - 1) + pos.x2 - 1-c;
+        return pane.getText(c,d);
     }
 
     /**
