@@ -1019,13 +1019,13 @@ public final class SimpleGUI implements ComponentListener, Listener {
         //remRedundantFeat=new JMenu("Remove Redundant Features");
        // addRedundantFeats=new JMenu("Add Redundant Features");
         autoMerSig=new JMenu("AutoMerge-Sigs");
-        autoMergeFact=new JMenu("Merge-Fact");
-        mergeassert=new JMenu("Merge-Assert");
-        mergefun=new JMenu("merge-fun/pred");
+        autoMergeFact=new JMenu("Fact");
+        mergeassert=new JMenu("Assert");
+        mergefun=new JMenu("Fun/Pred");
 
         // auto merge
         JMenu new_sigLists,factLists,assertions;
-        new_sigLists=new JMenu("Merge Sigs");
+        new_sigLists=new JMenu("Sigs");
 
 
         mergemenu.removeAll();
@@ -1037,9 +1037,9 @@ public final class SimpleGUI implements ComponentListener, Listener {
        // mergemenu.add(remRedundantFeat);
        // mergemenu.add(addRedundantFeats);
       //  mergemenu.add(autoMerSig);
-        mergemenu.add(autoMergeFact);
 
         mergemenu.add(new_sigLists);
+        mergemenu.add(autoMergeFact);
         mergemenu.add(mergeassert);
         mergemenu.add(mergefun);
 

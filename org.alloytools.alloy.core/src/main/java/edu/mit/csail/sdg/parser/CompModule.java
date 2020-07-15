@@ -1295,17 +1295,21 @@ public final class CompModule extends Browsable implements Module {
                         }
 
                         if(!resultSig.isEmpty()){
-                            Expr e=null;
-                            for(Sig s: resultSig){
-                                if(e==null){
-                                    e=ExprUnary.Op.NOOP.make(s.pos, s, null, 0,color);
+                            if(resultSig.size()==1){
+                                ans.add(resultSig.get(0));
+                            }else{
+                                Expr e=null;
+                                for(Sig s: resultSig){
+                                    if(e==null){
+                                        e=ExprUnary.Op.NOOP.make(s.pos, s, null, 0,color);
+                                    }
+                                    else{
+                                        Expr e2=ExprUnary.Op.NOOP.make(s.pos, s, null, 0,color);
+                                        e=ExprBinary.Op.PLUS.make(s.pos, null, e, e2,color);
+                                    }
                                 }
-                                else{
-                                    Expr e2=ExprUnary.Op.NOOP.make(s.pos, s, null, 0,color);
-                                    e=ExprBinary.Op.PLUS.make(s.pos, null, e, e2,color);
-                                }
+                                ans.add(e);
                             }
-                            ans.add(e);
                         }
                     }
 
@@ -3108,7 +3112,46 @@ public final class CompModule extends Browsable implements Module {
             }
             featsets.addAll(temp);
         }
-        return computeSubFeatSets(featsets,set);
+
+        //remove redundant according to FM
+
+        computeSubFeatSets(featsets,set);
+        featsets= removeInCompSet(featsets);
+        return featsets;
+    }
+
+    private Set<Set<Set<Integer>>> removeInCompSet(Set<Set<Set<Integer>>> featsets) {
+      Set< Set<Integer> > ImComp=new HashSet<>();//<feature cannbe removed, full feature set>
+        Set<Set<Set<Integer>>> featsetsClone= new HashSet<>();
+        Expr facts=this.getAllReachableFacts();
+        if(facts instanceof ExprList)
+            for(Expr f:((ExprList) facts).args){
+                if(f.toString().equals("some none")){
+                    if(f instanceof ExprUnary && ((ExprUnary) f).op.equals(ExprUnary.Op.NOOP))
+                        f=((ExprUnary) f).sub;
+                        ImComp.add(f.color.keySet());
+                }
+            }
+
+        for(Set<Set<Integer>>colSet:featsets){
+            Set<Set<Integer>> tempSet=new HashSet<>();
+            for(Set<Integer> set:colSet){
+                Boolean delete=false;
+                for(Set<Integer> icomp:ImComp){
+                    if(set.containsAll(icomp)){
+                        delete=true;
+                        break;
+                    }
+                }
+                if(!delete)
+                    tempSet.add(set);
+            }
+            if(!tempSet.isEmpty())
+                featsetsClone.add(tempSet);
+        }
+
+
+        return featsetsClone;
     }
     //colorful merge
     /**

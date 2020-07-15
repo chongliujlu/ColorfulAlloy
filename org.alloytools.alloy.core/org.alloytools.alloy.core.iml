@@ -8,7 +8,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="org.alloytools.kodkod.core" />
-    <orderEntry type="module" module-name="org.alloytools.kodkod.core" />
+    <orderEntry type="module" module-name="org.alloytools.kodkod.core1" />
+    <orderEntry type="module" module-name="org.alloytools.kodkod.core1" />
   </component>
 </module>
