@@ -543,12 +543,6 @@ public final class OurSyntaxWidget {
 
                                     if (cmd.expects >= 0)
                                         featsString.append(" expect ").append(cmd.expects);
-
-                                    //int c= getLineStartOffset(pos.y - 1) + pos.x - 1;
-                                    //int d = getLineStartOffset(pos.y2 - 1) + pos.x2 - 1;
-
-
-
                                     int c= getLineStartOffset(temp.y - 1) + temp.x - 1;
                                     int d = getLineStartOffset(temp.y2 - 1) + temp.x2 - 1;
                                     changeText(c+1,d+1,featsString.toString());
@@ -616,9 +610,6 @@ public final class OurSyntaxWidget {
                 }
                 return name;
             }
-
-
-
         });
 
         component.addFocusListener(new FocusAdapter() {

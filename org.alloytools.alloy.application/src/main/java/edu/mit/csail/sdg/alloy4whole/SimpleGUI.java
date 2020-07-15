@@ -2046,7 +2046,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
             fieldVisited.add(d);
 
             boolean merged=false;
-            Sig finalSignew = signew;
             Set<Integer> finalB = b;
             VisitOld2new sigFieldOld2newVisitor=new VisitOld2new();
 
@@ -2122,7 +2121,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
             //add field that can not be merged
             if(!merged){
                 Expr exprNew = d.expr.accept(sigFieldOld2newVisitor);
-                signew.addTrickyField(d.span(), d.isPrivate, d.disjoint, d.disjoint2, null, labels, exprNew, d.color);
+                VisitRefactor refactor =new VisitRefactor();
+                signew.addTrickyField(d.span(), d.isPrivate, d.disjoint, d.disjoint2, null, labels, exprNew.accept(refactor), d.color);
             }
         }
 
@@ -4474,15 +4474,21 @@ public final class SimpleGUI implements ComponentListener, Listener {
                 }
             }else if(x.op.equals(ExprBinary.Op.PLUS)){
                 featB=new HashSet<>();
-                if(x.left.toString().equals(x.right.toString()) && compare(x.left.color.keySet(),x.right.color.keySet(),featB)){
+                if(x.left.toString().equals(x.right.toString()) ){
                     VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
-                    x.left.accept(visiterRemoveFeatB);
-                    return x.left;
+                    if(x.left.color.keySet().equals(x.right.color.keySet())){
+                        return  visitThis(x.left);
+                    } else if( compare(x.left.color.keySet(),x.right.color.keySet(),featB)){
+
+                        x.left.accept(visiterRemoveFeatB);
+                        return visitThis(x.left);
+                    }
+
                 }
 
             }
 
-            return x.op.make(x.pos, x.closingBracket,  visitThis(x.left), visitThis(x.right), x.color); // [HASLab] colorful Alloy
+            return x.op.make(x.pos, x.closingBracket,  visitThis(x.left), visitThis(x.right), x.color);
         }
 
         @Override
@@ -4491,34 +4497,13 @@ public final class SimpleGUI implements ComponentListener, Listener {
             if(x.op.equals(ExprList.Op.AND)||x.op.equals(ExprList.Op.OR)){
                 temp.addAll(x.args);
 
-                Set<Expr> visit=new HashSet<>();
+                Set<Expr> visit;
                 //equal
                boolean notfinish= true;
                while(notfinish){
                    notfinish= mergeExprEqual(temp);
                }
-
-               /* for(Expr e: x.args){
-                    if(visit.contains(e)) continue;
-                    visit.add(e);
-                    for(Expr e2:x.args){
-                        if(visit.contains(e2)) continue;
-
-                        featB=new HashSet<>();
-                        if(e.toString().equals(e2.toString()) && compare(e.color.keySet(),e2.color.keySet(),featB)){
-                            VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
-                            e.accept(visiterRemoveFeatB);
-
-                            visit.add(e2);
-                            break;
-                        }
-                    }
-                    temp.add(e);
-                }*/
-
-                //x=ExprList.make(x.pos, x.closingBracket, x.op, temp.makeConst(), x.color);
                  notfinish=true;
-
 
                 while(notfinish){
                     boolean changed=false;
