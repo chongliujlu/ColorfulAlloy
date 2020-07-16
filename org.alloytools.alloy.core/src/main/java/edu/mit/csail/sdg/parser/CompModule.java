@@ -203,7 +203,7 @@ public final class CompModule extends Browsable implements Module {
         //if caret pos is a Sig
         for(Sig sig:module.getAllSigs()){
             mergeColorPos(sig);
-            if(sig.pos!=null)
+            if(sig.pos!=null && pos!=null)
                 if(sig.pos.contains(pos)){
                     col= sig.color.keySet();
                     change2String(colString,col);
@@ -215,6 +215,7 @@ public final class CompModule extends Browsable implements Module {
         if(module.getAllReachableFacts() instanceof ExprList)
         for(Expr fact: ((ExprList) module.getAllReachableFacts()).args){
             mergeColorPos(fact);
+            if(fact.pos!=null &&pos!=null)
             if(fact.pos.contains(pos)){
                 findExprPos.parentFeats=new HashMap<>();
                 findExprPos.setPos(pos);
@@ -227,6 +228,7 @@ public final class CompModule extends Browsable implements Module {
 
        for(Func func:module.getAllFunc()){
            mergeColorPos(func);
+           if(func.pos!=null &&pos!=null)
            if(func.pos.contains(pos)){
                 Expr e=func.getBody();
                 if(e instanceof ExprUnary && ((ExprUnary) e).op.equals(ExprUnary.Op.NOOP)){
@@ -251,6 +253,7 @@ public final class CompModule extends Browsable implements Module {
        }
        for(Pair<String,Expr> ass:module.getAllAssertions()){
            mergeColorPos(ass.b);
+           if(ass.b.pos!=null &&pos!=null)
            if(ass.b.pos.contains(pos)){
                findExprPos.parentFeats=new HashMap<>();
                findExprPos.setPos(pos);
@@ -261,9 +264,10 @@ public final class CompModule extends Browsable implements Module {
            }
        }
        for(Command com: module.commands){
-        if(com.pos.contains(pos)){
-            return com;
-        }
+           if(com.pos!=null &&pos!=null)
+            if(com.pos.contains(pos)){
+                return com;
+            }
 
        }
 
@@ -2683,7 +2687,6 @@ public final class CompModule extends Browsable implements Module {
         resolveParams(rep, root.allModules);
         resolveModules(rep, root.allModules);
         for (CompModule m : root.allModules)
-            //for (Sig s : m.sigs.values())
 
             //colorful merge
             for(Map<Map<Integer,Pos>,Sig> map: m.sigs.values())
@@ -3119,26 +3122,31 @@ public final class CompModule extends Browsable implements Module {
             featsets.addAll(temp);
         }
 
+        Set< Set<Integer> > ImComp=computeFMIncompFeas();
         //remove redundant according to FM
-
-        computeSubFeatSets(featsets,set);
-        featsets= removeInCompSet(featsets);
+        featsets= removeInCompSet(featsets,ImComp);
+        featsets= computeSubFeatSets(featsets,set);
+        featsets= removeInCompSet(featsets,ImComp);
         return featsets;
     }
 
-    private Set<Set<Set<Integer>>> removeInCompSet(Set<Set<Set<Integer>>> featsets) {
-      Set< Set<Integer> > ImComp=new HashSet<>();//<feature cannbe removed, full feature set>
-        Set<Set<Set<Integer>>> featsetsClone= new HashSet<>();
+    private Set<Set<Integer>> computeFMIncompFeas() {
+        Set< Set<Integer> > ImComp=new HashSet<>();//<feature cannbe removed, full feature set>
+
         Expr facts=this.getAllReachableFacts();
         if(facts instanceof ExprList)
             for(Expr f:((ExprList) facts).args){
                 if(f.toString().equals("some none")){
                     if(f instanceof ExprUnary && ((ExprUnary) f).op.equals(ExprUnary.Op.NOOP))
                         f=((ExprUnary) f).sub;
-                        ImComp.add(f.color.keySet());
+                    ImComp.add(f.color.keySet());
                 }
             }
+        return ImComp;
+    }
 
+    private Set<Set<Set<Integer>>> removeInCompSet(Set<Set<Set<Integer>>> featsets,Set< Set<Integer> > ImComp) {
+        Set<Set<Set<Integer>>> featsetsClone= new HashSet<>();
         for(Set<Set<Integer>>colSet:featsets){
             Set<Set<Integer>> tempSet=new HashSet<>();
             for(Set<Integer> set:colSet){
@@ -3155,7 +3163,6 @@ public final class CompModule extends Browsable implements Module {
             if(!tempSet.isEmpty())
                 featsetsClone.add(tempSet);
         }
-
 
         return featsetsClone;
     }
