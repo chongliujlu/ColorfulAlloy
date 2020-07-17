@@ -433,12 +433,11 @@ public final class OurSyntaxWidget {
                                       //delete a feature for Field
                                       if(field.pos!=null && field.pos.contains(pos) && !col.isEmpty()){
                                           featsBefore.addAll(field.color.keySet());
-                                          //doFeatRemove(featRmSet,featsBefore,col,point.x, point.y);
                                           er.color=col;
                                           break;
                                       }
                                   }
-                                  //deleter a feature of a sig
+                                  //deleter a feature of a sig/Field
                                   doFeatRemove(featRmSet,featsBefore,er.color,point.x, point.y);
                               }else if(er instanceof Expr){
                                   //delete features for facts/assert/Expr

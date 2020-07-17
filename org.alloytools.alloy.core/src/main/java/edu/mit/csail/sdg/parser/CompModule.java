@@ -509,7 +509,7 @@ public final class CompModule extends Browsable implements Module {
                         }
                         else
                         {y = ExprBadCall.make(bc.pos, bc.closingBracket, bc.fun, newargs, bc.extraWeight);
-                            y.color.putAll(color);} //colorful Alloy
+                            y.paint(color);} //colorful Alloy
                     } else {
                         y = ExprBinary.Op.JOIN.make(pos, closingBracket, arg, y,color);//colorful Alloy
                     }
@@ -526,7 +526,7 @@ public final class CompModule extends Browsable implements Module {
         @Override
         public Expr visit(ExprList x) throws Err {
             for(Expr e: x.args)//colorful Alloy
-                e.color.putAll(x.color);//colorful Alloy
+                e.paint(x.color);//colorful Alloy
             contextFeats.addAll(x.color.keySet());//colorful Alloy
             TempList<Expr> temp = new TempList<Expr>(x.args.size());//colorful Alloy
             Set<Integer> tempfeats=new HashSet<>(); //colorful Alloy
@@ -545,9 +545,9 @@ public final class CompModule extends Browsable implements Module {
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprITE x) throws Err {
-            x.cond.color.putAll(x.color);//colorful Alloy
-            x.left.color.putAll(x.color);//colorful Alloy
-            x.right.color.putAll(x.color);//colorful Alloy
+            x.cond.paint(x.color);//colorful Alloy
+            x.left.paint(x.color);//colorful Alloy
+            x.right.paint(x.color);//colorful Alloy
             contextFeats.addAll(x.color.keySet());//colorful Alloy
 
             Set<Integer> temp=new HashSet<>(); //colorful Alloy
@@ -570,8 +570,8 @@ public final class CompModule extends Browsable implements Module {
         @Override
         public Expr visit(ExprBadJoin x) throws Err {
             Set<Integer> temp=new HashSet<>(); //colorful Alloy used to store the features in current context
-            x.left.color.putAll(x.color);//colorful Alloy
-            x.right.color.putAll(x.color);//colorful Alloy
+            x.left.paint(x.color);//colorful Alloy
+            x.right.paint(x.color);//colorful Alloy
             contextFeats.addAll(x.color.keySet());//colorful Alloy
             CompModule.feats.addAll(x.color.keySet());//colorful Alloy
             temp.addAll(contextFeats);//colorful Alloy
@@ -596,8 +596,8 @@ public final class CompModule extends Browsable implements Module {
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprBinary x) throws Err {
-            x.left.color.putAll(x.color);//colorful Alloy
-            x.right.color.putAll(x.color);//colorful Alloy
+            x.left.paint(x.color);//colorful Alloy
+            x.right.paint(x.color);//colorful Alloy
 
             if(!x.op.equals(ExprBinary.Op.PLUS)&& !x.op.equals(ExprBinary.Op.INTERSECT)) //colorful Alloy
                 if(!(x.left.color.keySet().containsAll(x.right.color.keySet())&&x.right.color.keySet().containsAll(x.left.color.keySet())))
@@ -633,9 +633,9 @@ public final class CompModule extends Browsable implements Module {
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprLet x) throws Err {
-            x.expr.color.putAll(x.color);//colorful Alloy
-            x.sub.color.putAll(x.color);//colorful Alloy
-            x.var.color.putAll(x.color);//colorful Alloy
+            x.expr.paint(x.color);//colorful Alloy
+            x.sub.paint(x.color);//colorful Alloy
+            x.var.paint(x.color);//colorful Alloy
             contextFeats.addAll(x.color.keySet());//colorful Alloy
 
             Expr right = visitThis(x.expr);
@@ -659,15 +659,15 @@ public final class CompModule extends Browsable implements Module {
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprQt x) throws Err {
-            x.sub.color.putAll(x.color);//colorful Alloy
+            x.sub.paint(x.color);//colorful Alloy
             for(Decl de: x.decls)//colorful Alloy
-                de.color.putAll(x.color);
+                de.paint(x.color);
             contextFeats.addAll(x.color.keySet());//colorful Alloy
 
             TempList<Decl> decls = new TempList<Decl>(x.decls.size());
             boolean isMetaSig = false, isMetaField = false;
             for (Decl d : x.decls) {
-                d.expr.color.putAll(d.color);//colorful Alloy
+                d.expr.paint(d.color);//colorful Alloy
                 Expr exp = visitThis(d.expr).resolve_as_set(warns);
                 if (exp.mult == 0 && exp.type().arity() == 1)
                     exp = ExprUnary.Op.ONEOF.make(null, exp,exp.color); //colorful merge
@@ -795,7 +795,7 @@ public final class CompModule extends Browsable implements Module {
         /** {@inheritDoc} */
         @Override
         public Expr visit(ExprUnary x) throws Err {
-            x.sub.color.putAll(x.color); //colorful merge
+            x.sub.paint(x.color); //colorful merge
             contextFeats.addAll(x.color.keySet());//colorful Alloy
             CompModule.feats.addAll(x.color.keySet()); //colorful Alloy
             return x.op.make(x.pos, visitThis(x.sub), x.color);//colorful Alloy
@@ -850,7 +850,12 @@ public final class CompModule extends Browsable implements Module {
 
         // [HASLab] colorful Alloy
         public void paint(Map<Integer,Pos> c) {
-            color.putAll(c);
+            Map temp=new HashMap(c);
+            for(Integer i:color.keySet()){
+                if(temp.containsKey(i))
+                    temp.remove(i);
+            }
+            color.putAll(temp);
         }
 
         /**
@@ -2079,7 +2084,7 @@ public final class CompModule extends Browsable implements Module {
         for (ArrayList<Func> entry : funcs.values())
             for (Func ff : entry) {
                 //colorful merge
-                ff.getBody().color.putAll(ff.color);
+                ff.getBody().paint(ff.color);
                 Context.contextFeats.clear();//colorful Alloy
                 Context cx = new Context(this, warns);
                 cx.rootfunbody = ff;
@@ -2223,7 +2228,7 @@ public final class CompModule extends Browsable implements Module {
         for (int i = 0; i < facts.size(); i++) {
             String name = facts.get(i).a;
             Expr expr = facts.get(i).b;
-            expr.color.putAll( ((ExprUnary) expr).sub.color); //colorful merge
+            expr.paint( ((ExprUnary) expr).sub.color); //colorful merge
             Context.contextFeats.clear(); //colorful Alloy
             Context.contextFeats.addAll(expr.color.keySet());//colorful Alloy
             expr = cx.check(expr).resolve_as_formula(warns);
@@ -2240,7 +2245,7 @@ public final class CompModule extends Browsable implements Module {
                 Context.contextFeats.clear();
                 Context.contextFeats.addAll(s.color.keySet());
                 Expr f = res.old2appendedfacts.get(res.new2old.get(s));
-                f.color.putAll(s.color);
+                f.paint(s.color);
                 if (f == null)
                     continue;
                 if (f instanceof ExprConstant && ((ExprConstant) f).op == ExprConstant.Op.TRUE)
@@ -2504,7 +2509,7 @@ public final class CompModule extends Browsable implements Module {
             Context.contextFeats.clear(); // colorful Alloy
             Context.contextFeats.addAll(d.color.keySet());// colorful Alloy
             CompModule.feats.addAll(d.color.keySet()); //colorful Alloy
-            d.expr.color.putAll(d.color); //colorful merge
+            d.expr.paint(d.color); //colorful merge
             Expr bound = cx.check(d.expr).resolve_as_set(warns);
 
             cx.remove("this");

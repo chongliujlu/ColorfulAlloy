@@ -56,7 +56,12 @@ public abstract class Browsable {
 
     // [HASLab] colorful Alloy
     public void paint(Map<Integer,Pos> c) {
-        color.putAll(c);
+        Map temp=new HashMap(c);
+        for(Integer i:color.keySet()){
+            if(temp.containsKey(i))
+                temp.remove(i);
+        }
+        color.putAll(temp);
     }
 
     /**
