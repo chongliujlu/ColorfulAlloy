@@ -394,7 +394,7 @@ public final class OurSyntaxWidget {
 
                        if(er !=null){
                            //use a map to store the features that can be removed
-                           Map<Set<Integer>,Integer> featRmSet=new HashMap<>();//<feature cannbe removed, full feature set>
+                           Map<Set<Integer>,Integer> featRmSet=new HashMap<>();//<feature can be removed, full feature set>
                            Expr facts=module.getAllReachableFacts();
                            if(facts instanceof ExprList)
                                for(Expr f:((ExprList) facts).args){
@@ -433,18 +433,19 @@ public final class OurSyntaxWidget {
                                       //delete a feature for Field
                                       if(field.pos!=null && field.pos.contains(pos) && !col.isEmpty()){
                                           featsBefore.addAll(field.color.keySet());
+                                          er=field;
                                           er.color=col;
                                           break;
                                       }
                                   }
                                   //deleter a feature of a sig/Field
-                                  doFeatRemove(featRmSet,featsBefore,er.color,point.x, point.y);
+                                  doFeatRemove(featRmSet,featsBefore,er,point.x, point.y);
                               }else if(er instanceof Expr){
                                   //delete features for facts/assert/Expr
-                                  doFeatRemove(featRmSet,new HashSet<>(featsBefore),er.color,point.x, point.y);
+                                  doFeatRemove(featRmSet,new HashSet<>(featsBefore),er,point.x, point.y);
                               }else if(er instanceof Func){
                                   //delete features for the whole pred/fun
-                                  doFeatRemove(featRmSet,er.color.keySet(),er.color,point.x, point.y);
+                                  doFeatRemove(featRmSet,er.color.keySet(),er,point.x, point.y);
                               }else if(er instanceof Command){
                                   doFeatRemove(featRmSet, (Command) er,point.x, point.y);
                               }
@@ -460,34 +461,64 @@ public final class OurSyntaxWidget {
             /**
              * show popUp menu
              * @param featRmSet feats sets that can be removed
-             * @param featsBefore feats begore remove
-             * @param col Explicit feature annotation of the expr
+             * @param featsBefore feats before remove (include features in parent Expr)
+             * @param e expr that can be remove or add features, color only containds Explicit feature annotation in the expr(not parent)
              * @param x x position to show the popup menu
              * @param y y position to show the popup menu
              */
-            private void doFeatRemove(Map<Set<Integer>, Integer> featRmSet, Set<Integer> featsBefore, Map<Integer, Pos> col, int x, int y) {
+            private void doFeatRemove(Map<Set<Integer>, Integer> featRmSet, Set<Integer> featsBefore, Browsable e, int x, int y) {
                 pop.removeAll();
                 Set <Integer> menu=new HashSet<>();
                 for(Map.Entry<Set<Integer>, Integer> entry:featRmSet.entrySet()){
-                   if(featsBefore.containsAll(entry.getKey()) && col.keySet().contains(entry.getValue())){
+                   if(featsBefore.containsAll(entry.getKey()) && e.color.keySet().contains(entry.getValue())){
                        if(!menu.contains(entry.getValue())){
                            menu.add(entry.getValue());
                            JMenuItem item = new JMenuItem("Remove "+getColorString(entry.getValue()));
                            pop.add(item);
                            item.addActionListener(new ActionListener() {
                                @Override
-                               public void actionPerformed(ActionEvent e) {
-                                   Pos pos=col.get(entry.getValue());
+                               public void actionPerformed(ActionEvent event) {
+                                   Pos pos=e.color.get(entry.getValue());
                                    int c = getLineStartOffset(pos.y2 - 1) + pos.x2 - 1;
                                    int d= getLineStartOffset(pos.y - 1) + pos.x - 1;
                                    changeText(c,c+1,"");
                                    changeText(d,d+1,"");
-                                   getComponent().repaint();
                                }
                            });
                        }
                    }
                }
+               //Add Features
+                //计算removeFeatures
+                Map<Set<Integer>, Integer> featAddSet =new HashMap<>(featRmSet);
+                for(Map.Entry<Set<Integer>, Integer> entry:featRmSet.entrySet()){
+                   Set <Integer> addFeat=new HashSet<>(entry.getKey());
+                   addFeat.remove(entry.getValue());
+                    featAddSet.put(addFeat,entry.getValue());
+                }
+
+                menu=new HashSet<>();
+                for(Map.Entry<Set<Integer>, Integer> entry:featAddSet.entrySet()){
+                    if(featsBefore.containsAll(entry.getKey()) && !featsBefore.contains(entry.getValue())){
+                        if(!menu.contains(entry.getValue())){
+                            menu.add(entry.getValue());
+                            JMenuItem item = new JMenuItem("Add "+getColorString(entry.getValue()));
+                            pop.add(item);
+                            item.addActionListener(new ActionListener() {
+                                @Override
+                                public void actionPerformed(ActionEvent event) {
+                                    if(e instanceof Expr){
+                                        Pos pos= ((Expr) e).pos;
+                                        int c = getLineStartOffset(pos.y2 - 1) + pos.x2 - 1;
+                                        int d= getLineStartOffset(pos.y - 1) + pos.x - 1;
+                                        changeText(c+1,c+1,getColorString(entry.getValue()));
+                                        changeText(d,d,getColorString(entry.getValue()));
+                                    }
+                                }
+                            });
+                        }
+                    }
+                }
 
                 pop.show(pane, x, y);
             }
