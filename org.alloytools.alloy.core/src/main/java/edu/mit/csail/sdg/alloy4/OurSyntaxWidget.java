@@ -439,15 +439,16 @@ public final class OurSyntaxWidget {
                                       }
                                   }
                                   //deleter a feature of a sig/Field
-                                  doFeatRemove(featRmSet,featsBefore,er,point.x, point.y);
+                                  doFeatRmOrAdd(featRmSet,featsBefore,er,point.x, point.y);
+
                               }else if(er instanceof Expr){
                                   //delete features for facts/assert/Expr
-                                  doFeatRemove(featRmSet,new HashSet<>(featsBefore),er,point.x, point.y);
+                                  doFeatRmOrAdd(featRmSet,new HashSet<>(featsBefore),er,point.x, point.y);
                               }else if(er instanceof Func){
                                   //delete features for the whole pred/fun
-                                  doFeatRemove(featRmSet,er.color.keySet(),er,point.x, point.y);
+                                  doFeatRmOrAdd(featRmSet,er.color.keySet(),er,point.x, point.y);
                               }else if(er instanceof Command){
-                                  doFeatRemove(featRmSet, (Command) er,point.x, point.y);
+                                  doFeatRM(featRmSet, (Command) er,point.x, point.y);
                               }
                           }
                        }
@@ -466,7 +467,7 @@ public final class OurSyntaxWidget {
              * @param x x position to show the popup menu
              * @param y y position to show the popup menu
              */
-            private void doFeatRemove(Map<Set<Integer>, Integer> featRmSet, Set<Integer> featsBefore, Browsable e, int x, int y) {
+            private void doFeatRmOrAdd(Map<Set<Integer>, Integer> featRmSet, Set<Integer> featsBefore, Browsable e, int x, int y) {
                 pop.removeAll();
                 Set <Integer> menu=new HashSet<>();
                 for(Map.Entry<Set<Integer>, Integer> entry:featRmSet.entrySet()){
@@ -522,7 +523,7 @@ public final class OurSyntaxWidget {
 
                 pop.show(pane, x, y);
             }
-            private void doFeatRemove(Map<Set<Integer>, Integer> featRmSet, Command cmd, int x, int y) {
+            private void doFeatRM(Map<Set<Integer>, Integer> featRmSet, Command cmd, int x, int y) {
                 pop.removeAll();
                 if(cmd.feats!=null){
 
