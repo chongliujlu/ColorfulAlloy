@@ -16,12 +16,10 @@
 package edu.mit.csail.sdg.ast;
 
 import static edu.mit.csail.sdg.alloy4.TableView.clean;
+import static edu.mit.csail.sdg.ast.ExprUnary.Op.*;
+import static edu.mit.csail.sdg.ast.ExprUnary.Op.SOMEOF;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.alloytools.util.table.Table;
 
@@ -1008,5 +1006,360 @@ public abstract class Sig extends Expr implements Clause {
         }
 
         return t.toString();
+    }
+
+    public Sig mergeSig(Sig sig,Integer b,StringBuilder fact){
+        /** used to change the sigs after merge*///colorful merge
+
+        /** used to change the sigs after merge*///colorful merge
+        // Map<Field,Field> fieldOld2new=new HashMap();
+
+        //used to generate new Sig
+        Attr[] attributes = new Attr[this.attributes.size()];
+        for (int i = 0; i < this.attributes.size(); i++) {
+            attributes[i] = this.attributes.get(i);
+        }
+        Sig signew=null;
+        if(this instanceof Sig.PrimSig)
+            signew = new Sig.PrimSig(label, ((Sig.PrimSig) this).parent, attributes);
+        else if (this instanceof Sig.SubsetSig)
+            signew=new Sig.SubsetSig(label,((Sig.SubsetSig) this).parents,attributes);
+
+        Map<Integer,Pos> feats=new HashMap<>(color);
+        feats.remove(b);
+        feats.remove(-b);
+        signew.color.putAll(feats);
+
+
+
+        //add feature b or -b to fields.
+       // Sig finalSignew = signew;
+        VisitOld2new sigold2newVisitor = new VisitOld2new();
+        //sigold2newVisitor.getSigOld2new();
+        sigold2newVisitor.getSigOld2new().put(this,signew);
+        sigold2newVisitor.getSigOld2new().put(sig,signew);
+
+        for (Decl d: getFieldDecls()){
+            Expr exprNew=d.expr.accept(sigold2newVisitor);
+            String[]labels = new String[d.names.size()];
+            for(int i=0; i< d.names.size();i++){
+                labels[i]=d.names.get(i).label;
+            }
+            signew.addTrickyField(d.span(),d.isPrivate,d.disjoint,d.disjoint2,null,labels,exprNew,d.color);
+        }
+        for (Decl d: sig.getFieldDecls()){
+            Expr exprNew=d.expr.accept(sigold2newVisitor);
+            String[]labels = new String[d.names.size()];
+            for(int i=0; i< d.names.size();i++){
+                labels[i]=d.names.get(i).label;
+            }
+            signew.addTrickyField(d.span(),d.isPrivate,d.disjoint,d.disjoint2,null,labels,exprNew,d.color);
+        }
+
+        //已经将s替换成了sigBinary.
+        Sig sigBinaryField=signew.mergeField(fact);
+
+        return sigBinaryField;
+
+    }
+    //colorful merge
+    /**
+     * merge all fields for a sig
+     * @param
+     * @return
+     */
+    public Sig mergeField(StringBuilder fact) {
+        VisitOld2new sigOld2new = new VisitOld2new();
+        Integer b;
+        //used to generate new Sig
+        Attr[] attributes = new Attr[this.attributes.size()];
+        for (int i = 0; i < this.attributes.size(); i++) {
+            attributes[i] = this.attributes.get(i);
+        }
+        Sig signew=null;
+        if(this instanceof Sig.PrimSig)
+            signew = new Sig.PrimSig(label, ((Sig.PrimSig) this).parent, attributes);
+        else if (this instanceof Sig.SubsetSig)
+            signew=new Sig.SubsetSig(label,((Sig.SubsetSig) this).parents,attributes);
+        signew.color=color;
+
+        sigOld2new.getSigOld2new().put(this,signew);
+
+
+        ArrayList<Decl> fieldVisited=new ArrayList<>();
+        for(Decl d: getFieldDecls()) {
+            if (fieldVisited.contains(d)) continue;
+
+            fieldVisited.add(d);
+
+            boolean merged=false;
+
+            String[] labels = new String[d.names.size()];
+            for (int i = 0; i < d.names.size(); i++) {
+                labels[i] = d.names.get(i).label;
+            }
+
+            for (Decl d2 : getFieldDecls()) {
+                if (fieldVisited.contains(d2)) continue;
+                //只比较第一个名字。
+                if (d.names.get(0).label.equals(d2.names.get(0).label)) {
+                    b=compareMergeLaw(d.color.keySet(), d2.color.keySet());
+                    if (b!=null) {
+                        merged=true;
+                        Expr exprNew = d.expr.accept(sigOld2new);
+
+                        if(d.expr instanceof ExprUnary && d2.expr instanceof ExprUnary){
+
+                            ExprUnary.Op op=((ExprUnary) d.expr).op;
+                            if(!((ExprUnary) d.expr).op.equals(((ExprUnary) d2.expr).op)){// 修改multiplicity
+                                op= ExprUnary.Op.SETOF;
+                                if(!((ExprUnary) d.expr).op.equals(ExprUnary.Op.SETOF)){
+                                    StringBuilder coloF, colorB;
+                                    String name = "set";
+                                    if(((ExprUnary) d.expr).op.equals(LONEOF))
+                                        name="lone";
+                                    else if(((ExprUnary) d.expr).op.equals(ONEOF))
+                                        name="one";
+                                    else if(((ExprUnary) d.expr).op.equals(SOMEOF))
+                                        name="some";
+
+                                    coloF = new StringBuilder();
+                                    colorB = new StringBuilder();
+                                    if (d.expr.color != null)
+                                        d.expr.printcolor(coloF, colorB);
+                                    fact.append("\r\n        "+coloF+"all s:"+label.substring(5)+" | "+ name+" s."+d.names.get(0).label+colorB);
+                                }
+                                if(!((ExprUnary) d2.expr).op.equals(ExprUnary.Op.SETOF)){
+                                    String name = "set";
+                                    if(((ExprUnary) d2.expr).op.equals(LONEOF))
+                                        name="lone";
+                                    else if(((ExprUnary) d2.expr).op.equals(ONEOF))
+                                        name="one";
+                                    else if(((ExprUnary) d2.expr).op.equals(SOMEOF))
+                                        name="some";
+                                    StringBuilder coloF, colorB;
+                                    coloF = new StringBuilder();
+                                    colorB = new StringBuilder();
+                                    if (d2.expr.color != null)
+                                        d2.expr.printcolor(coloF, colorB);
+                                    fact.append("\r\n        "+coloF+"all s:"+label.substring(5)+" | "+ name+" s."+d2.names.get(0).label+colorB);
+                                }
+                            }
+
+
+                                d.color.remove(b);
+                                d.color.remove(-b);
+
+                            exprNew=ExprBinary.Op.PLUS.make(exprNew.pos,null,((ExprUnary)exprNew).sub,((ExprUnary) d2.expr).sub,d.color);
+                            exprNew=op.make(d.expr.pos,exprNew,null,0,d.color);
+                        }
+
+                        VisitRefactor refactor =new VisitRefactor();
+                        signew.addTrickyField(d.span(), d.isPrivate, d.disjoint, d.disjoint2, null, labels, exprNew.accept(refactor), d.color);
+                        fieldVisited.add(d2);
+                        break;
+                    }
+                }
+            }
+
+            //add field that can not be merged
+            if(!merged){
+                Expr exprNew = d.expr.accept(sigOld2new);
+                VisitRefactor refactor =new VisitRefactor();
+                signew.addTrickyField(d.span(), d.isPrivate, d.disjoint, d.disjoint2, null, labels, exprNew.accept(refactor), d.color);
+            }
+        }
+
+
+
+        return signew;
+    }
+
+    public void printSig(StringBuilder print){
+
+        StringBuilder coloF,colorB,coloFieldF,colorFieldB;
+        coloF=new StringBuilder();
+        colorB=new StringBuilder();
+        if(color!=null)
+            printcolor(coloF,colorB);
+
+        print.append(coloF);
+
+        if(isAbstract!=null)
+            print.append("abstract ");
+        if(isLone !=null)
+            print.append("lone ");
+        if (isOne!=null)
+            print.append("one ");
+        if(isSome != null)
+            print.append("some ");
+
+        print.append("sig "+ label.substring(5));
+
+        if(isSubsig!=null ){
+            if(((Sig.PrimSig) this).parent!=UNIV){
+                print.append(" extends ");
+                print.append( ((Sig.PrimSig) this).parent.label.substring(5));
+            }
+        }
+
+        if(isSubset!=null){
+            print.append(" in ");
+            print.append(((Sig.SubsetSig) this).parents.get(0).label.substring(5));
+
+            if(((Sig.SubsetSig) this).parents.size()>1){
+                for (int j = 1; j< ((Sig.SubsetSig) this).parents.size()-1; j ++){
+                    print.append(" + "+((Sig.SubsetSig) this).parents.get(j).label.substring(5));
+                }
+            }
+        }
+        //print fields
+        print.append("{ ");
+
+        for (Decl f:getFieldDecls()){
+            coloFieldF=new StringBuilder();
+            colorFieldB =new StringBuilder();
+            if(f.color!=null){
+                Map<Integer,Pos> fcol=new HashMap<>(f.color);
+                if(color!=null)
+                    for (Map.Entry<Integer,Pos> col:color.entrySet()){
+                        fcol.remove(col.getKey());
+                    }
+
+                printcolor(coloFieldF,colorFieldB,fcol.keySet());
+            }
+            print.append("\r\n        "+coloFieldF);
+            print.append(f.disjoint!=null? "disj ": "");
+            if(f.names.size()>=1){
+                for(ExprHasName n:f.names){
+                    print.append(n.label+",");
+                }
+                print.deleteCharAt(print.length()-1);
+                print.append(": ");
+
+                //get the first Field
+                Sig.Field n= (Sig.Field)f.names.get(0);
+                VisitprintmergeExpr visitprintmergeExpr=new VisitprintmergeExpr();
+                visitprintmergeExpr.setParentFeats(n.decl().color.keySet());
+                print.append(n.decl().expr.accept(visitprintmergeExpr));
+                print.append(colorFieldB);
+                print.append(",");
+            }
+        }
+
+        if(!getFieldDecls().isEmpty()){
+            print.deleteCharAt(print.length()-1);
+            //} of Sig
+            print.append("\r\n        }");
+        }else
+            //} of Sig
+            print.append("}");
+
+        //fact for sig
+        if(!getFacts().isEmpty()){
+            print.append("{");
+            for(Expr fact:getFacts()){
+                String temp=fact.toString();
+                //replace "s.fileld" to field
+                temp=temp.replace(label.substring(5)+" .","");
+                print.append("\r\n        "+temp);
+            }
+            print.append("\r\n        }\r\n");
+        }
+
+        print.append(colorB);
+        print.append("\r\n");
+
+    }
+
+    private class VisitOld2new extends VisitReturn<Expr> {
+        public Map<Sig, Sig> getSigOld2new() {
+            return sigOld2new;
+        }
+
+        public Map<Field, Field> getFieldOld2new() {
+            return fieldOld2new;
+        }
+
+        public void setSigOld2new(Map<Sig, Sig> sigOld2new) {
+            this.sigOld2new = sigOld2new;
+        }
+
+        public void setFieldOld2new(Map<Field, Field> fieldOld2new) {
+            this.fieldOld2new = fieldOld2new;
+        }
+
+        Map<Sig,Sig> sigOld2new =new HashMap();
+        Map<Field,Field> fieldOld2new=new HashMap();
+        @Override
+        public  Expr visit(ExprCall x) {
+            return x;
+        }
+
+        @Override
+        public Expr visit(ExprBinary x) throws Err {
+            visitThis(x.left);
+            visitThis(x.right);
+            return x;
+        }
+
+        @Override
+        public Expr visit(ExprList x) throws Err {
+            for(Expr e: x.args)
+                visitThis(e);
+            return x;
+        }
+
+        @Override
+        public Expr visit(ExprConstant x) throws Err {
+            return x;
+        }
+
+        @Override
+        public Expr visit(ExprITE x) throws Err {
+            visitThis(x.cond);
+            visitThis(x.left);
+            visitThis(x.right);
+            return x;
+        }
+
+        @Override
+        public Expr visit(ExprLet x) throws Err {
+            visitThis(x.expr);
+            visitThis(x.sub);
+            return x;
+        }
+
+        @Override
+        public Expr visit(ExprQt x) throws Err {
+            return x;
+        }
+
+        @Override
+        public Expr visit(ExprUnary x) throws Err {
+            visitThis(x.sub);
+            return x;
+        }
+
+        @Override
+        public Expr visit(ExprVar x) throws Err {
+            return x;
+        }
+
+        @Override
+        public Expr visit(Sig x) throws Err {
+            if(sigOld2new.containsKey(x))
+                return sigOld2new.get(x);
+
+            return x;
+        }
+
+        @Override
+        public Expr visit(Field x) throws Err {
+            if(fieldOld2new.containsKey(x))
+                return fieldOld2new.get(x);
+            return x;
+        }
+
     }
 }

@@ -1056,13 +1056,13 @@ public final class SimpleGUI implements ComponentListener, Listener {
         HashMap <String, ArrayList<Expr>> fact_Merge=new LinkedHashMap<>();
 
 
-        Map<Field, ArrayList<Field>> field_Merge_List=new HashMap();
-        Set <Sig> mult_Refac_Sig=new HashSet<>();
-        Set <Sig> abstract_Refa_Sig=new HashSet<>();
-        Set<Field> multFie=new HashSet<>();
+
+      //  Set <Sig> mult_Refac_Sig=new HashSet<>();
+
+     //   Set<Field> multFie=new HashSet<>();
         //to creat incompatible sig menu
-        Set<Sig> incompatibleSigs =new HashSet<>();
-        Set<Sig> redundantSigs=new HashSet<>();
+       // Set<Sig> incompatibleSigs =new HashSet<>();
+        //Set<Sig> redundantSigs=new HashSet<>();
 
 
         Set <String> sigName =new HashSet<>();
@@ -1144,9 +1144,9 @@ public final class SimpleGUI implements ComponentListener, Listener {
                     }
 
                     //计算可以进行multiple abstract refactoring 的sig
-                    computeRefactorSigList_multAndAbstract(sigSafeList,mult_Refac_Sig,abstract_Refa_Sig,multFie);
-                    computeincompatiblFeatures(factp,featSet,incompatiblefeatures,compatibleFeatureSets,incompatibleFeats,redundantOld2new);
-                    computeincompatibleSigs(sigSafeList,incompatiblefeatures,redundantOld2new,incompatibleSigs,redundantSigs);
+                   // computeRefactorSigList_multAndAbstract(sigSafeList,mult_Refac_Sig,abstract_Refa_Sig,multFie);
+                  //  computeincompatiblFeatures(factp,featSet,incompatiblefeatures,compatibleFeatureSets,incompatibleFeats,redundantOld2new);
+                 //   computeincompatibleSigs(sigSafeList,incompatiblefeatures,redundantOld2new,incompatibleSigs,redundantSigs);
 
                 }
 
@@ -1232,58 +1232,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
             }
             mergeField.add(field);
         }
-        
-        //生成 remove multiplicity 菜单
-        if(mult_Refac_Sig.isEmpty()&&multFie.isEmpty())
-            mergemenu.remove(remMultiplicity);
-        for(Sig sMul:mult_Refac_Sig){
-            JMenuItem y = new JMenuItem(sMul.label.substring(5) + " " + getColorString(sMul.color.keySet()), null);
-            y.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    text.clearShade();
-                    log.clearError(); // To clear any residual error message
-                    doRmMultipilicity(sMul);
-                }
 
-                private void doRmMultipilicity(Sig sig) {
 
-                    StringBuilder coloF,colorB;
-                    coloF=new StringBuilder();
-                    colorB=new StringBuilder();
-                    if(sig.color!=null)
-                        printcolor(coloF,colorB,sig.color.keySet());
-
-                    StringBuilder factString=new StringBuilder();
-                    factString.append("fact { ");
-                    Pos multipos=UNKNOWN;
-
-                    if (sig.isLone!=null){
-                        multipos=sig.isLone;
-                        text.changeText(sig.isLone);
-                        factString.append("one "+ sig.label.substring(5)+" ");
-                    }
-                    if(sig.isOne!=null){
-                        multipos=sig.isOne;
-                        text.changeText(sig.isOne);
-                        factString.append("one "+ sig.label.substring(5)+" ");
-                    }
-                    if(sig.isSome!=null){
-                        multipos=sig.isSome;
-                        text.changeText(sig.isSome);
-                        factString.append("some "+ sig.label.substring(5)+" ");
-                    }
-                    factString.append("}");
-                    for(Map.Entry<Integer,Pos> entry:sig.color.entrySet())
-                        sig.pos= sig.pos.merge(entry.getValue());
-                    Pos factPos=new Pos(sig.pos.filename,sig.pos.x2+1,sig.pos.y2);
-                    text.changeText(factPos,"\r\n"+coloF+factString+colorB+"");
-
-                    text.changeText(multipos,"");
-                }
-            });
-            remMultiplicity.add(y);
-        }
         for(Field fMul:multFie){
             JMenuItem y = new JMenuItem(fMul.label + ": " + getColorString(fMul.color.keySet()), null);
             y.addActionListener(new ActionListener() {
@@ -1312,7 +1262,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
             remMultiplicity.add(y);
         }
 
-        mergemenu.remove(addRedundantFeats);
+
 
         if(abstract_Refa_Sig.isEmpty())
             mergemenu.remove(remAbstract);
@@ -1431,9 +1381,9 @@ public final class SimpleGUI implements ComponentListener, Listener {
         if(sig_Merge_List.isEmpty())
             mergemenu.remove(autoMerSig);
         for(Map.Entry<Sig,ArrayList<Sig>> m:sig_Merge_List.entrySet()){
-            JMenu sig=new JMenu(m.getKey().label.substring(5)+" "+getColorString(m.getKey().color.keySet()));
+            JMenu sig=new JMenu(m.getKey().label.substring(5)+" "+m.getKey().getColorString());
             for(Sig sigSub:m.getValue()){
-                JMenuItem y = new JMenuItem(sigSub.label.substring(5) + " " + getColorString(sigSub.color.keySet()), null);
+                JMenuItem y = new JMenuItem(sigSub.label.substring(5) + " " + sigSub.getColorString(), null);
                 y.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
@@ -2082,7 +2032,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                                         coloF = new StringBuilder();
                                         colorB = new StringBuilder();
                                         if (d.expr.color != null)
-                                            printcolor(coloF, colorB, d.expr.color.keySet());
+                                            d.expr.printcolor(coloF, colorB);
                                         fact.append("\r\n        "+coloF+"all s:"+s.label.substring(5)+" | "+ name+" s."+d.names.get(0).label+colorB);
                                     }
                                     if(!((ExprUnary) d2.expr).op.equals(ExprUnary.Op.SETOF)){
@@ -2097,7 +2047,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                                         coloF = new StringBuilder();
                                         colorB = new StringBuilder();
                                         if (d2.expr.color != null)
-                                            printcolor(coloF, colorB, d2.expr.color.keySet());
+                                            d2.expr.printcolor(coloF, colorB);
                                         fact.append("\r\n        "+coloF+"all s:"+s.label.substring(5)+" | "+ name+" s."+d2.names.get(0).label+colorB);
                                     }
                                 }
@@ -2866,7 +2816,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
              coloF=new StringBuilder();
              colorB=new StringBuilder();
             if(s.color!=null)
-                printcolor(coloF,colorB,s.color.keySet());
+                s.printcolor(coloF,colorB);
 
             print.append(coloF);
 
@@ -3420,36 +3370,11 @@ public final class SimpleGUI implements ComponentListener, Listener {
         return match;
     }
 
-
-
-    private String getColorString(Set<Integer> key) {
-        String name=null;
-        for (Integer i:key){
-            String color=null;
-            if(i==1) color ="\u2780";
-            else if(i==2) color ="\u2781";
-            else if(i==3) color ="\u2782" ;
-            else if(i==4) color ="\u2783" ;
-            else if(i==5) color ="\u2784" ;
-            else if(i==6) color ="\u2785" ;
-            else if(i==7) color ="\u2786" ;
-            else if(i==8) color ="\u2787" ;
-            else if(i==9) color ="\u2788" ;
-            else if(i==-1) color ="\u278A" ;
-            else if(i==-2) color ="\u278B" ;
-            else if(i==-3) color ="\u278C" ;
-            else if(i==-4) color ="\u278D" ;
-            else if(i==-5) color ="\u278E" ;
-            else if(i==-6) color ="\u278F" ;
-            else if(i==-7) color ="\u2790" ;
-            else if(i==-8) color ="\u2791" ;
-            else if(i==-9) color ="\u2792" ;
-
-            name=name==null? color : name+" "+color;
-        }
-        return name;
-    }
-
+    /**
+     * print the color for a command feats
+     * @param key
+     * @return
+     */
     private String getComandColorString(Set<Integer> key) {
         String name=null;
         for (Integer i:key){
@@ -4420,75 +4345,78 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
         @Override
         public Expr visit(ExprBinary x) throws Err {
+            Expr left=visitThis(x.left);
+            Expr right=visitThis(x.right);
+
             if(x.op.equals(ExprBinary.Op.INTERSECT)){
                 featB=new HashSet<>();
-                if(x.left instanceof ExprBinary && ((ExprBinary) x.left).op==ExprBinary.Op.JOIN &&
-                        x.right instanceof ExprBinary && ((ExprBinary) x.right).op==ExprBinary.Op.JOIN &&
-                        ((ExprBinary) x.left).left.toString().equals(((ExprBinary) x.right).left.toString())&&
-                        compare(x.left.color.keySet(),x.right.color.keySet(),featB)){
+                if(left instanceof ExprBinary && ((ExprBinary) left).op==ExprBinary.Op.JOIN &&
+                        right instanceof ExprBinary && ((ExprBinary) right).op==ExprBinary.Op.JOIN &&
+                        ((ExprBinary) left).left.toString().equals(((ExprBinary) right).left.toString())&&
+                        compare(left.color.keySet(),right.color.keySet(),featB)){
 
                     VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
-                    ((ExprBinary) x.left).left.accept(visiterRemoveFeatB);
-                    Expr er= ExprBinary.Op.INTERSECT.make(((ExprBinary) x.left).left.pos,
-                           ((ExprBinary) x.left).left.closingBracket,((ExprBinary) x.left).right,((ExprBinary) x.right).right,((ExprBinary) x.left).left.color);
+                    ((ExprBinary) left).left.accept(visiterRemoveFeatB);
+                    Expr er= ExprBinary.Op.INTERSECT.make(((ExprBinary) left).left.pos,
+                           ((ExprBinary) left).left.closingBracket,((ExprBinary) left).right,((ExprBinary) right).right,((ExprBinary) left).left.color);
 
-                    return  ExprBinary.Op.JOIN.make(((ExprBinary) x.left).left.pos,((ExprBinary) x.left).left.closingBracket,
-                         visitThis(((ExprBinary) x.left).left),visitThis(er),((ExprBinary) x.left).left.color);
+                    return  ExprBinary.Op.JOIN.make(((ExprBinary) left).left.pos,((ExprBinary) left).left.closingBracket,
+                         ((ExprBinary) left).left,er,((ExprBinary) left).left.color);
 
-                }else if(x.left instanceof ExprBinary && ((ExprBinary) x.left).op==ExprBinary.Op.JOIN &&
-                        x.right instanceof ExprBinary && ((ExprBinary) x.right).op==ExprBinary.Op.JOIN &&
-                        ((ExprBinary) x.left).right.toString().equals(((ExprBinary) x.right).right.toString())&&
-                        compare(x.left.color.keySet(),x.right.color.keySet(),featB)){
+                }else if(left instanceof ExprBinary && ((ExprBinary) left).op==ExprBinary.Op.JOIN &&
+                        right instanceof ExprBinary && ((ExprBinary) right).op==ExprBinary.Op.JOIN &&
+                        ((ExprBinary) left).right.toString().equals(((ExprBinary) right).right.toString())&&
+                        compare(left.color.keySet(),right.color.keySet(),featB)){
 
                     VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
-                    ((ExprBinary) x.left).right.accept(visiterRemoveFeatB);
-                    Expr er= ExprBinary.Op.INTERSECT.make(((ExprBinary) x.left).right.pos,
-                            ((ExprBinary) x.left).right.closingBracket,((ExprBinary) x.left).left,
-                            ((ExprBinary) x.right).left,((ExprBinary) x.left).right.color);
+                    ((ExprBinary) left).right.accept(visiterRemoveFeatB);
+                    Expr er= ExprBinary.Op.INTERSECT.make(((ExprBinary) left).right.pos,
+                            ((ExprBinary) left).right.closingBracket,((ExprBinary) left).left,
+                            ((ExprBinary) right).left,((ExprBinary) left).right.color);
 
-                    return  ExprBinary.Op.JOIN.make(((ExprBinary) x.left).right.pos,((ExprBinary) x.left).right.closingBracket,
-                             visitThis(er),visitThis(((ExprBinary) x.left).right),((ExprBinary) x.left).right.color);
+                    return  ExprBinary.Op.JOIN.make(((ExprBinary) left).right.pos,((ExprBinary) left).right.closingBracket,
+                             er,((ExprBinary) left).right,((ExprBinary) left).right.color);
                 }
             }else if(x.op.equals(ExprBinary.Op.AND)) {
-                if (x.left instanceof ExprBinary && ((ExprBinary) x.left).op == ExprBinary.Op.JOIN &&
-                        x.right instanceof ExprBinary && ((ExprBinary) x.right).op == ExprBinary.Op.JOIN &&
-                        ((ExprBinary) x.left).left.toString().equals(((ExprBinary) x.right).left.toString())){
+                if (left instanceof ExprBinary && ((ExprBinary) left).op == ExprBinary.Op.JOIN &&
+                        right instanceof ExprBinary && ((ExprBinary) right).op == ExprBinary.Op.JOIN &&
+                        ((ExprBinary) left).left.toString().equals(((ExprBinary) right).left.toString())){
                     VisiterRemoveFeatB visiterRemoveFeatB = new VisiterRemoveFeatB();
-                    ((ExprBinary) x.left).left.accept(visiterRemoveFeatB);
-                    Expr er = ExprBinary.Op.AND.make(((ExprBinary) x.left).left.pos,
-                            ((ExprBinary) x.left).left.closingBracket, ((ExprBinary) x.left).right,
-                            ((ExprBinary) x.right).right, ((ExprBinary) x.left).left.color);
+                    ((ExprBinary) left).left.accept(visiterRemoveFeatB);
+                    Expr er = ExprBinary.Op.AND.make(((ExprBinary) left).left.pos,
+                            ((ExprBinary) left).left.closingBracket, ((ExprBinary) left).right,
+                            ((ExprBinary) right).right, ((ExprBinary) left).left.color);
 
-                    return ExprBinary.Op.JOIN.make(((ExprBinary) x.left).left.pos, ((ExprBinary) x.left).left.closingBracket,
-                            visitThis(((ExprBinary) x.left).left), visitThis(er), ((ExprBinary) x.left).left.color);
-                }else if (x.left instanceof ExprBinary && ((ExprBinary) x.left).op == ExprBinary.Op.JOIN &&
-                        x.right instanceof ExprBinary && ((ExprBinary) x.right).op == ExprBinary.Op.JOIN &&
-                        ((ExprBinary) x.left).right.toString().equals(((ExprBinary) x.right).right.toString())) {
+                    return ExprBinary.Op.JOIN.make(((ExprBinary) left).left.pos, ((ExprBinary) left).left.closingBracket,
+                            ((ExprBinary) left).left, er, ((ExprBinary) left).left.color);
+                }else if (left instanceof ExprBinary && ((ExprBinary) left).op == ExprBinary.Op.JOIN &&
+                        right instanceof ExprBinary && ((ExprBinary) right).op == ExprBinary.Op.JOIN &&
+                        ((ExprBinary) left).right.toString().equals(((ExprBinary) right).right.toString())) {
                     VisiterRemoveFeatB visiterRemoveFeatB = new VisiterRemoveFeatB();
-                    ((ExprBinary) x.left).right.accept(visiterRemoveFeatB);
-                    Expr er = ExprBinary.Op.AND.make(((ExprBinary) x.left).right.pos,
-                            ((ExprBinary) x.left).right.closingBracket, ((ExprBinary) x.left).left, ((ExprBinary) x.right).left, ((ExprBinary) x.left).right.color);
+                    ((ExprBinary) left).right.accept(visiterRemoveFeatB);
+                    Expr er = ExprBinary.Op.AND.make(((ExprBinary) left).right.pos,
+                            ((ExprBinary) left).right.closingBracket, ((ExprBinary) left).left, ((ExprBinary) right).left, ((ExprBinary) left).right.color);
 
-                    return ExprBinary.Op.JOIN.make(((ExprBinary) x.left).right.pos, ((ExprBinary) x.left).right.closingBracket,
-                            visitThis(er), visitThis(((ExprBinary) x.left).right), ((ExprBinary) x.left).right.color);
+                    return ExprBinary.Op.JOIN.make(((ExprBinary) left).right.pos, ((ExprBinary) left).right.closingBracket,
+                            er, ((ExprBinary) left).right, ((ExprBinary) left).right.color);
                 }
             }else if(x.op.equals(ExprBinary.Op.PLUS)){
                 featB=new HashSet<>();
-                if(x.left.toString().equals(x.right.toString()) ){
+                if(left.toString().equals(right.toString()) ){
                     VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
-                    if(x.left.color.keySet().equals(x.right.color.keySet())){
-                        return  visitThis(x.left);
-                    } else if( compare(x.left.color.keySet(),x.right.color.keySet(),featB)){
+                    if(left.color.keySet().equals(right.color.keySet())){
+                        return  x.left;
+                    } else if( compare(left.color.keySet(),right.color.keySet(),featB)){
 
-                        x.left.accept(visiterRemoveFeatB);
-                        return visitThis(x.left);
+                        return left.accept(visiterRemoveFeatB);
+
                     }
 
                 }
 
             }
 
-            return x.op.make(x.pos, x.closingBracket,  visitThis(x.left), visitThis(x.right), x.color);
+            return x.op.make(x.pos, x.closingBracket,  left, right, x.color);
         }
 
         @Override

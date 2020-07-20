@@ -393,6 +393,7 @@ public final class OurSyntaxWidget {
                        Set featsBefore=new HashSet(tempColor);
 
                        if(er !=null){
+                           pop.removeAll();
                            //use a map to store the features that can be removed
                            Map<Set<Integer>,Integer> featRmSet=new HashMap<>();//<feature can be removed, full feature set>
                            Expr facts=module.getAllReachableFacts();
@@ -440,6 +441,9 @@ public final class OurSyntaxWidget {
                                   }
                                   //deleter a feature of a sig/Field
                                   doFeatRmOrAdd(featRmSet,featsBefore,er,point.x, point.y);
+                                  //merge Sigs/Fields
+                                  //addMergeMenu(module,er);
+
 
                               }else if(er instanceof Expr){
                                   //delete features for facts/assert/Expr
@@ -456,6 +460,60 @@ public final class OurSyntaxWidget {
                 }
             }
 
+            private void addMergeMenu(CompModule module, Browsable er) {
+                if(er instanceof Sig){
+                    for(Sig s: module.sigs.get(((Sig) er).label.substring(5)).values()){
+                        if(s!=er){
+                            Integer b=((Sig)er).compareMergeLaw(s);
+                            if(b!=null){
+                                JMenuItem y = new JMenuItem("Merge"+s.label.substring(5) + " " + s.getColorString());
+                                y.addActionListener(new ActionListener() {
+                                    @Override
+                                    public void actionPerformed(ActionEvent e) {
+                                        doSigMerge((Sig) er,s,b);
+                                    }
+                                    private void doSigMerge(Sig sig1, Sig sig2, Integer b) {
+                                        StringBuilder fact=new StringBuilder();
+                                                Sig s= sig1.mergeSig(sig2,b,fact);
+
+                                                StringBuilder print = new StringBuilder();
+                                                s.printSig(print);
+
+                                                //merge feature position with sig position
+                                                for (Map.Entry<Integer,Pos> ent:sig1.color.entrySet()){
+                                                    sig1.pos=sig1.pos.merge(ent.getValue());
+                                                }
+                                                for (Map.Entry<Integer,Pos> ent:sig2.color.entrySet()){
+                                                    sig2.pos=sig2.pos.merge(ent.getValue());
+                                                }
+
+                                                if(fact.length()>0)
+                                                    appendText(fact.toString());
+
+                                                int d2 = getLineStartOffset(sig2.pos.y2 - 1) + sig2.pos.x2 - 1;
+                                                int c2= getLineStartOffset(sig2.pos.y - 1) + sig2.pos.x - 1;
+                                                int d = getLineStartOffset(sig1.pos.y2 - 1) + sig1.pos.x2 - 1;
+                                                int c= getLineStartOffset(sig1.pos.y - 1) + sig1.pos.x - 1;
+
+                                                if(sig1.pos.y<sig2.pos.y || (sig1.pos.y==sig2.pos.y && sig1.pos.x<sig2.pos.x)){
+                                                    changeText(c2,d2+2,"");
+                                                    changeText(c,d+1,print.toString());
+
+                                                }else{
+                                                    changeText(c,d+2,"");
+                                                    changeText(c2,d2+1,print.toString());
+                                                }
+                                    }
+                                });
+                                pop.add(y);
+                            }
+                        }
+                    }
+
+                }else if (er instanceof Sig.Field){
+
+                }
+            }
 
 
             //colorful merge
@@ -468,7 +526,6 @@ public final class OurSyntaxWidget {
              * @param y y position to show the popup menu
              */
             private void doFeatRmOrAdd(Map<Set<Integer>, Integer> featRmSet, Set<Integer> featsBefore, Browsable e, int x, int y) {
-                pop.removeAll();
                 Set <Integer> menu=new HashSet<>();
                 for(Map.Entry<Set<Integer>, Integer> entry:featRmSet.entrySet()){
                    if(featsBefore.containsAll(entry.getKey()) && e.color.keySet().contains(entry.getValue())){
@@ -520,14 +577,15 @@ public final class OurSyntaxWidget {
                         }
                     }
                 }
+                if(e instanceof Sig){
+                    addMergeMenu(getModule(),e);
+                }
+
 
                 pop.show(pane, x, y);
             }
             private void doFeatRM(Map<Set<Integer>, Integer> featRmSet, Command cmd, int x, int y) {
-                pop.removeAll();
                 if(cmd.feats!=null){
-
-
                 Set <Integer> menu=new HashSet<>();
                 for(Map.Entry<Set<Integer>, Integer> entry:featRmSet.entrySet()){
                     if(cmd.feats.feats.containsAll(entry.getKey())){

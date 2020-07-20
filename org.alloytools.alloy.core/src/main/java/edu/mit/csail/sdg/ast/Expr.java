@@ -1169,4 +1169,168 @@ public abstract class Expr extends Browsable {
     public Clause referenced() {
         return referenced;
     }
+
+    //colorful Merge
+    /**
+     * compare this and expr to find out if they can apply the Positive and Negative Law
+     * @param
+     * @return return b if it can be apply,otherwise null.
+     */
+    public Integer compareMergeLaw(Set<Integer> feats1, Set<Integer> feats2){
+        Set<Integer> k= new HashSet<>();
+
+        if(feats1.size()!=feats2.size())
+            return null;
+
+        for(int i: feats1){
+            if(feats2.contains(i) || feats2.contains(-i)){
+                for(int j:feats2){
+                    if(i==-j){
+                        if(k.size()<1){
+                            k.add(j>0?j:-j);
+                            break;
+                        } else{
+                            k.clear();
+                            return null;
+                        }
+                    }else if(i==j){
+                        break;
+                    }
+                }
+            }else
+                return null;
+        }
+
+        if(k.size()==1)
+            return k.iterator().next();
+
+        return null;
+    }
+    //colorful Merge
+    public Integer compareMergeLaw(Expr expr){
+        Set<Integer> feats1=this.color.keySet();
+        Set<Integer> feats2= expr.color.keySet();
+        return compareMergeLaw(feats1,feats2);
+    }
+    //colorful merge
+    public String getColorString() {
+        String separator=" ";
+        String name=null;
+        for (Integer i:this.color.keySet()){
+            String color=null;
+            if(i==1) color ="\u2780";
+            else if(i==2) color ="\u2781";
+            else if(i==3) color ="\u2782" ;
+            else if(i==4) color ="\u2783" ;
+            else if(i==5) color ="\u2784" ;
+            else if(i==6) color ="\u2785" ;
+            else if(i==7) color ="\u2786" ;
+            else if(i==8) color ="\u2787" ;
+            else if(i==9) color ="\u2788" ;
+            else if(i==-1) color ="\u278A" ;
+            else if(i==-2) color ="\u278B" ;
+            else if(i==-3) color ="\u278C" ;
+            else if(i==-4) color ="\u278D" ;
+            else if(i==-5) color ="\u278E" ;
+            else if(i==-6) color ="\u278F" ;
+            else if(i==-7) color ="\u2790" ;
+            else if(i==-8) color ="\u2791" ;
+            else if(i==-9) color ="\u2792" ;
+
+            name=name==null? color : name+separator+color;
+        }
+        return name;
+    }
+
+    //colorful merge
+    /**
+     * print color annotation, for example clor: -1,2,3, colfront :➊➁➂
+     * @param colfront record the front color annotation:➂➁➊
+     * @param colback record the back color annotation
+     */
+    public void printcolor(StringBuilder colfront, StringBuilder colback,Set<Integer> color) {
+        final String PFEAT1="\u2780";
+        final String PFEAT2="\u2781";
+        final String PFEAT3="\u2782" ;
+        final String PFEAT4="\u2783" ;
+        final String PFEAT5="\u2784" ;
+        final String PFEAT6="\u2785" ;
+        final String PFEAT7="\u2786" ;
+        final String PFEAT8="\u2787" ;
+        final String PFEAT9="\u2788" ;
+        final String NFEAT1="\u278A" ;
+        final String NFEAT2="\u278B" ;
+        final String NFEAT3="\u278C" ;
+        final String NFEAT4="\u278D" ;
+        final String NFEAT5="\u278E" ;
+        final String NFEAT6="\u278F" ;
+        final String NFEAT7="\u2790" ;
+        final String NFEAT8="\u2791" ;
+        final String NFEAT9="\u2792" ;
+        for(Integer i: color){
+            if(i==1) {
+                colfront.append(PFEAT1+" ");
+                colback.insert(0,PFEAT1);
+            }else if(i==2) {
+                colfront.append(PFEAT2+" ");
+                colback.insert(0,PFEAT2);
+            }else if(i==3) {
+                colfront.append(PFEAT3+" ");
+                colback.insert(0,PFEAT3);
+            }else if(i==4) {
+                colfront.append(PFEAT4+" ");
+                colback.insert(0,PFEAT4);
+            }else if(i==5) {
+                colfront.append(PFEAT5+" ");
+                colback.insert(0,PFEAT5);
+            }else if(i==6) {
+                colfront.append(PFEAT6+" ");
+                colback.insert(0,PFEAT6);
+            }else if(i==7) {
+                colfront.append(PFEAT7+" ");
+                colback.insert(0,PFEAT7);
+            }else if(i==8) {
+                colfront.append(PFEAT8+" ");
+                colback.insert(0,PFEAT8);
+            }else if(i==9) {
+                colfront.append(PFEAT9+" ");
+                colback.insert(0,PFEAT9);
+            }else if(i==-1) {
+                colfront.append(NFEAT1+" ");
+                colback.insert(0,NFEAT1);
+            }else if(i==-2) {
+                colfront.append(NFEAT2+" ");
+                colback.insert(0,NFEAT2);
+            }else if(i==-3) {
+                colfront.append(NFEAT3+" ");
+                colback.insert(0,NFEAT3);
+            }else if(i==-4) {
+                colfront.append(NFEAT4+" ");
+                colback.insert(0,NFEAT4);
+            }else if(i==-5) {
+                colfront.append(NFEAT5+" ");
+                colback.insert(0,NFEAT5);
+            }else if(i==-6) {
+                colfront.append(NFEAT6+" ");
+                colback.insert(0,NFEAT6);
+            }else if(i==-7) {
+                colfront.append(NFEAT7+" ");
+                colback.insert(0,NFEAT7);
+            }else if(i==-8) {
+                colfront.append(NFEAT8+" ");
+                colback.insert(0,NFEAT8);
+            }else if(i==-9) {
+                colfront.append(NFEAT9+" ");
+                colback.insert(0,NFEAT9);
+            }
+
+            if(colfront!=null)
+                colfront.deleteCharAt(colfront.length()-1);
+        }
+        return;
+    }
+    public void printcolor(StringBuilder colfront, StringBuilder colback) {
+        printcolor(colfront, colback, color.keySet());
+    }
+
 }
