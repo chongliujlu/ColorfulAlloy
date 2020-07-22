@@ -1008,6 +1008,15 @@ public abstract class Sig extends Expr implements Clause {
         return t.toString();
     }
 
+    //colorful merge
+    /**
+     * merge top-level sigs, merge this with sig
+     * ( a b sig n { ds0,...,dsk}ba,  a -b sig n { ds′0,...,ds′l}-b a) =
+     * a sig n {b ds0 b,...,b dsk b, b ds′0 b,...,b ds′l b } a
+     * @param sig   Sig to be merge
+     * @param fact store facts if the quantifier need to be removed
+     * @param b  feature to be remove
+     */
     public Sig mergeSig(Sig sig,Integer b,StringBuilder fact){
         /** used to change the sigs after merge*///colorful merge
 
@@ -1171,6 +1180,66 @@ public abstract class Sig extends Expr implements Clause {
         }
 
         return signew;
+    }
+    public void addSomeFact(StringBuilder sigfact) {
+        StringBuilder coloF, colorB;
+        coloF = new StringBuilder();
+        colorB = new StringBuilder();
+        if (color != null)
+             printcolor(coloF, colorB);
+
+        sigfact.append("\r\n      "+coloF+"some "+ label.substring(5)+colorB);
+    }
+
+    public void addOneFact(StringBuilder sigfact) {
+        StringBuilder coloF, colorB;
+        coloF = new StringBuilder();
+        colorB = new StringBuilder();
+        if (color != null)
+            printcolor(coloF, colorB);
+
+        sigfact.append("\r\n      "+coloF+"one "+ label.substring(5)+colorB);
+    }
+
+    public void addLoneFact(StringBuilder sigfact) {
+        StringBuilder coloF, colorB;
+        coloF = new StringBuilder();
+        colorB = new StringBuilder();
+        if (color != null)
+            printcolor(coloF, colorB);
+
+        sigfact.append("\r\n      "+coloF+"lone "+ label.substring(5)+colorB);
+    }
+
+    public void addAbstractFact(SafeList<Sig> sigSafeList, StringBuilder sigfact) {
+        Set<Sig> children = new HashSet<>();
+        for (Sig s : sigSafeList) {
+            if (!s.equals(this)) {
+                if (s instanceof Sig.PrimSig) {
+                    if (((Sig.PrimSig) s).parent.equals(this)) {
+                        children.add(s);
+                    }
+                }
+            }
+        }
+
+        StringBuilder coloF, colorB;
+        coloF = new StringBuilder();
+        colorB = new StringBuilder();
+        if (color != null)
+            printcolor(coloF, colorB);
+
+        if (children.isEmpty())
+            sigfact.append("\r\n      " + coloF + "no " + label.substring(5) + colorB);
+        else {
+            StringBuilder childString = new StringBuilder();
+            for (Sig child : children) {
+                childString.append(child.label.substring(5) + "+");
+            }
+            childString.deleteCharAt(childString.length() - 1);
+            sigfact.append("\r\n      " + coloF + label.substring(5) + "=" + childString + colorB);
+        }
+
     }
 
     public void printSig(StringBuilder print){

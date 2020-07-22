@@ -308,6 +308,117 @@ public final class CompModule extends Browsable implements Module {
             func.pos.merge(map.getValue());
         }
     }
+    //colorful merge
+    /**
+     * merge sigs, find a pair of sigs that can be merge in the group. sigs with different quantifier must be removed in advance
+     * @param values a map of sigs to be merge
+     * @return return true means the process is not finish, false means there is no sigs can be merge in the given group
+     */
+    public void mergeSigs(Map<Map<Integer, Pos>, Sig> sigMap, StringBuilder attributefact) {
+        if(!sigMap.isEmpty()){
+            Set <Integer> feat=new TreeSet<>(getModuleFeatSet());
+
+            for(Integer curMergFeat: feat){
+                Map<Map<Integer, Pos>, Sig>sigMapclone=new HashMap<>(sigMap);
+                Set<Sig> visit=new HashSet();
+                for(Map.Entry<Map<Integer, Pos>, Sig> sig1: sigMapclone.entrySet()){
+                    if(visit.contains(sig1.getValue()))
+                        continue;
+                    visit.add(sig1.getValue());
+                    for(Map.Entry<Map<Integer, Pos>, Sig> sig2: sigMapclone.entrySet()){
+                        if(visit.contains(sig2.getValue()))
+                            continue;
+                        if(!sig2.getKey().keySet().contains(curMergFeat) && !sig2.getKey().keySet().contains(-curMergFeat) )
+                            continue;
+                        Integer b=sig1.getValue().compareMergeLaw(sig2.getValue());
+                        if(b==curMergFeat){
+                            StringBuilder sigfact=new StringBuilder();
+                            //remove abstract quantifier
+                            if(sig1.getValue().isAbstract==null && sig2.getValue().isAbstract!=null){
+                               sig2.getValue().addAbstractFact(getAllSigs(),sigfact);
+                            }
+                            if(sig1.getValue().isAbstract!=null && sig2.getValue().isAbstract==null) {
+                                sig1.getValue().addAbstractFact(getAllSigs(),sigfact);
+                                ConstList.TempList attributes = new ConstList.TempList(sig1.getValue().attributes.size());
+                                for (int i = 0; i < sig1.getValue().attributes.size(); i++) {
+                                    Attr attr = sig1.getValue().attributes.get(i);
+                                    if (attr!=null && !attr.type.name().equals("ABSTRACT"))
+                                        attributes.add(attr) ;
+                                }
+                                sig1.getValue().attributes=attributes.makeConst();
+                            }
+                            //remove lone quantifier
+                            if(sig1.getValue().isLone==null && sig2.getValue().isLone!=null){
+                                sig2.getValue().addLoneFact(sigfact);
+                            }
+                            if(sig1.getValue().isLone!=null && sig2.getValue().isLone==null) {
+                                sig1.getValue().addLoneFact(sigfact);
+                                ConstList.TempList attributes = new ConstList.TempList(sig1.getValue().attributes.size());
+                                for (int i = 0; i < sig1.getValue().attributes.size(); i++) {
+                                    Attr attr = sig1.getValue().attributes.get(i);
+                                    if (attr!=null && !attr.type.name().equals("LONE"))
+                                        attributes.add(attr) ;
+                                }
+                                sig1.getValue().attributes=attributes.makeConst();
+                            }
+
+                            //remove one quantifier
+                            if(sig1.getValue().isOne==null && sig2.getValue().isOne!=null){
+                                sig2.getValue().addOneFact(sigfact);
+                            }
+                            if(sig1.getValue().isOne!=null && sig2.getValue().isOne==null) {
+                                sig1.getValue().addOneFact(sigfact);
+                                ConstList.TempList attributes = new ConstList.TempList(sig1.getValue().attributes.size());
+                                for (int i = 0; i < sig1.getValue().attributes.size(); i++) {
+                                    Attr attr = sig1.getValue().attributes.get(i);
+                                    if (attr!=null && !attr.type.name().equals("ONE"))
+                                        attributes.add(attr) ;
+                                }
+                                sig1.getValue().attributes=attributes.makeConst();
+                            }
+
+                            //remove some quantifier
+                            if(sig1.getValue().isSome==null && sig2.getValue().isSome!=null){
+                                sig2.getValue().addSomeFact(sigfact);
+                            }
+                            if(sig1.getValue().isSome!=null && sig2.getValue().isSome==null) {
+                                sig1.getValue().addSomeFact(sigfact);
+                                ConstList.TempList attributes = new ConstList.TempList(sig1.getValue().attributes.size());
+                                for (int i = 0; i < sig1.getValue().attributes.size(); i++) {
+                                    Attr attr = sig1.getValue().attributes.get(i);
+                                    if (attr!=null && !attr.type.name().equals("SOME"))
+                                        attributes.add(attr) ;
+                                }
+                                sig1.getValue().attributes=attributes.makeConst();
+                            }
+
+                            Sig s= sig1.getValue().mergeSig(sig2.getValue(),b,sigfact);
+
+                            if(sigfact.length()>0){
+                                attributefact.append("\r\nfact RemoveQualtifier {" +sigfact+"\r\n        }");
+                            }
+                            visit.add(sig2.getValue());
+                            sigMap.put(s.color,s);
+                            sigMap.remove(sig1.getKey());
+                            sigMap.remove(sig2.getKey());
+                            break;
+                        }
+                    }
+
+                }
+
+
+            }
+        }
+    }
+
+    private Collection<? extends Integer> getModuleFeatSet() {
+        Set<Integer> temp=new HashSet<>();
+        for(Integer i: CompModule.feats){
+            temp.add(i>0? i: -i);
+        }
+        return temp;
+    }
 
     // ============================================================================================================================//
 
@@ -1293,8 +1404,8 @@ public final class CompModule extends Browsable implements Module {
                         Set< Set<Integer> > ImComp=computeFMIncompFeas();
                         Map< Set<Integer>,Set<Integer> > comp=computeFMCompFeats(ImComp);
                         for(Map.Entry<Set<Integer>,Set<Integer>> s:comp.entrySet()){
-                            if(s.getKey().equals(require)){
-                                require=s.getValue();
+                            if(require.containsAll(s.getKey())){
+                                require.addAll(s.getValue());
                             }
                         }
 
@@ -1374,20 +1485,24 @@ public final class CompModule extends Browsable implements Module {
     private Map<Set<Integer>, Set<Integer>> computeFMCompFeats(Set<Set<Integer>> imComp) {
         Map<Set<Integer>, Set<Integer>> result=new HashMap<>();
         for(Set<Integer> set:imComp){
-            Set<Integer> value=new HashSet<>();
+
             for(Integer i:set){
+                Set<Integer> value=new HashSet<>();
                 value.add(-i);
                 for(Integer j:set){
                     if(j!=i)
                         value.add(j);
                 }
-
+                Set<Integer> keytemp=new HashSet<>(value);
+                keytemp.removeAll(set);
+                Set<Integer> key=new HashSet<>(value);
+                key.removeAll(keytemp);
+                if(result.containsKey(key))
+                    result.get(key).addAll(value);
+                else
+                    result.put(key,value);
             }
-            Set<Integer> keytemp=new HashSet<>(value);
-            keytemp.removeAll(set);
-            Set<Integer> key=new HashSet<>(value);
-            key.removeAll(keytemp);
-            result.put(key,value);
+
         }
         return  result;
     }
@@ -2727,8 +2842,10 @@ public final class CompModule extends Browsable implements Module {
 
             //colorful merge
             for(Map<Map<Integer,Pos>,Sig> map: m.sigs.values())
-                for(Sig s: map.values())
+                for(Sig s: map.values()){
                     root.sig2module.put(s, m);
+                    feats.addAll(s.color.keySet());
+                }
         // Resolves SigAST -> Sig, and topologically sort the sigs into the
         // "sorted" array
         root.new2old.put(UNIV, UNIV);
@@ -2742,8 +2859,8 @@ public final class CompModule extends Browsable implements Module {
             //colorful merge
             for(Map<Map<Integer,Pos>,Sig> map:m.sigs.values())
                 for(Sig s: map.values()){
-                    if(!s.color.isEmpty())                 //colorful Alloy
-                        CompModule.feats.addAll(s.color.keySet());  //colorful Alloy
+                   // if(!s.color.isEmpty())                 //colorful Alloy
+                   //     CompModule.feats.addAll(s.color.keySet());  //colorful Alloy
                 resolveSig(root, topo, s);
                 }
         // Add the non-defined fields to the sigs in topologically sorted order
@@ -2935,8 +3052,8 @@ public final class CompModule extends Browsable implements Module {
                     Set< Set<Integer> > ImComp=computeFMIncompFeas();
                     Map< Set<Integer>,Set<Integer> > comp=computeFMCompFeats(ImComp);
                     for(Map.Entry<Set<Integer>,Set<Integer>> s:comp.entrySet()){
-                        if(s.getKey().equals(require)){
-                            require=s.getValue();
+                        if(require.containsAll(s.getKey())){
+                            require.addAll(s.getValue());
                         }
                     }
                     for (Field field: fieldCandidate.get(name)) {
@@ -3134,7 +3251,7 @@ public final class CompModule extends Browsable implements Module {
         //features that not referred in color, but can be remove by merge(module marked with 1 -1 2 -3,expression 2, returns 1 )
         for (Integer i : CompModule.feats){
             if(!color.contains(i) && !color.contains(-i)){
-                if(CompModule.feats.contains(-i))
+                //if(CompModule.feats.contains(-i))
                     set.add(i>0?i:-i);
             }
         }
@@ -3651,6 +3768,7 @@ public final class CompModule extends Browsable implements Module {
             return null;
         }
     }
+
 
 }
 

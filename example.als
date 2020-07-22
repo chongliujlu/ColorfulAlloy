@@ -2,52 +2,33 @@ fact FeatureModel {
 	➁➊some none➊➁
 	➂➊some none➊➂
 	}
-➀➁sig Product{
-        category:  set Category,
-        images:  set Image
-        }➁➀
-➋➌sig Product{
-        ➀category:  one Category➀,
+sig    Product{
+        ➀➋➌category:  one Category➌➋➀,
         images:  set Image,
-        ➊catalog:  one Catalog➊
-        }➌➋
-➋➀➂sig Product{
-        category:  some Category,
-        images:  set Image
-        }➂➀➋
+        ➊➋➌catalog:  one Catalog➌➋➊,
+        ➀➁➌category:  one Category➌➁➀,
+        ➂category:  some Category➂
+        }
 
-➊➋➌sig Image {}➌➋➊
-➀➋➌sig Image {}➌➋➀
-➀➁➌sig Image {}➌➁➀
-➀➋➂ sig Image {}➂➋➀
-➀➁➂sig Image {}➂➁➀
-➊➋➌sig Catalog {
-	thumbnails : set Image
-	}➌➋➊
-➀➋➌sig Catalog {
-	thumbnails : set Image
-	}➌➋➀
-➀➁➌sig Catalog {
-	thumbnails : set Image
-	}➌➁➀
-➀➋➂ sig Catalog {
-	thumbnails : set Image
-	}➂➋➀
-➀➁➂sig Catalog {
-	thumbnails: set Image
-	}➂➁➀
-➀➋➌ sig Category {
-	inside : one Catalog
-    } ➌➋➀
-➀➁➌sig Category {
-	inside : one Catalog + Category
-	}➌➁➀
-➀➋➂ sig Category {
-	inside : one Catalog
-	} ➂➋➀
-➀➁➂sig Category {
-	inside : one Catalog + Category
-	}➂➁➀
+
+➀➂sig Image{ }➂➀
+➋➌sig Image{ }➌➋
+➀➌➁sig Image{ }➁➌➀
+
+➀➂sig Catalog{
+        thumbnails:  set Image
+        }➂➀
+➀➌➁sig Catalog{
+        thumbnails:  set Image
+        }➁➌➀
+➋➌sig Catalog{
+        thumbnails:  set Image
+        }➌➋
+
+➀sig Category{
+        inside:  one ((➋➂Catalog➂➋ + (➁➂Catalog + Category➂➁)) + (➌➋Catalog➋ + (➁Catalog + Category➁)➌))
+        }➀
+
 ➀➁➌fact Acyclic {
     	all c : Category | c not in c.^inside
     }➌➁➀
@@ -107,7 +88,11 @@ check AllCataloged with ➀,➁,➂ for 10
 
 
 
-fact RemoveMultiplicity {
-        ➀➁➂all s:Product | some s.category➂➁➀
-        ➀➌➁all s:Product | one s.category➁➌➀
-        }
+
+
+
+
+
+
+
+

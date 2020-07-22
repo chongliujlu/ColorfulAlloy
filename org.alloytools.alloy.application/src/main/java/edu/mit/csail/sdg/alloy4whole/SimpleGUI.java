@@ -73,6 +73,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.event.*;
 import javax.swing.plaf.FontUIResource;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.html.HTMLDocument;
 
 import edu.mit.csail.sdg.alloy4.*;
@@ -998,6 +999,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
         if (wrap)
             return wrapMe();
         incompatibleFeats=new HashSet<>();
+        CompModule world=null;
         //store the sigs after parser
         Map<String,Map<Map<Integer,Pos>,Sig>> sigp = sigs;
         HashMap<String,ArrayList<Expr>> assertp=asserts;
@@ -1043,7 +1045,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
         //parser the model， get elements that can be merge.
         if (sigp == null) {
-            Module world;
+
             try {
                 text.clearShade();
                 log.clearError(); // To clear any residual error message
@@ -1079,7 +1081,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                         for (Sig s1  : entry.getValue().values()){
                             for( Sig s2  : entry.getValue().values()){
                                 if(!s1.equals(s2))
-                                    if( compare(s1.color.keySet(),s2.color.keySet(),new HashSet<>())){
+                                    if( s1.compareMergeLaw(s2)!=null){
                                         sigName.add(entry.getKey());
                                         break;
                                     }
@@ -1099,7 +1101,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                                             if(!f2.equals(f))
                                                 if(f.label.equals(f2.label))
                                                         if(f.color.keySet().equals(f2.color.keySet())||
-                                                                compare(f.color.keySet(),f2.color.keySet(),new HashSet<>())){
+                                                                sigF.compareMergeLaw(f.color.keySet(),f2.color.keySet())!=null){
                                                             new_mergeField.add(sigF);
                                                             break;
                                                         }
@@ -1218,9 +1220,12 @@ public final class SimpleGUI implements ComponentListener, Listener {
                 JMenuItem sig=new JMenuItem(name);
                 new_sigLists.add(sig);
                 Map<String, Map<Map<Integer, Pos>, Sig>> finalSigp = sigp;
+
+                CompModule finalWorld = world;
                 sig.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
+
                         text.clearShade();
                         log.clearError(); // To clear any residual error message
 
@@ -1247,20 +1252,21 @@ public final class SimpleGUI implements ComponentListener, Listener {
                             for(int i=0;i<pos.size()-1;i++)
                                 text.changeText(pos.get(i),"");
 
-
-
-                        boolean notFinish=true;
                         StringBuilder attributefact=new StringBuilder();
+                        finalWorld.mergeSigs(finalSigp.get(name),attributefact);
+                     /*   boolean notFinish=true;
+
                         while(notFinish){
+
                             notFinish=  mergeSig(finalSigp.get(name),attributefact);
-                        }
+                        }*/
 
                         //merge sigs with different quantifier abstract ,lone,some, one quantifier
-                        notFinish=true;
+                      /*  notFinish=true;
                         while(notFinish){
                             notFinish=  mergeSig(finalSigp.get(name),sigSafeList,attributefact);
                         }
-
+*/
                         text.get().appendText(attributefact.toString());
                         //根据FM merge Sigs.
 
@@ -1271,6 +1277,46 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
 
                         text.changeText(pos.get(pos.size()-1),print.toString());
+                    }
+                });
+
+            }
+            for(Sig s:new_mergeField){
+                JMenuItem sig=new JMenuItem(s.label.substring(5)+s.getColorString());
+                new_sigLists.add(sig);
+                sig.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        StringBuilder fact=new StringBuilder();
+                        Sig sig=s.mergeField(fact);
+                        if(sig.color.entrySet().isEmpty()){
+                            Pos p=new Pos(sig.pos.filename,sig.pos.x-4,sig.pos.y,sig.pos.x-1,sig.pos.y);
+                            String textSig = null;
+                            try {
+                                textSig=text.get().getText(p);
+                            } catch (BadLocationException badLocationException) {
+                                badLocationException.printStackTrace();
+                            }
+                            while (!textSig.equals("sig")){
+                                p=new Pos(p.filename,p.x-1,p.y,p.x2-1,p.y2);
+                                try {
+                                    textSig=text.get().getText(p);
+                                } catch (BadLocationException badLocationException) {
+                                    badLocationException.printStackTrace();
+                                }
+                            }
+                            sig.pos=sig.pos.merge(p);
+                        }
+                        else
+                        for (Map.Entry<Integer,Pos> ent:sig.color.entrySet()){
+                            sig.pos=sig.pos.merge(ent.getValue());
+                        }
+                        if(fact.length()>0)
+                        text.get().appendText("\r\nfact RemoveQualtifier {" +fact+"\r\n        }");
+                        
+                        StringBuilder print=new StringBuilder();
+                        sig.printSig(print);
+                        text.changeText(sig.pos,print.toString());
                     }
                 });
 
@@ -1731,7 +1777,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
     }
 
     private void updateSigOld2newList(Sig sig, Sig sigNew) {
-        List<Sig> keyList = new ArrayList<>();
         for(Sig key: sigOld2new.keySet())
             if (sigOld2new.get(key).equals(sig)) {
                 sigOld2new.put(key,sigNew);
@@ -2425,422 +2470,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
         }
     }
 
-
-
-    /**
-     * merge top-level sigs,
-     * ( a b sig n { ds0,...,dsk}ba,  a -b sig n { ds′0,...,ds′l}-b a) =
-     * a sig n {b ds0 b,...,b dsk b, b ds′0 b,...,b ds′l b } a
-     * @param sig1  Sig to be merge
-     * @param sig2  Sig to be merge
-     * @param b  feature to be remove
-     */
-    private  Sig mergeSig(Sig sig1,Sig sig2, Integer b){
-            //used to generate new Sig
-            Attr[] attributes = new Attr[sig1.attributes.size()];
-            for (int i = 0; i < sig1.attributes.size(); i++) {
-                attributes[i] = sig1.attributes.get(i);
-            }
-            Sig signew=null;
-            if(sig1 instanceof Sig.PrimSig)
-                signew = new Sig.PrimSig(sig1.label, ((Sig.PrimSig) sig1).parent, attributes);
-            else if (sig1 instanceof Sig.SubsetSig)
-                signew=new Sig.SubsetSig(sig1.label,((Sig.SubsetSig) sig1).parents,attributes);
-
-            Map<Integer,Pos> feats=new HashMap<>(sig1.color);
-            feats.remove(b);
-            feats.remove(-b);
-            signew.color.putAll(feats);
-
-            //add feature b or -b to fields.
-            Sig finalSignew = signew;
-            VisitQuery<Expr> sigold2newVisitor = new VisitQuery<Expr>() {
-
-                @Override
-                public  Expr visit(ExprCall x) {
-                    return x;
-                }
-
-                @Override
-                public Expr visit(ExprBinary x) throws Err {
-                    visitThis(x.left);
-                    visitThis(x.right);
-                    return x;
-                }
-
-                @Override
-                public Expr visit(ExprList x) throws Err {
-                    for(Expr e: x.args)
-                        visitThis(e);
-                    return x;
-                }
-
-                @Override
-                public Expr visit(ExprConstant x) throws Err {
-                    return x;
-                }
-
-                @Override
-                public Expr visit(ExprITE x) throws Err {
-                    visitThis(x.cond);
-                    visitThis(x.left);
-                    visitThis(x.right);
-                    return x;
-                }
-
-                @Override
-                public Expr visit(ExprLet x) throws Err {
-                    visitThis(x.expr);
-                    visitThis(x.sub);
-                    return x;
-                }
-
-                @Override
-                public Expr visit(ExprQt x) throws Err {
-                    return x;
-                }
-
-                @Override
-                public Expr visit(ExprUnary x) throws Err {
-                    visitThis(x.sub);
-                    return x;
-                }
-
-                @Override
-                public Expr visit(ExprVar x) throws Err {
-                    return x;
-                }
-
-                @Override
-                public Expr visit(Sig x) throws Err {
-                    if (x.equals(sig1)||x.equals(sig2)) {
-                        return finalSignew;
-                    }
-                    return x;
-                }
-
-                @Override
-                public Expr visit(Field x) throws Err {
-                    return x;
-                }
-            };
-
-
-            for (Decl d: sig1.getFieldDecls()){
-                Expr exprNew=d.expr.accept(sigold2newVisitor);
-                String[]labels = new String[d.names.size()];
-                for(int i=0; i< d.names.size();i++){
-                    labels[i]=d.names.get(i).label;
-                }
-                signew.addTrickyField(d.span(),d.isPrivate,d.disjoint,d.disjoint2,null,labels,exprNew,d.color);
-            }
-            for (Decl d: sig2.getFieldDecls()){
-                Expr exprNew=d.expr.accept(sigold2newVisitor);
-                String[]labels = new String[d.names.size()];
-                for(int i=0; i< d.names.size();i++){
-                    labels[i]=d.names.get(i).label;
-                }
-                signew.addTrickyField(d.span(),d.isPrivate,d.disjoint,d.disjoint2,null,labels,exprNew,d.color);
-            }
-
-            return signew;
-    }
-
-
-    //colorful merge
-    /**
-     * merge sigs, find a pair of sigs that can be merge in the group. sigs with different quantifier must be removed in advance
-     * @param values a map of sigs to be merge
-     * @return return true means the process is not finish, false means there is no sigs can be merge in the given group
-     */
-    private boolean mergeSig(Map<Map<Integer, Pos>, Sig> values,StringBuilder sigfact){
-        Set <Integer> feat=new TreeSet<>(getModuleFeatSet()) ;
-        System.out.println("");
-        Boolean change=false;
-        Set<Sig> visit=new HashSet();
-        Map<Map<Integer, Pos>, Sig> valuesClone= new HashMap<>();
-        valuesClone.putAll(values);
-        for(Map.Entry<Map<Integer, Pos>, Sig> sig1: valuesClone.entrySet()){
-            if(visit.contains(sig1.getValue()))
-                continue;
-            visit.add(sig1.getValue());
-            for(Map.Entry<Map<Integer, Pos>, Sig> sig2: valuesClone.entrySet()){
-                if(visit.contains(sig2.getValue()))
-                    continue;
-                Set<Integer> k=new HashSet<>();
-
-                //compare if the two sigs with the same quantifier
-                if ((sig1.getValue().isAbstract==null && sig2.getValue().isAbstract==null)||(sig1.getValue().isAbstract!=null && sig2.getValue().isAbstract!=null))
-                    if((sig1.getValue().isLone==null && sig2.getValue().isLone==null)||(sig1.getValue().isLone!=null && sig2.getValue().isLone!=null))
-                        if((sig1.getValue().isOne==null && sig2.getValue().isOne==null)||(sig1.getValue().isOne!=null && sig2.getValue().isOne!=null))
-                            if((sig1.getValue().isSome==null && sig2.getValue().isSome==null)||(sig1.getValue().isSome!=null && sig2.getValue().isSome!=null))
-                                if(compare(sig1.getValue().color.keySet(),sig2.getValue().color.keySet(),k)){
-                                    if(k.size()==1){
-                                        Sig s= mergeSig(sig1.getValue(),sig2.getValue(),k.iterator().next());
-                                        visit.add(sig2.getValue());
-                                        change=true;
-                                        updateSigOld2newList(sig1.getValue(),s);
-                                        updateSigOld2newList(sig2.getValue(),s);
-
-                                        //merge field
-
-                                        StringBuilder fact=new StringBuilder();
-                                        Sig sigBinaryField=s.mergeField(fact);
-                                        if(fact.length()>0){
-                                            sigfact.append("fact RemoveMultiplicity {"+fact+"\r\n        }");
-                                        }
-
-                                        values.put(sigBinaryField.color,sigBinaryField);
-                                        values.remove(sig1.getKey());
-                                        values.remove(sig2.getKey());
-                                        break;
-                                    }
-                                }
-            }
-        }
-
-        if(change)
-            return true;
-        else
-            return false;
-    }
-    private void mergeSigSet(Map<Map<Integer, Pos>, Sig> values,StringBuilder sigfact){
-        TreeSet <Integer> feat=new TreeSet<>(getModuleFeatSet()) ;
-        Integer currentFeat=feat.first();
-        boolean notfind=true;
-        while(notfind && currentFeat==feat.last()){
-            Map<Map<Integer, Pos>, Sig> valuesClone= new HashMap<>(values);
-            Boolean change=false;
-            while(!change){
-
-            }
-
-            Set<Sig> visit=new HashSet();
-            for(Map.Entry<Map<Integer, Pos>, Sig> sig1: valuesClone.entrySet()){
-                if(visit.contains(sig1.getValue()))
-                    continue;
-                visit.add(sig1.getValue());
-                for(Map.Entry<Map<Integer, Pos>, Sig> sig2: valuesClone.entrySet()){
-                    if(visit.contains(sig2.getValue()))
-                        continue;
-                    Set<Integer> k=new HashSet<>();
-
-                    //compare if the two sigs with the same quantifier
-                    if ((sig1.getValue().isAbstract==null && sig2.getValue().isAbstract==null)||(sig1.getValue().isAbstract!=null && sig2.getValue().isAbstract!=null))
-                        if((sig1.getValue().isLone==null && sig2.getValue().isLone==null)||(sig1.getValue().isLone!=null && sig2.getValue().isLone!=null))
-                            if((sig1.getValue().isOne==null && sig2.getValue().isOne==null)||(sig1.getValue().isOne!=null && sig2.getValue().isOne!=null))
-                                if((sig1.getValue().isSome==null && sig2.getValue().isSome==null)||(sig1.getValue().isSome!=null && sig2.getValue().isSome!=null))
-                                    if(compare(sig1.getValue().color.keySet(),sig2.getValue().color.keySet(),k)){
-                                        if(k.size()==1 && k.iterator().next()==currentFeat){
-                                            Sig s= mergeSig(sig1.getValue(),sig2.getValue(),k.iterator().next());
-                                            visit.add(sig2.getValue());
-                                            change=true;
-                                            updateSigOld2newList(sig1.getValue(),s);
-                                            updateSigOld2newList(sig2.getValue(),s);
-
-                                            //merge field
-
-                                            StringBuilder fact=new StringBuilder();
-                                            Sig sigBinaryField=s.mergeField(fact);
-                                            if(fact.length()>0){
-                                                sigfact.append("fact RemoveMultiplicity {"+fact+"\r\n        }");
-                                            }
-
-                                            values.put(sigBinaryField.color,sigBinaryField);
-                                            values.remove(sig1.getKey());
-                                            values.remove(sig2.getKey());
-                                            break;
-                                        }
-                                    }
-
-            }
-                currentFeat=feat.higher(currentFeat);
-        }
-
-
-
-
-
-        for(Map.Entry<Map<Integer, Pos>, Sig> sig1: valuesClone.entrySet()){
-
-
-            }
-        }
-
-
-
-    }
-    private Collection<? extends Integer> getModuleFeatSet() {
-        Set<Integer> temp=new HashSet<>();
-        for(Integer i: CompModule.feats){
-            temp.add(i>0? i: -i);
-        }
-        return temp;
-    }
-
-    private boolean mergeSig(Map<Map<Integer, Pos>, Sig> values,SafeList<Sig> sigSafeList,StringBuilder sigfact){
-        Boolean change=false;
-        Set<Sig> visit=new HashSet();
-        Map<Map<Integer, Pos>, Sig> valuesClone= new HashMap<>();
-        valuesClone.putAll(values);
-        for(Map.Entry<Map<Integer, Pos>, Sig> sig1: valuesClone.entrySet()){
-            if(visit.contains(sig1.getValue()))
-                continue;
-            visit.add(sig1.getValue());
-            for(Map.Entry<Map<Integer, Pos>, Sig> sig2: valuesClone.entrySet()){
-                if(visit.contains(sig2.getValue()))
-                    continue;
-                Set<Integer> k=new HashSet<>();
-                if(compare(sig1.getValue().color.keySet(),sig2.getValue().color.keySet(),k)){
-                    if(k.size()==1){
-                        sigfact.append("\r\nfact RemoveQualtifier {");
-
-                        //remove abstract quantifier
-                        if(sig1.getValue().isAbstract==null && sig2.getValue().isAbstract!=null){
-                            addAbstractFact(sig2.getValue(),sigSafeList,sigfact);
-                        }
-                        if(sig1.getValue().isAbstract!=null && sig2.getValue().isAbstract==null) {
-                            addAbstractFact(sig1.getValue(),sigSafeList,sigfact);
-                            ConstList.TempList attributes = new ConstList.TempList(sig1.getValue().attributes.size());
-                            for (int i = 0; i < sig1.getValue().attributes.size(); i++) {
-                                Attr attr = sig1.getValue().attributes.get(i);
-                                if (attr!=null && !attr.type.name().equals("ABSTRACT"))
-                                    attributes.add(attr) ;
-                            }
-                            sig1.getValue().attributes=attributes.makeConst();
-                        }
-                        //remove lone quantifier
-                        if(sig1.getValue().isLone==null && sig2.getValue().isLone!=null){
-                            addLoneFact(sig2.getValue(),sigfact);
-                        }
-                        if(sig1.getValue().isLone!=null && sig2.getValue().isLone==null) {
-                            addLoneFact(sig1.getValue(),sigfact);
-                            ConstList.TempList attributes = new ConstList.TempList(sig1.getValue().attributes.size());
-                            for (int i = 0; i < sig1.getValue().attributes.size(); i++) {
-                                Attr attr = sig1.getValue().attributes.get(i);
-                                if (attr!=null && !attr.type.name().equals("LONE"))
-                                    attributes.add(attr) ;
-                            }
-                            sig1.getValue().attributes=attributes.makeConst();
-                        }
-
-                        //remove one quantifier
-                        if(sig1.getValue().isOne==null && sig2.getValue().isOne!=null){
-                            addOneFact(sig2.getValue(),sigfact);
-                        }
-                        if(sig1.getValue().isOne!=null && sig2.getValue().isOne==null) {
-                            addOneFact(sig1.getValue(),sigfact);
-                            ConstList.TempList attributes = new ConstList.TempList(sig1.getValue().attributes.size());
-                            for (int i = 0; i < sig1.getValue().attributes.size(); i++) {
-                                Attr attr = sig1.getValue().attributes.get(i);
-                                if (attr!=null && !attr.type.name().equals("ONE"))
-                                    attributes.add(attr) ;
-                            }
-                            sig1.getValue().attributes=attributes.makeConst();
-                        }
-
-                        //remove some quantifier
-                        if(sig1.getValue().isSome==null && sig2.getValue().isSome!=null){
-                            addSomeFact(sig2.getValue(),sigfact);
-                        }
-                        if(sig1.getValue().isSome!=null && sig2.getValue().isSome==null) {
-                            addSomeFact(sig1.getValue(),sigfact);
-                            ConstList.TempList attributes = new ConstList.TempList(sig1.getValue().attributes.size());
-                            for (int i = 0; i < sig1.getValue().attributes.size(); i++) {
-                                Attr attr = sig1.getValue().attributes.get(i);
-                                if (attr!=null && !attr.type.name().equals("SOME"))
-                                    attributes.add(attr) ;
-                            }
-                            sig1.getValue().attributes=attributes.makeConst();
-                        }
-
-                        Sig s= mergeSig(sig1.getValue(),sig2.getValue(),k.iterator().next());
-
-                        visit.add(sig2.getValue());
-                        change=true;
-                        updateSigOld2newList(sig1.getValue(),s);
-                        updateSigOld2newList(sig2.getValue(),s);
-
-                        //merge field
-                        Sig sigBinaryField=s.mergeField(sigfact);
-                        values.put(sigBinaryField.color,sigBinaryField);
-                        values.remove(sig1.getKey());
-                        values.remove(sig2.getKey());
-
-
-                        sigfact.append("\r\n        }");
-                        break;
-                    }
-                }
-            }
-        }
-
-        if(change)
-            return true;
-        else
-            return false;
-    }
-
-    private void addSomeFact(Sig sig, StringBuilder sigfact) {
-        StringBuilder coloF, colorB;
-        coloF = new StringBuilder();
-        colorB = new StringBuilder();
-        if (sig.color != null)
-           sig. printcolor(coloF, colorB);
-
-        sigfact.append("\r\n      "+coloF+"some "+ sig.label.substring(5)+colorB);
-    }
-
-    private void addOneFact(Sig sig, StringBuilder sigfact) {
-        StringBuilder coloF, colorB;
-        coloF = new StringBuilder();
-        colorB = new StringBuilder();
-        if (sig.color != null)
-            sig.printcolor(coloF, colorB);
-
-        sigfact.append("\r\n      "+coloF+"one "+ sig.label.substring(5)+colorB);
-    }
-
-    private void addLoneFact(Sig sig, StringBuilder sigfact) {
-        StringBuilder coloF, colorB;
-        coloF = new StringBuilder();
-        colorB = new StringBuilder();
-        if (sig.color != null)
-            sig.printcolor(coloF, colorB);
-
-        sigfact.append("\r\n      "+coloF+"lone "+ sig.label.substring(5)+colorB);
-    }
-
-    private void addAbstractFact(Sig sig, SafeList<Sig> sigSafeList, StringBuilder sigfact) {
-        Set<Sig> children = new HashSet<>();
-        for (Sig s : sigSafeList) {
-            if (!sig.equals(s)) {
-                if (s instanceof Sig.PrimSig) {
-                    if (((Sig.PrimSig) s).parent.equals(sig)) {
-                        children.add(s);
-                    }
-                }
-            }
-        }
-
-        StringBuilder coloF, colorB;
-        coloF = new StringBuilder();
-        colorB = new StringBuilder();
-        if (sig.color != null)
-            sig.printcolor(coloF, colorB);
-
-        if (children.isEmpty())
-            sigfact.append("\r\n      " + coloF + "no " + sig.label.substring(5) + colorB);
-        else {
-            StringBuilder childString = new StringBuilder();
-            for (Sig child : children) {
-                childString.append(child.label.substring(5) + "+");
-            }
-            childString.deleteCharAt(childString.length() - 1);
-            sigfact.append("\r\n      " + coloF + sig.label.substring(5) + "=" + childString + colorB);
-        }
-
-    }
 //colorful merge
     /**
      * find two sigs can apply law.
