@@ -466,7 +466,7 @@ public final class OurSyntaxWidget {
                         if(s!=er){
                             Integer b=((Sig)er).compareMergeLaw(s);
                             if(b!=null){
-                                JMenuItem y = new JMenuItem("Merge"+s.label.substring(5) + " " + s.getColorString());
+                                JMenuItem y = new JMenuItem("Merge "+s.label.substring(5) + s.getColorString());
                                 y.addActionListener(new ActionListener() {
                                     @Override
                                     public void actionPerformed(ActionEvent e) {

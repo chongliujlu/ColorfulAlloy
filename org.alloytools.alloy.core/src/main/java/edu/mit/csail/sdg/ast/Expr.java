@@ -1213,8 +1213,9 @@ public abstract class Expr extends Browsable {
         return compareMergeLaw(feats1,feats2);
     }
     //colorful merge
+
     public String getColorString() {
-        String separator=" ";
+        String separator="";
         String name=null;
         for (Integer i:this.color.keySet()){
             String color=null;

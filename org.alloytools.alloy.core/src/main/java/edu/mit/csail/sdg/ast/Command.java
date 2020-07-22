@@ -329,4 +329,37 @@ public final class Command extends Browsable {
     public List< ? extends Browsable> getSubnodes() {
         return formula == null ? (new ArrayList<Browsable>(0)) : Util.asList(formula);
     }
+
+    /**
+     * print the color for a command feats
+     * @return
+     */
+    public String getComandColorString() {
+        Set<Integer> key=new HashSet<>(feats.feats);
+        String name=null;
+        for (Integer i:key){
+            String color=null;
+            if(i==1) color ="\u2780";
+            else if(i==2) color ="\u2781";
+            else if(i==3) color ="\u2782" ;
+            else if(i==4) color ="\u2783" ;
+            else if(i==5) color ="\u2784" ;
+            else if(i==6) color ="\u2785" ;
+            else if(i==7) color ="\u2786" ;
+            else if(i==8) color ="\u2787" ;
+            else if(i==9) color ="\u2788" ;
+            else if(i==-1) color ="\u278A" ;
+            else if(i==-2) color ="\u278B" ;
+            else if(i==-3) color ="\u278C" ;
+            else if(i==-4) color ="\u278D" ;
+            else if(i==-5) color ="\u278E" ;
+            else if(i==-6) color ="\u278F" ;
+            else if(i==-7) color ="\u2790" ;
+            else if(i==-8) color ="\u2791" ;
+            else if(i==-9) color ="\u2792" ;
+
+            name=name==null? color : name+","+color;
+        }
+        return name;
+    }
 }

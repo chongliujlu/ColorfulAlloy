@@ -1006,21 +1006,11 @@ public final class SimpleGUI implements ComponentListener, Listener {
         ArrayList<String> commandmergeName=new ArrayList<>();
         //store the facts after parser
         SafeList<Pair<String, Expr>> factp = null;
-        //存储冗余feature对，old2new redundant
-        Map<Set<Integer>,Set<Integer>> redundantOld2new=new HashMap<>();
+
 
         //JMenu mergeSigs,mergeField,remMultiplicity,remAbstract,remIncompatibleSigs,remRedundantFeat,addRedundantFeats,autoMerSig,autoMergeFact,mergeassert;
-        JMenu autoMerSig,autoMergeFact,mergeassert,mergefun,mergecommands;
+        JMenu autoMergeFact,mergeassert,mergefun,mergecommands;
 
-
-        //mergeSigs=new JMenu("Merge Sigs");
-       // mergeField=new JMenu("Merge Fields");
-       // remMultiplicity=new JMenu("Remove Multiplicity");
-       // remAbstract=new JMenu("Remove Abstract");
-       // remIncompatibleSigs=new JMenu("Remove Redundant Sigs");
-        //remRedundantFeat=new JMenu("Remove Redundant Features");
-       // addRedundantFeats=new JMenu("Add Redundant Features");
-        autoMerSig=new JMenu("AutoMerge-Sigs");
         autoMergeFact=new JMenu("Fact");
         mergeassert=new JMenu("Assert");
         mergefun=new JMenu("Fun/Pred");
@@ -1032,14 +1022,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
 
         mergemenu.removeAll();
-       // mergemenu.add(mergeSigs);
-       // mergemenu.add(mergeField);
-       // mergemenu.add(remMultiplicity);
-       // mergemenu.add(remAbstract);
-       // mergemenu.add(remIncompatibleSigs);
-       // mergemenu.add(remRedundantFeat);
-       // mergemenu.add(addRedundantFeats);
-      //  mergemenu.add(autoMerSig);
 
         mergemenu.add(new_sigLists);
         mergemenu.add(autoMergeFact);
@@ -1051,18 +1033,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
         SafeList<Sig> sigSafeList=new SafeList<>();
 
 
-        Map<Sig, ArrayList<Sig>> sig_Merge_List=new LinkedHashMap<>();
         Map<Pair,ArrayList<Pair>>fact_Merge_List=new LinkedHashMap<>();
         HashMap <String, ArrayList<Expr>> fact_Merge=new LinkedHashMap<>();
-
-
-
-      //  Set <Sig> mult_Refac_Sig=new HashSet<>();
-
-     //   Set<Field> multFie=new HashSet<>();
-        //to creat incompatible sig menu
-       // Set<Sig> incompatibleSigs =new HashSet<>();
-        //Set<Sig> redundantSigs=new HashSet<>();
 
 
         Set <String> sigName =new HashSet<>();
@@ -1140,14 +1112,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                                 }
                             }
                         }
-
                     }
-
-                    //计算可以进行multiple abstract refactoring 的sig
-                   // computeRefactorSigList_multAndAbstract(sigSafeList,mult_Refac_Sig,abstract_Refa_Sig,multFie);
-                  //  computeincompatiblFeatures(factp,featSet,incompatiblefeatures,compatibleFeatureSets,incompatibleFeats,redundantOld2new);
-                 //   computeincompatibleSigs(sigSafeList,incompatiblefeatures,redundantOld2new,incompatibleSigs,redundantSigs);
-
                 }
 
                 if(factp!=null){
@@ -1213,136 +1178,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
             sigs=sigp;
         }
 /*
-        //根据fieldList 生成菜单
-        if(field_Merge_List.isEmpty())
-            mergemenu.remove(mergeField);
-        for(Map.Entry<Field,ArrayList<Field>> f:field_Merge_List.entrySet()){
-            JMenu field=new JMenu("Sig "+f.getKey().sig.label.substring(5)+": "+f.getKey().label+" "+getColorString(f.getKey().color.keySet()));
-            for(Field fieSub:f.getValue()){
-                JMenuItem y = new JMenuItem("Sig " + fieSub.sig.label.substring(5)+": "+fieSub.label + " " + getColorString(fieSub.color.keySet()), null);
-                y.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        text.clearShade();
-                        log.clearError(); // To clear any residual error message
-                        domerge(f.getKey(),fieSub);
-                    }
-                });
-                field.add(y);
-            }
-            mergeField.add(field);
-        }
-
-
-        for(Field fMul:multFie){
-            JMenuItem y = new JMenuItem(fMul.label + ": " + getColorString(fMul.color.keySet()), null);
-            y.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    text.clearShade();
-                    log.clearError(); // To clear any residual error message
-                    doRmMultipilicity(fMul);
-                }
-
-                private void doRmMultipilicity(Field f) {
-                    Expr e= null;
-                    if(f.decl().expr instanceof ExprUnary ){
-                      e=  ((ExprUnary) f.decl().expr).sub;
-
-                        if(e instanceof ExprUnary){
-                            if(((ExprUnary) e).op.equals(SOMEOF)){
-                                System.out.println("some");
-                            }
-                        }else if(e instanceof ExprBinary && ((ExprBinary) e).op.isArrow){
-
-                        }
-                    }
-                }
-            });
-            remMultiplicity.add(y);
-        }
-
-
-
-        if(abstract_Refa_Sig.isEmpty())
-            mergemenu.remove(remAbstract);
-        for(Sig sMul:abstract_Refa_Sig){
-            JMenuItem y = new JMenuItem(sMul.label.substring(5) + " " + getColorString(sMul.color.keySet()), null);
-
-            y.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    text.clearShade();
-                    log.clearError(); // To clear any residual error message
-                    doRmAbstract(sMul);
-                }
-
-                private void doRmAbstract(Sig sig) {
-
-                    if (sig.isAbstract!=null){
-                        text.changeText(sig.isAbstract);
-                        Set <Sig> children=new HashSet<>();
-                        for (Sig s:sigSafeList){
-                            if(!sig.equals(s)){
-                                if(s instanceof Sig.PrimSig){
-                                    if (((Sig.PrimSig) s).parent.equals(sig)){
-                                        children.add(s);
-                                    }
-                                }
-                            }
-                        }
-
-                        StringBuilder coloF,colorB;
-                        coloF=new StringBuilder();
-                        colorB=new StringBuilder();
-                        if(sig.color!=null)
-                            printcolor(coloF,colorB,sig.color.keySet());
-
-
-                        for(Map.Entry<Integer,Pos> entry:sig.color.entrySet())
-                            sig.pos= sig.pos.merge(entry.getValue());
-                        Pos factPos=new Pos(sig.pos.filename,sig.pos.x2+1,sig.pos.y2);
-
-                        if(children.isEmpty())
-                            text.changeText(factPos,"\r\n"+coloF+"fact{no "+sig.label.substring(5)+" }"+colorB+"\r\n");
-                        else{
-                            StringBuilder childString=new StringBuilder();
-                            for(Sig child:children){
-                                childString.append(child.label.substring(5)+"+");
-                            }
-                            childString.deleteCharAt(childString.length()-1);
-                            text.changeText(factPos,"\r\n"+coloF+"fact{ "+sig.label.substring(5)+"="+childString+"}"+colorB+"\n\r");
-                        }
-                        text.changeText(sig.isAbstract,"");
-                    }
-
-                }
-            });
-            remAbstract.add(y);
-        }
-
-        //生成 IncompatibleSigs 菜单
-        if(incompatibleSigs.isEmpty())
-            mergemenu.remove(remIncompatibleSigs);
-        for(Sig sIncompat:incompatibleSigs){
-            JMenuItem y = new JMenuItem(sIncompat.label.substring(5) + " " + getColorString(sIncompat.color.keySet()), null);
-            y.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    text.clearShade();
-                    log.clearError(); // To clear any residual error message
-                    doRmSig(sIncompat);
-                }
-
-                private void doRmSig(Sig sig) {
-                    for(Map.Entry<Integer,Pos> entry:sig.color.entrySet())
-                        sig.pos= sig.pos.merge(entry.getValue());
-                        text.changeText(sig.pos,"");
-                }
-            });
-            remIncompatibleSigs.add(y);
-        }
-
         if(redundantSigs.isEmpty())
             mergemenu.remove(remRedundantFeat);
         for(Sig sRed:redundantSigs){
@@ -1376,58 +1211,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
             remRedundantFeat.add(y);
         }*/
 
-        //
-        //根据sig_Merge_List生成自动merge sigs菜单，
-        if(sig_Merge_List.isEmpty())
-            mergemenu.remove(autoMerSig);
-        for(Map.Entry<Sig,ArrayList<Sig>> m:sig_Merge_List.entrySet()){
-            JMenu sig=new JMenu(m.getKey().label.substring(5)+" "+m.getKey().getColorString());
-            for(Sig sigSub:m.getValue()){
-                JMenuItem y = new JMenuItem(sigSub.label.substring(5) + " " + sigSub.getColorString(), null);
-                y.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        text.clearShade();
-                        log.clearError(); // To clear any residual error message
-                        doAutoSigMerge(m.getKey(),sigSub);
-                    }
-                    private void doAutoSigMerge(Sig key, Sig sigSub) {
-                        Set<Integer> k=new HashSet<>();
-                        if(compare(key.color.keySet(),sigSub.color.keySet(),k))
-                        if(k.size()==1){
-                            Sig s= mergeSig(key,sigSub,k.iterator().next());
-                            sigOld2new.put(key,s);
-                            sigOld2new.put(sigSub,s);
-                            //已经将s替换成了sigBinary.
-                            Sig sigBinaryField=mergeBinaryField(s,new StringBuilder());
-
-                            StringBuilder print = new StringBuilder();
-                            printsigs(new ArrayList<Sig>(){{add(sigBinaryField);}},print);
-
-                            //merge feature position with sig position
-                            for (Map.Entry<Integer,Pos> ent:key.color.entrySet()){
-                                key.pos=key.pos.merge(ent.getValue());
-                            }
-                            for (Map.Entry<Integer,Pos> ent:sigSub.color.entrySet()){
-                                sigSub.pos=sigSub.pos.merge(ent.getValue());
-                            }
-                            if(key.pos.y<sigSub.pos.y || (key.pos.y==sigSub.pos.y && key.pos.x<sigSub.pos.x)){
-                                text.changeText(sigSub.pos,"");
-                                text.changeText(key.pos,print.toString());
-                            }else{
-                                text.changeText(key.pos,"");
-                                text.changeText(sigSub.pos,print.toString());
-                            }
-
-                        }
-                    }
-                });
-                sig.add(y);
-            }
-            autoMerSig.add(sig);
-        }
-
-        //
         if(sigName.isEmpty() && new_mergeField.isEmpty())
             mergemenu.remove(new_sigLists);
         else{
@@ -1474,19 +1257,18 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
                         //merge sigs with different quantifier abstract ,lone,some, one quantifier
                         notFinish=true;
-                         //attributefact=new StringBuilder();
                         while(notFinish){
                             notFinish=  mergeSig(finalSigp.get(name),sigSafeList,attributefact);
                         }
 
                         text.get().appendText(attributefact.toString());
-                       // text.appendText(attributefact.toString());
                         //根据FM merge Sigs.
 
 
                         //打印sigs
                         StringBuilder print = new StringBuilder();
                         printsigs(new ArrayList<>(finalSigp.get(name).values()),print);
+
 
                         text.changeText(pos.get(pos.size()-1),print.toString());
                     }
@@ -1747,8 +1529,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
 
 
-
-
                         boolean notFinish=true;
 
                         while(notFinish){
@@ -1850,10 +1630,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
                                                 }
                                             }
 
-
-                                            //print.append(ass.b.accept(printAmalgamatedExpr));
-
-
                                         }
                                     }
 
@@ -1870,7 +1646,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
 
                                                 if ( fun1.getBody() instanceof ExprUnary&&((ExprUnary) fun1.getBody()).op.equals(ExprUnary.Op.NOOP))
-                                                    list.add(((ExprUnary) ((ExprUnary) fun1.getBody())));
+                                                    list.add(fun1.getBody());
 
                                             }
                                             Expr enew=ExprList.make(cmd.pos, cmd.pos, ExprList.Op.AND,  list, new HashMap<Integer,Pos>());
@@ -1902,7 +1678,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                                 }
                             }
                             if(cmd.feats!=null && cmd.feats.feats.size()!=0)
-                                print.append(" with "+getComandColorString(new HashSet<>(cmd.feats.feats)));
+                                print.append(" with "+cmd.getComandColorString());
 
                             print.append(" for ");
                             print.append(cmd.overall > 0 ? cmd.overall + " " : 4 + " ");
@@ -1954,133 +1730,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
         return command;
     }
 
-    private Expr mergeExpr(Expr sub, Expr sub1,Map<Integer,Pos> color) {
-        if(sub instanceof ExprUnary && ((ExprUnary) sub).op.equals(ExprUnary.Op.NOOP))
-            sub=((ExprUnary) sub).sub;
-        if(sub1 instanceof ExprUnary && ((ExprUnary) sub1).op.equals(ExprUnary.Op.NOOP))
-            sub1=((ExprUnary) sub1).sub;
-
-        Expr e=ExprList.makeAND(sub.pos,sub.closingBracket,sub,sub1,color);
-        VisitRefactor refactorExpr=new VisitRefactor();
-        return e.accept(refactorExpr);
-
-    }
-
-    //colorful merge
-    /**
-     * merge all fields for a sig
-      * @param s
-     * @return
-     */
-    private Sig mergeBinaryField(Sig s,StringBuilder fact) {
-        Set<Integer> b=new HashSet<>();
-        //used to generate new Sig
-        Attr[] attributes = new Attr[s.attributes.size()];
-        for (int i = 0; i < s.attributes.size(); i++) {
-            attributes[i] = s.attributes.get(i);
-        }
-        Sig signew=null;
-        if(s instanceof Sig.PrimSig)
-            signew = new Sig.PrimSig(s.label, ((Sig.PrimSig) s).parent, attributes);
-        else if (s instanceof Sig.SubsetSig)
-            signew=new Sig.SubsetSig(s.label,((Sig.SubsetSig) s).parents,attributes);
-        signew.color=s.color;
-        updateSigOld2newList(s,signew);
-
-
-
-        ArrayList<Decl> fieldVisited=new ArrayList<>();
-        for(Decl d: s.getFieldDecls()) {
-            if (fieldVisited.contains(d)) continue;
-
-            fieldVisited.add(d);
-
-            boolean merged=false;
-            Set<Integer> finalB = b;
-            VisitOld2new sigFieldOld2newVisitor=new VisitOld2new();
-
-
-            String[] labels = new String[d.names.size()];
-            for (int i = 0; i < d.names.size(); i++) {
-                labels[i] = d.names.get(i).label;
-            }
-
-            for (Decl d2 : s.getFieldDecls()) {
-                if (fieldVisited.contains(d2)) continue;
-                //只比较第一个名字。
-                if (d.names.get(0).label.equals(d2.names.get(0).label)) {
-                    b=new HashSet<>();
-                    if (compare(d.color.keySet(), d2.color.keySet(),b)) {
-                        merged=true;
-                        Expr exprNew = d.expr.accept(sigFieldOld2newVisitor);
-
-                            if(d.expr instanceof ExprUnary && d2.expr instanceof ExprUnary){
-
-                                ExprUnary.Op op=((ExprUnary) d.expr).op;
-                                if(!((ExprUnary) d.expr).op.equals(((ExprUnary) d2.expr).op)){// 修改multiplicity
-                                    op= ExprUnary.Op.SETOF;
-                                    if(!((ExprUnary) d.expr).op.equals(ExprUnary.Op.SETOF)){
-                                        StringBuilder coloF, colorB;
-                                        String name = "set";
-                                        if(((ExprUnary) d.expr).op.equals(LONEOF))
-                                            name="lone";
-                                        else if(((ExprUnary) d.expr).op.equals(ONEOF))
-                                            name="one";
-                                        else if(((ExprUnary) d.expr).op.equals(SOMEOF))
-                                            name="some";
-
-                                        coloF = new StringBuilder();
-                                        colorB = new StringBuilder();
-                                        if (d.expr.color != null)
-                                            d.expr.printcolor(coloF, colorB);
-                                        fact.append("\r\n        "+coloF+"all s:"+s.label.substring(5)+" | "+ name+" s."+d.names.get(0).label+colorB);
-                                    }
-                                    if(!((ExprUnary) d2.expr).op.equals(ExprUnary.Op.SETOF)){
-                                        String name = "set";
-                                        if(((ExprUnary) d2.expr).op.equals(LONEOF))
-                                            name="lone";
-                                        else if(((ExprUnary) d2.expr).op.equals(ONEOF))
-                                            name="one";
-                                        else if(((ExprUnary) d2.expr).op.equals(SOMEOF))
-                                            name="some";
-                                        StringBuilder coloF, colorB;
-                                        coloF = new StringBuilder();
-                                        colorB = new StringBuilder();
-                                        if (d2.expr.color != null)
-                                            d2.expr.printcolor(coloF, colorB);
-                                        fact.append("\r\n        "+coloF+"all s:"+s.label.substring(5)+" | "+ name+" s."+d2.names.get(0).label+colorB);
-                                    }
-                                }
-
-                                for(Integer remCol:b){
-                                    d.color.remove(remCol);
-                                    d.color.remove(-remCol);
-                                }
-                                exprNew=ExprBinary.Op.PLUS.make(exprNew.pos,null,((ExprUnary)exprNew).sub,((ExprUnary) d2.expr).sub,d.color);
-                                exprNew=op.make(d.expr.pos,exprNew,null,0,d.color);
-                            }
-
-                        VisitRefactor refactor =new VisitRefactor();
-                        signew.addTrickyField(d.span(), d.isPrivate, d.disjoint, d.disjoint2, null, labels, exprNew.accept(refactor), d.color);
-                        fieldVisited.add(d2);
-                        break;
-                    }
-                }
-            }
-
-            //add field that can not be merged
-            if(!merged){
-                Expr exprNew = d.expr.accept(sigFieldOld2newVisitor);
-                VisitRefactor refactor =new VisitRefactor();
-                signew.addTrickyField(d.span(), d.isPrivate, d.disjoint, d.disjoint2, null, labels, exprNew.accept(refactor), d.color);
-            }
-        }
-
-
-
-        return signew;
-    }
-
     private void updateSigOld2newList(Sig sig, Sig sigNew) {
         List<Sig> keyList = new ArrayList<>();
         for(Sig key: sigOld2new.keySet())
@@ -2129,8 +1778,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
                 }
             }
     }
-
-
     private void computeincompatibleSigs(SafeList<Sig> sigSafeList, Set<Integer> incompatiblefeatures, Map<Set<Integer>, Set<Integer>> redundantOld2new, Set<Sig> incompatibleSigs, Set<Sig> redundantSigs) {
         for(Sig s:sigSafeList){
             //计算 不兼容的sigs
@@ -2152,54 +1799,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
             }
         }
     }
-
-
-    //colorful merge
-
-    /**
-     * comput sigs and fields that can be remove multiplicity and abstract quantifier
-     * 求解可以重构多重性和abstract 的sig 和field列表，生成对应的菜单按钮。
-     * @param sigSafeList
-     * @param mult_refac_sig
-     * @param abstract_refa_sig
-     * @param multFie
-     */
-    private void computeRefactorSigList_multAndAbstract(SafeList<Sig> sigSafeList, Set<Sig> mult_refac_sig, Set<Sig> abstract_refa_sig, Set<Field> multFie) {
-        for(Sig s:sigSafeList){
-            if(s.isLone!=null){
-                mult_refac_sig.add(s);
-            }
-            if(s.isOne!=null){
-                mult_refac_sig.add(s);
-            }
-            if(s.isSome!=null){
-                mult_refac_sig.add(s);
-            }
-            if(s.isAbstract!=null){
-                abstract_refa_sig.add(s);
-            }
-            for(Field fie:s.getFields()){
-                Expr e=fie.decl().expr;
-                if(e instanceof ExprUnary &&((ExprUnary) e).op.equals(ExprUnary.Op.NOOP)){
-                    Expr exprSub=((ExprUnary) e).sub;
-                    if(exprSub instanceof ExprUnary){
-                        if(((ExprUnary) exprSub).op.equals(ExprUnary.Op.LONE)||
-                                ((ExprUnary) exprSub).op.equals(ExprUnary.Op.ONE)||
-                                ((ExprUnary) exprSub).op.equals(ExprUnary.Op.SOME) )
-                            multFie.add(fie);
-                    }else if(exprSub instanceof ExprBinary){
-                        if(((ExprBinary) exprSub).op.isArrow){
-                            if(!((ExprBinary) exprSub).op.equals(ExprBinary.Op.ARROW))
-                                multFie.add(fie);
-                        }
-                    }
-                }
-            }
-
-
-        }
-    }
-
 
     //colorful merge
     /**
@@ -2289,87 +1888,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
         return incompatibleFeats;
     }
-
-    //colorful merge
-    private void domerge(Sig key, Sig sigSub) {
-        Set<Integer> k=new HashSet<>();
-            if(compare(key.color.keySet(),sigSub.color.keySet(),k));
-            if(k.size()==1){
-                //位置问题
-                Sig s= mergeSig(key,sigSub,k.iterator().next());
-
-                StringBuilder print = new StringBuilder();
-                printsigs(new ArrayList<Sig>(){{add(s);}},print);
-                for (Map.Entry<Integer,Pos> ent:key.color.entrySet()){
-                    key.pos=key.pos.merge(ent.getValue());
-                }
-                for (Map.Entry<Integer,Pos> ent:sigSub.color.entrySet()){
-                    sigSub.pos=sigSub.pos.merge(ent.getValue());
-                }
-
-                // sig 位置添加为空白
-                text.changeText(key.pos,sigSub.pos);
-                text.changeText(key.pos,print.toString());
-                text.changeText(sigSub.pos,"");
-               // text.appendText(print.toString());
-                //text.changeText(key.pos,print.toString());
-        }
-
-    }
-    private void domerge(Field key, Field fieldSub) {
-        if(key.color.keySet().equals(fieldSub.color.keySet())){
-            if(key.pos.x<fieldSub.pos.x||(key.pos.x==fieldSub.pos.x&& key.pos.y<fieldSub.pos.y)){
-                getFieldPos(key);
-                text.changeText(key.pos);}
-            else {
-                getFieldPos(fieldSub);
-                text.changeText(fieldSub.pos);
-            }
-            return;
-        }
-
-        Set<Integer> k=new HashSet<>();
-        ArrayList<Field> tomerge=new ArrayList<>();
-        tomerge.add(key);
-        tomerge.add(fieldSub);
-
-        if(compare(key.color.keySet(),fieldSub.color.keySet(),k));
-        if(k.size()==1){
-            //位置问题
-            int colk=key.color.keySet().contains(k.iterator().next())?k.iterator().next():-k.iterator().next();
-            Pos p=key.color.get(colk);
-            key.color.remove(colk);
-            Pos p1=new Pos(p.filename,p.x,p.y,p.x+1,p.y);
-            Pos p2=new Pos(p.filename,p.x2,p.y2,p.x2+1,p.y2);
-            text.changeText(p1,p2);
-
-            //删除第二个Field
-            getFieldPos(fieldSub);
-            text.changeText(fieldSub.pos);
-
-        }
-
-    }
-
-    //merge the pos of feature annotations
-    private void getFieldPos(Field f) {
-        Map<Integer,Pos> sc=new HashMap<>(f.color);
-        for(Map.Entry<Integer,Pos> en:f.color.entrySet()){
-            if(!f.sig.color.containsValue(en.getValue())){
-                f.pos=f.pos.merge(en.getValue());
-            }
-        }
-    }
-
-    private String emptyString(Pos pos) {
-        int leng=pos.end()-pos.start();
-        StringBuilder blank=new StringBuilder();
-        for(int i=0;i<pos.end()-pos.start()+1;i++){
-            blank.append(" ");
-        }
-        return blank.toString();
-    }
-
 
     /** This method refreshes the "run" menu. */
     private Runner doRefreshRun() {
@@ -2861,7 +2379,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                            fcol.remove(col.getKey());
                     }
 
-                    printcolor(coloFieldF,colorFieldB,fcol.keySet());
+                    s.printcolor(coloFieldF,colorFieldB,fcol.keySet());
                 }
                 print.append("\r\n        "+coloFieldF);
                 print.append(f.disjoint!=null? "disj ": "");
@@ -2907,96 +2425,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
         }
     }
 
-
-
-    //colorful merge
-    /**
-     * print color annotation, for example clor: -1,2,3, colfront :➊➁➂
-     * @param colfront record the front color annotation:➂➁➊
-     * @param colback record the back color annotation
-     * @param color  colors in the expression
-     */
-    private void printcolor(StringBuilder colfront, StringBuilder colback, Set<Integer> color) {
-        final String PFEAT1="\u2780";
-        final String PFEAT2="\u2781";
-        final String PFEAT3="\u2782" ;
-        final String PFEAT4="\u2783" ;
-        final String PFEAT5="\u2784" ;
-        final String PFEAT6="\u2785" ;
-        final String PFEAT7="\u2786" ;
-        final String PFEAT8="\u2787" ;
-        final String PFEAT9="\u2788" ;
-        final String NFEAT1="\u278A" ;
-        final String NFEAT2="\u278B" ;
-        final String NFEAT3="\u278C" ;
-        final String NFEAT4="\u278D" ;
-        final String NFEAT5="\u278E" ;
-        final String NFEAT6="\u278F" ;
-        final String NFEAT7="\u2790" ;
-        final String NFEAT8="\u2791" ;
-        final String NFEAT9="\u2792" ;
-        for(Integer i: color){
-            if(i==1) {
-                colfront.append(PFEAT1+" ");
-                colback.insert(0,PFEAT1);
-            }else if(i==2) {
-                colfront.append(PFEAT2+" ");
-                colback.insert(0,PFEAT2);
-            }else if(i==3) {
-                colfront.append(PFEAT3+" ");
-                colback.insert(0,PFEAT3);
-            }else if(i==4) {
-                colfront.append(PFEAT4+" ");
-                colback.insert(0,PFEAT4);
-            }else if(i==5) {
-                colfront.append(PFEAT5+" ");
-                colback.insert(0,PFEAT5);
-            }else if(i==6) {
-                colfront.append(PFEAT6+" ");
-                colback.insert(0,PFEAT6);
-            }else if(i==7) {
-                colfront.append(PFEAT7+" ");
-                colback.insert(0,PFEAT7);
-            }else if(i==8) {
-                colfront.append(PFEAT8+" ");
-                colback.insert(0,PFEAT8);
-            }else if(i==9) {
-                colfront.append(PFEAT9+" ");
-                colback.insert(0,PFEAT9);
-            }else if(i==-1) {
-                colfront.append(NFEAT1+" ");
-                colback.insert(0,NFEAT1);
-            }else if(i==-2) {
-                colfront.append(NFEAT2+" ");
-                colback.insert(0,NFEAT2);
-            }else if(i==-3) {
-                colfront.append(NFEAT3+" ");
-                colback.insert(0,NFEAT3);
-            }else if(i==-4) {
-                colfront.append(NFEAT4+" ");
-                colback.insert(0,NFEAT4);
-            }else if(i==-5) {
-                colfront.append(NFEAT5+" ");
-                colback.insert(0,NFEAT5);
-            }else if(i==-6) {
-                colfront.append(NFEAT6+" ");
-                colback.insert(0,NFEAT6);
-            }else if(i==-7) {
-                colfront.append(NFEAT7+" ");
-                colback.insert(0,NFEAT7);
-            }else if(i==-8) {
-                colfront.append(NFEAT8+" ");
-                colback.insert(0,NFEAT8);
-            }else if(i==-9) {
-                colfront.append(NFEAT9+" ");
-                colback.insert(0,NFEAT9);
-            }
-
-            if(colfront!=null)
-                colfront.deleteCharAt(colfront.length()-1);
-        }
-        return;
-    }
 
 
     /**
@@ -3126,6 +2554,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
      * @return return true means the process is not finish, false means there is no sigs can be merge in the given group
      */
     private boolean mergeSig(Map<Map<Integer, Pos>, Sig> values,StringBuilder sigfact){
+        Set <Integer> feat=new TreeSet<>(getModuleFeatSet()) ;
+        System.out.println("");
         Boolean change=false;
         Set<Sig> visit=new HashSet();
         Map<Map<Integer, Pos>, Sig> valuesClone= new HashMap<>();
@@ -3155,7 +2585,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                                         //merge field
 
                                         StringBuilder fact=new StringBuilder();
-                                        Sig sigBinaryField=mergeBinaryField(s, fact);
+                                        Sig sigBinaryField=s.mergeField(fact);
                                         if(fact.length()>0){
                                             sigfact.append("fact RemoveMultiplicity {"+fact+"\r\n        }");
                                         }
@@ -3173,6 +2603,79 @@ public final class SimpleGUI implements ComponentListener, Listener {
             return true;
         else
             return false;
+    }
+    private void mergeSigSet(Map<Map<Integer, Pos>, Sig> values,StringBuilder sigfact){
+        TreeSet <Integer> feat=new TreeSet<>(getModuleFeatSet()) ;
+        Integer currentFeat=feat.first();
+        boolean notfind=true;
+        while(notfind && currentFeat==feat.last()){
+            Map<Map<Integer, Pos>, Sig> valuesClone= new HashMap<>(values);
+            Boolean change=false;
+            while(!change){
+
+            }
+
+            Set<Sig> visit=new HashSet();
+            for(Map.Entry<Map<Integer, Pos>, Sig> sig1: valuesClone.entrySet()){
+                if(visit.contains(sig1.getValue()))
+                    continue;
+                visit.add(sig1.getValue());
+                for(Map.Entry<Map<Integer, Pos>, Sig> sig2: valuesClone.entrySet()){
+                    if(visit.contains(sig2.getValue()))
+                        continue;
+                    Set<Integer> k=new HashSet<>();
+
+                    //compare if the two sigs with the same quantifier
+                    if ((sig1.getValue().isAbstract==null && sig2.getValue().isAbstract==null)||(sig1.getValue().isAbstract!=null && sig2.getValue().isAbstract!=null))
+                        if((sig1.getValue().isLone==null && sig2.getValue().isLone==null)||(sig1.getValue().isLone!=null && sig2.getValue().isLone!=null))
+                            if((sig1.getValue().isOne==null && sig2.getValue().isOne==null)||(sig1.getValue().isOne!=null && sig2.getValue().isOne!=null))
+                                if((sig1.getValue().isSome==null && sig2.getValue().isSome==null)||(sig1.getValue().isSome!=null && sig2.getValue().isSome!=null))
+                                    if(compare(sig1.getValue().color.keySet(),sig2.getValue().color.keySet(),k)){
+                                        if(k.size()==1 && k.iterator().next()==currentFeat){
+                                            Sig s= mergeSig(sig1.getValue(),sig2.getValue(),k.iterator().next());
+                                            visit.add(sig2.getValue());
+                                            change=true;
+                                            updateSigOld2newList(sig1.getValue(),s);
+                                            updateSigOld2newList(sig2.getValue(),s);
+
+                                            //merge field
+
+                                            StringBuilder fact=new StringBuilder();
+                                            Sig sigBinaryField=s.mergeField(fact);
+                                            if(fact.length()>0){
+                                                sigfact.append("fact RemoveMultiplicity {"+fact+"\r\n        }");
+                                            }
+
+                                            values.put(sigBinaryField.color,sigBinaryField);
+                                            values.remove(sig1.getKey());
+                                            values.remove(sig2.getKey());
+                                            break;
+                                        }
+                                    }
+
+            }
+                currentFeat=feat.higher(currentFeat);
+        }
+
+
+
+
+
+        for(Map.Entry<Map<Integer, Pos>, Sig> sig1: valuesClone.entrySet()){
+
+
+            }
+        }
+
+
+
+    }
+    private Collection<? extends Integer> getModuleFeatSet() {
+        Set<Integer> temp=new HashSet<>();
+        for(Integer i: CompModule.feats){
+            temp.add(i>0? i: -i);
+        }
+        return temp;
     }
 
     private boolean mergeSig(Map<Map<Integer, Pos>, Sig> values,SafeList<Sig> sigSafeList,StringBuilder sigfact){
@@ -3259,7 +2762,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                         updateSigOld2newList(sig2.getValue(),s);
 
                         //merge field
-                        Sig sigBinaryField=mergeBinaryField(s,sigfact);
+                        Sig sigBinaryField=s.mergeField(sigfact);
                         values.put(sigBinaryField.color,sigBinaryField);
                         values.remove(sig1.getKey());
                         values.remove(sig2.getKey());
@@ -3283,7 +2786,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
         coloF = new StringBuilder();
         colorB = new StringBuilder();
         if (sig.color != null)
-            printcolor(coloF, colorB, sig.color.keySet());
+           sig. printcolor(coloF, colorB);
 
         sigfact.append("\r\n      "+coloF+"some "+ sig.label.substring(5)+colorB);
     }
@@ -3293,7 +2796,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
         coloF = new StringBuilder();
         colorB = new StringBuilder();
         if (sig.color != null)
-            printcolor(coloF, colorB, sig.color.keySet());
+            sig.printcolor(coloF, colorB);
 
         sigfact.append("\r\n      "+coloF+"one "+ sig.label.substring(5)+colorB);
     }
@@ -3303,7 +2806,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
         coloF = new StringBuilder();
         colorB = new StringBuilder();
         if (sig.color != null)
-            printcolor(coloF, colorB, sig.color.keySet());
+            sig.printcolor(coloF, colorB);
 
         sigfact.append("\r\n      "+coloF+"lone "+ sig.label.substring(5)+colorB);
     }
@@ -3324,7 +2827,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
         coloF = new StringBuilder();
         colorB = new StringBuilder();
         if (sig.color != null)
-            printcolor(coloF, colorB, sig.color.keySet());
+            sig.printcolor(coloF, colorB);
 
         if (children.isEmpty())
             sigfact.append("\r\n      " + coloF + "no " + sig.label.substring(5) + colorB);
@@ -3370,38 +2873,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
         return match;
     }
 
-    /**
-     * print the color for a command feats
-     * @param key
-     * @return
-     */
-    private String getComandColorString(Set<Integer> key) {
-        String name=null;
-        for (Integer i:key){
-            String color=null;
-            if(i==1) color ="\u2780";
-            else if(i==2) color ="\u2781";
-            else if(i==3) color ="\u2782" ;
-            else if(i==4) color ="\u2783" ;
-            else if(i==5) color ="\u2784" ;
-            else if(i==6) color ="\u2785" ;
-            else if(i==7) color ="\u2786" ;
-            else if(i==8) color ="\u2787" ;
-            else if(i==9) color ="\u2788" ;
-            else if(i==-1) color ="\u278A" ;
-            else if(i==-2) color ="\u278B" ;
-            else if(i==-3) color ="\u278C" ;
-            else if(i==-4) color ="\u278D" ;
-            else if(i==-5) color ="\u278E" ;
-            else if(i==-6) color ="\u278F" ;
-            else if(i==-7) color ="\u2790" ;
-            else if(i==-8) color ="\u2791" ;
-            else if(i==-9) color ="\u2792" ;
 
-            name=name==null? color : name+","+color;
-        }
-        return name;
-    }
     // ===============================================================================================================//
 
     /** This method displays the about box. */
@@ -4531,100 +4003,11 @@ public final class SimpleGUI implements ComponentListener, Listener {
                        notfinish=false;
                 }
 
-              /*  // merge
-                visit=new HashSet<>();
-                temp = new ConstList.TempList<Expr>(x.args.size());
-                for(Expr e: x.args){
-                    if(visit.contains(e)) continue;
-                    visit.add(e);
-                    if(e instanceof ExprQt){
-                        for(Expr e2:x.args){
-                            if(visit.contains(e2)) continue;
-                            if(e2 instanceof ExprQt){
-                                featB=new HashSet<>();
-                                if(compare(e.color.keySet(),e2.color.keySet(),featB)){
-                                    if(((ExprQt) e).decls.size()== (((ExprQt) e2).decls.size())){
-                                        boolean match=true;
-                                        for(Decl d1i:((ExprQt) e).decls){
-                                            boolean find=false;
-                                            for(Decl d2j:((ExprQt) e2).decls){
-                                                if(d1i.names.toString().equals(d2j.names.toString())){
-                                                    find=true;
-                                                    break;
-                                                }
-                                            }
-                                            if(!find) {
-                                                match=false;
-                                            break;}
-                                        }
-
-                                        //进行merge
-                                        if(match){
-                                            visit.add(e2);
-
-                                            Map cl=new HashMap(e.color);
-                                            for(Integer i:featB){
-                                                cl.remove(i);
-                                                cl.remove(-i);
-                                            }
-                                            ConstList.TempList<Decl> decls = new ConstList.TempList<Decl>(((ExprQt) e).decls.size());
-                                            //merge Decl
-                                            for(Decl d1i:((ExprQt) e).decls){
-                                                for(Decl d2j:((ExprQt) e2).decls){
-                                                    if(d1i.names.toString().equals(d2j.names.toString())){
-                                                        ConstList.TempList<ExprVar> n = new ConstList.TempList<ExprVar>(d1i.names.size());
-                                                        for (ExprHasName v : d1i.names)
-                                                            n.add(ExprVar.make(v.pos, v.label, cl)); // [HASLab] colorful Alloy
-                                                        Expr exp=null;
-                                                        if(d1i.expr instanceof ExprUnary && d2j.expr instanceof ExprUnary){
-                                                            Expr expnew=ExprBinary.Op.PLUS.make(d1i.span(),d1i.expr.closingBracket,((ExprUnary) d1i.expr).sub,((ExprUnary) d2j.expr).sub,cl);
-                                                            exp=((ExprUnary) d1i.expr).op.make(expnew.pos,expnew,cl);
-                                                        }else{
-                                                            exp=ExprBinary.Op.PLUS.make(d1i.span(),d1i.expr.closingBracket, d1i.expr,d2j.expr,cl);
-                                                        }
-
-                                                        Decl dd = new Decl(d1i.isPrivate, d1i.disjoint,d1i.disjoint2, n.makeConst(), visitThis(exp),cl); // [HASLab] colorful Alloy
-                                                        decls.add(dd);
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                            //mergr sub
-                                            Expr sub=ExprBinary.Op.AND.make(e.pos,e.closingBracket,visitThis(((ExprQt) e).sub),visitThis(((ExprQt) e2).sub),cl);
-                                            e=((ExprQt) e).op.make(x.pos, x.closingBracket, decls.makeConst(), sub, cl);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }else if(e instanceof ExprBinary && ((ExprBinary) e).op.equals(ExprBinary.Op.IN) ){
-                        for(Expr e2:x.args){
-                            if(visit.contains(e2)) continue;
-                            if(e2 instanceof ExprBinary && ((ExprBinary) e).op.equals(ExprBinary.Op.IN)){
-                                featB=new HashSet<>();
-                                if(compare(e.color.keySet(),e2.color.keySet(),featB)){
-                                    if(((ExprBinary) e).left.toString().equals(((ExprBinary) e2).left.toString())){
-                                        visit.add(e2);
-                                        VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
-                                        ((ExprBinary) e).left.accept(visiterRemoveFeatB);
-                                        Expr eNew=ExprBinary.Op.INTERSECT.make(e.pos,e.closingBracket,visitThis(((ExprBinary) e).right),visitThis(((ExprBinary) e2).right),((ExprBinary) e).left.color);
-                                        e=ExprBinary.Op.IN.make(e.pos,e.closingBracket,((ExprBinary) e).left,eNew,((ExprBinary) e).left.color);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    temp.add(visitThis(e));
-                }*/
-                //x=ExprList.make(x.pos, x.closingBracket, x.op, temp.makeConst(), x.color);
             }else {
                 temp = new ConstList.TempList<Expr>(x.args.size());
                 for(Expr e:x.args)
                     temp.add(visitThis(e));
             }
-
-
 
             return ExprList.make(x.pos, x.closingBracket, x.op, temp.makeConst(), x.color);
 
@@ -4830,295 +4213,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
     }
 
-
-      private class VisitprintmergeExpr extends VisitReturn<String> {
-          public void setParentFeats(Set<Integer> parentFeats) {
-              this.parentFeats = parentFeats;
-          }
-
-          public Set<Integer> parentFeats=new HashSet<>();
-        @Override
-        public  String visit(ExprCall x) {
-            StringBuilder print=new StringBuilder();
-            Set <Integer> xcolor=sub(x.color.keySet(),parentFeats);
-            parentFeats=x.color.keySet();
-
-
-            StringBuilder coloF=new StringBuilder();
-            StringBuilder colorB=new StringBuilder();
-            if(xcolor.size()>0)
-                printcolor(coloF,colorB,xcolor);
-
-            print.append(coloF);
-            String name= x.fun.label;
-            while (name.contains("/")){
-                name=name.substring(name.indexOf("/")+1);
-            }
-            print.append("("+name);
-            // tempExpr.append(x.fun.label.substring(x.fun.label.indexOf("/")+1));
-            if(x.args.size()>0) {
-                print.append("[");
-                for (Expr arg : x.args) {
-                    parentFeats=x.color.keySet();
-                    print.append(visitThis(arg) + ",");
-
-                }
-
-                print.deleteCharAt(print.length() - 1);
-                print.append("]");
-            }
-            print.append(")");
-            print.append(colorB);
-            return print.toString();
-        }
-
-        @Override
-        public String visit(ExprBinary x) throws Err {
-            Set <Integer> xcolor=sub(x.color.keySet(),parentFeats);
-            parentFeats=x.color.keySet();
-
-            StringBuilder print=new StringBuilder();
-            StringBuilder coloF=new StringBuilder();
-            StringBuilder colorB=new StringBuilder();
-            if(xcolor.size()>0)
-                printcolor(coloF,colorB,xcolor);
-
-            if(x.op==ExprBinary.Op.PLUS||x.op==ExprBinary.Op.INTERSECT)
-                print.append("(");
-
-            print.append(coloF+visitThis(x.left));
-
-            print.append(x.op==ExprBinary.Op.JOIN? x.op :" "+x.op+" ");
-
-            parentFeats=x.color.keySet();
-            print.append(visitThis(x.right)+colorB);
-
-            if(x.op==ExprBinary.Op.PLUS||x.op==ExprBinary.Op.INTERSECT)
-                print.append(")");
-            return print.toString();
-        }
-
-        @Override
-        public String visit(ExprList x) throws Err {
-            Set <Integer> xcolor=sub(x.color.keySet(),parentFeats);
-
-
-            StringBuilder print=new StringBuilder();
-            StringBuilder coloF=new StringBuilder();
-            StringBuilder colorB=new StringBuilder();
-            if(xcolor.size()>0)
-                printcolor(coloF,colorB,xcolor);
-
-            print.append(coloF);
-            String name=x.op.name();
-            if(name.equals("AND")) name=" and ";
-            if(name.equals("OR")) name=" or ";
-
-            for(Expr e: x.args){
-                parentFeats=x.color.keySet();
-                print.append(visitThis(e)+" ");
-                print.append(x.op.name().equals(ExprBinary.Op.AND)?name:" "+name);
-            }
-
-            print.deleteCharAt(print.length()-1);
-            print.deleteCharAt(print.length()-1);
-            print.deleteCharAt(print.length()-1);
-            if(x.op.equals(ExprList.Op.AND))
-                print.deleteCharAt(print.length()-1);
-            print.append(colorB);
-            return print.toString();
-        }
-
-        @Override
-        public String visit(ExprConstant x) throws Err {
-            Set <Integer> xcolor=sub(x.color.keySet(),parentFeats);
-            parentFeats=x.color.keySet();
-
-            StringBuilder print=new StringBuilder();
-            StringBuilder coloF=new StringBuilder();
-            StringBuilder colorB=new StringBuilder();
-            if(xcolor.size()>0)
-                printcolor(coloF,colorB,xcolor);
-
-            print.append(coloF);
-
-            if(x.op.equals(ExprConstant.Op.TRUE))
-                print.append( " true ");
-            if(x.op.equals(ExprConstant.Op.FALSE))
-                print.append( " false ");
-            if(x.op.equals(ExprConstant.Op.IDEN))
-                print.append(" iden ");
-
-            if(x.op.equals(ExprConstant.Op.MAX))
-                print.append(" fun/max ");
-            if(x.op.equals(ExprConstant.Op.MIN))
-                print.append(" fun/min ");
-            if(x.op.equals(ExprConstant.Op.NEXT))
-                print.append( " fun/next ");
-            if(x.op.equals(ExprConstant.Op.EMPTYNESS))
-                print.append( " none ");
-            if(x.op.equals(ExprConstant.Op.STRING))
-                print.append( " " + x.string+" ");
-            if(x.op.equals(ExprConstant.Op.NUMBER))
-                print.append( " " + x.num+" ");
-            print.append(colorB);
-            return print.toString();
-        }
-
-        @Override
-        public String visit(ExprITE x) throws Err {
-            Set <Integer> xcolor=sub(x.color.keySet(),parentFeats);
-            parentFeats=x.color.keySet();
-
-            StringBuilder print=new StringBuilder();
-            StringBuilder coloF=new StringBuilder();
-            StringBuilder colorB=new StringBuilder();
-            if(xcolor.size()>0)
-                printcolor(coloF,colorB,xcolor);
-
-            print.append(coloF);
-
-            print.append( visitThis(x.cond));
-            print.append(visitThis(x.left));
-            print.append(visitThis(x.right));
-
-            print.append(colorB);
-            return print.toString();
-        }
-
-        @Override
-        public String visit(ExprLet x) throws Err {
-            Set <Integer> xcolor=sub(x.color.keySet(),parentFeats);
-            parentFeats=x.color.keySet();
-
-            StringBuilder print=new StringBuilder();
-            StringBuilder coloF=new StringBuilder();
-            StringBuilder colorB=new StringBuilder();
-            if(xcolor.size()>0)
-                printcolor(coloF,colorB,xcolor);
-
-            print.append(coloF);
-
-            print.append(visitThis(x.expr));
-            print.append(visitThis(x.sub));
-
-            print.append(colorB);
-            return print.toString();
-        }
-
-        @Override
-        public String visit(ExprQt x) throws Err {
-            Set <Integer> xcolor=sub(x.color.keySet(),parentFeats);
-            parentFeats=x.color.keySet();
-
-            StringBuilder print=new StringBuilder();
-            StringBuilder coloF=new StringBuilder();
-            StringBuilder colorB=new StringBuilder();
-            if(xcolor.size()>0)
-                printcolor(coloF,colorB,xcolor);
-
-            print.append(coloF);
-            if(!x.op.equals(ExprQt.Op.COMPREHENSION))
-                //all，no
-                print.append(x.op.getLabel() +" ");
-
-            for (Decl decl :x.decls){
-                if(decl.disjoint!=null)
-                    print.append( " disj "); //"disj" key word
-                for (Expr e: decl.names){
-                    parentFeats=x.color.keySet();
-                    print.append(visitThis(e)+",");
-                }
-                print.deleteCharAt(print.length() - 1);
-                print.append(": ");
-
-                //  for(Integer i:x.color.keySet()){
-                //     decl.expr.color.remove(i);
-                //  }
-                parentFeats=x.color.keySet();
-                print.append(visitThis(decl.expr)+",");
-            }
-
-            print.deleteCharAt(print.length()-1);
-            print.append(" | ");
-            // x.sub.color.remove(x.color.keySet());
-            parentFeats=x.color.keySet();
-            print.append(visitThis(x.sub));
-            print.append(colorB);
-            return print.toString();
-        }
-
-        @Override
-        public String visit(ExprUnary x) throws Err {
-            Set <Integer> xcolor=sub(x.color.keySet(),parentFeats);
-            parentFeats=x.color.keySet();
-
-            StringBuilder print=new StringBuilder();
-            StringBuilder coloF=new StringBuilder();
-            StringBuilder colorB=new StringBuilder();
-            if(xcolor.size()>0)
-                printcolor(coloF,colorB,xcolor);
-
-            print.append(coloF);
-
-            if(x.op.equals(ExprUnary.Op.SETOF))
-                print.append(" set ");
-            else if(x.op.equals(ExprUnary.Op.SOMEOF))
-                print.append(" some ");
-            else if(x.op.equals(LONEOF))
-                print.append(" lone ");
-            else if(x.op.equals(ONEOF))
-                print.append(" one ");
-            else if(x.op.equals(ExprUnary.Op.EXACTLYOF))
-                print.append(" exactly ");
-            else if(x.op.equals(ExprUnary.Op.RCLOSURE)||x.op.equals(ExprUnary.Op.CLOSURE)||
-                    x.op.equals(ExprUnary.Op.CARDINALITY))
-                print.append(" "+x.op.getOpLabel()+"("); // (
-
-            else if(x.op.equals(ExprUnary.Op.NOT)||x.op.equals(ExprUnary.Op.NO)||
-                    x.op.equals(ExprUnary.Op.SOME)||x.op.equals(ExprUnary.Op.ONE)||
-                    x.op.equals(ExprUnary.Op.LONE)||x.op.equals(ExprUnary.Op.TRANSPOSE))
-                print.append(" "+x.op.getOpLabel()+" ");
-            print.append(visitThis(x.sub));
-
-
-            if(x.op.equals(ExprUnary.Op.RCLOSURE)||x.op.equals(ExprUnary.Op.CLOSURE)||
-                    x.op.equals(ExprUnary.Op.CARDINALITY))
-                print.append(")");  // )
-            print.append(colorB);
-            return print.toString();
-        }
-
-        @Override
-        public String visit(ExprVar x) throws Err {
-          //  Set <Integer> xcolor=sub(x.color.keySet(),parentFeats);
-          //  parentFeats=x.color.keySet();
-
-            StringBuilder print=new StringBuilder();
-         //   StringBuilder coloF=new StringBuilder();
-         //   StringBuilder colorB=new StringBuilder();
-          //  if(xcolor.size()>0)
-          //      printcolor(coloF,colorB,xcolor);
-
-          //  print.append(coloF);
-            print.append(" "+x.label+ " ");
-            return print.toString();
-        }
-
-        @Override
-        public String visit(Sig x) throws Err {
-            if(x.label.contains("/")){
-                return x.label.substring(x.label.indexOf("/")+1);
-            }
-            return x.label;
-        }
-
-        @Override
-        public String visit(Field x) throws Err {
-            return x.label;
-        }
-
-    }
     /**
      * return sub set (a-b)
      * @param a

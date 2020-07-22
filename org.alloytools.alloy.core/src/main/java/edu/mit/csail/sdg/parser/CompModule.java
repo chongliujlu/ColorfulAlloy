@@ -1283,18 +1283,36 @@ public final class CompModule extends Browsable implements Module {
                 if(map!=null){
                     Sig x=null;
                     for(Map.Entry<Map<Integer,Pos>,Sig> entry:map.entrySet()){
-                        if(entry.getKey().size()==0 ||   checkColor(color.keySet(),entry.getKey().keySet())|| colorNL(color,entry.getKey())){
+                        if(entry.getKey().size()==0 ||   checkColor(color.keySet(),entry.getKey().keySet())|| colorNL(color.keySet(),entry.getKey().keySet())){
                             x=entry.getValue();
                             break;
                         }
                     }
+                    Set<Integer> require=new HashSet<>(color.keySet());
                     if(x==null){
-                        Set<Set<Set<Integer>>> featsets = computingFeatSets(color.keySet());
+                        Set< Set<Integer> > ImComp=computeFMIncompFeas();
+                        Map< Set<Integer>,Set<Integer> > comp=computeFMCompFeats(ImComp);
+                        for(Map.Entry<Set<Integer>,Set<Integer>> s:comp.entrySet()){
+                            if(s.getKey().equals(require)){
+                                require=s.getValue();
+                            }
+                        }
+
+                        for(Map.Entry<Map<Integer,Pos>,Sig> entry:map.entrySet()){
+                            if(entry.getKey().size()==0 ||   checkColor(require,entry.getKey().keySet())|| colorNL(require,entry.getKey().keySet())){
+                                x=entry.getValue();
+                                break;
+                            }
+                        }
+
+                    }
+
+                    if(x==null){
+                        Set<Set<Set<Integer>>> featsets = computingFeatSets(require);
 
                         //find a set of Sigs that meet the required feature: e.g. resolve sig A{} in expression ➀➌some A➌➀, can be set  ➀➁sig A{}➁➀ ➀➋sig A{}➋➀
                         //the result is ➀➌some (➀➁A➁➀ + ➀➋A➋➀➌➀)
                         for(Set<Set<Integer>> fcolset:featsets){
-                            if(map.values().size()>=fcolset.size()){
                                 for(Set<Integer>col: fcolset){
                                     for(Sig s: map.values()){
                                         if(checkColor(col,s.color.keySet())){
@@ -1306,7 +1324,6 @@ public final class CompModule extends Browsable implements Module {
                                     resultSig.clear();
                                 else
                                     break;
-                            }
                         }
 
                         if(!resultSig.isEmpty()){
@@ -1354,6 +1371,27 @@ public final class CompModule extends Browsable implements Module {
         return ans;
     }
 
+    private Map<Set<Integer>, Set<Integer>> computeFMCompFeats(Set<Set<Integer>> imComp) {
+        Map<Set<Integer>, Set<Integer>> result=new HashMap<>();
+        for(Set<Integer> set:imComp){
+            Set<Integer> value=new HashSet<>();
+            for(Integer i:set){
+                value.add(-i);
+                for(Integer j:set){
+                    if(j!=i)
+                        value.add(j);
+                }
+
+            }
+            Set<Integer> keytemp=new HashSet<>(value);
+            keytemp.removeAll(set);
+            Set<Integer> key=new HashSet<>(value);
+            key.removeAll(keytemp);
+            result.put(key,value);
+        }
+        return  result;
+    }
+
     //colorful merge
     /**
      * used when resolve Fields
@@ -1362,16 +1400,10 @@ public final class CompModule extends Browsable implements Module {
      * @param key colors marked in Sig
      * @return
      */
-    private boolean colorNL(Map<Integer, Pos> color, Map<Integer, Pos> key) {
-        boolean notLess=true;
-        for (Map.Entry<Integer, Pos> entry : key.entrySet()) {
-            boolean keyExist = color.containsKey(entry.getKey());
-            if (!keyExist ) {
-                notLess = false;
-                break;
-                }
-        }
-        return  notLess;
+    private boolean colorNL(Set<Integer> color, Set<Integer> key) {
+        if(color.containsAll(key)) return true;
+
+        return  false;
     }
 
     /**
@@ -2898,6 +2930,22 @@ public final class CompModule extends Browsable implements Module {
                         fieldFinal.add(field);
                     }
                 }
+                Set<Integer> require=new HashSet<>(color.keySet());
+                if(fieldFinal.isEmpty()){
+                    Set< Set<Integer> > ImComp=computeFMIncompFeas();
+                    Map< Set<Integer>,Set<Integer> > comp=computeFMCompFeats(ImComp);
+                    for(Map.Entry<Set<Integer>,Set<Integer>> s:comp.entrySet()){
+                        if(s.getKey().equals(require)){
+                            require=s.getValue();
+                        }
+                    }
+                    for (Field field: fieldCandidate.get(name)) {
+                        if (field.isMeta == null && (m == this || field.isPrivate == null) && checkColor(require, field.color.keySet())) {
+                            fieldFinal.add(field);
+                        }
+                    }
+
+                }
 
                 //colorful merge
                 if (fieldFinal.isEmpty()) {
@@ -2905,9 +2953,8 @@ public final class CompModule extends Browsable implements Module {
                     // (e.g. find ➀r➀ , but we have ➀➁➌r➌➁, ➀➁➂r➂➁➀, ➀➋➌r➌➋➀, ➀➋➂r➂➋➀
                     // the result will be:
                     //➀➁➌r➌➁➀+ ➀➁➂r➂➁➀ +➀➋➌r➌➋➀ + ➀➋➂r➂➋➀)
-                    Set<Set<Set<Integer>>> featsets = computingFeatSets(color.keySet());
+                    Set<Set<Set<Integer>>> featsets = computingFeatSets(require);
                     for (Set<Set<Integer>> fcolset : featsets) {
-                        if (fieldCandidate.get(name).size() >= fcolset.size()) {
                             for (Set<Integer> col : fcolset) {
                                 for (Field fitem : fieldCandidate.get(name))
                                 if (checkColor(col,fitem.color.keySet()))
@@ -2918,7 +2965,7 @@ public final class CompModule extends Browsable implements Module {
                                 fieldFinal.clear();
                             else
                                 break;
-                        }
+
                     }
                 }
 

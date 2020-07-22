@@ -1170,13 +1170,10 @@ public abstract class Sig extends Expr implements Clause {
             }
         }
 
-
-
         return signew;
     }
 
     public void printSig(StringBuilder print){
-
         StringBuilder coloF,colorB,coloFieldF,colorFieldB;
         coloF=new StringBuilder();
         colorB=new StringBuilder();

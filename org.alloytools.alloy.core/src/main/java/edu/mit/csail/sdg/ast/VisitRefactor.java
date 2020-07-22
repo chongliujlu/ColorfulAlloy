@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class VisitRefactor extends VisitReturn<Expr> {
-    static Set<Integer> featB=new HashSet<>();
+     Integer featB=null;
     @Override
     public  Expr visit(ExprCall x) {
         return x;
@@ -21,13 +21,15 @@ public class VisitRefactor extends VisitReturn<Expr> {
         Expr right=visitThis(x.right);
 
         if(x.op.equals(ExprBinary.Op.INTERSECT)){
-            //featB=new HashSet<>();
+            featB= left.compareMergeLaw(right);
             if(left instanceof ExprBinary && ((ExprBinary) left).op==ExprBinary.Op.JOIN &&
                     right instanceof ExprBinary && ((ExprBinary) right).op==ExprBinary.Op.JOIN &&
                     ((ExprBinary) left).left.toString().equals(((ExprBinary) right).left.toString())&&
-                    left.compareMergeLaw(right)!=null){
+                   featB!=null){
 
                 VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
+                visiterRemoveFeatB.setFeatB(featB);
+
                 ((ExprBinary) left).left.accept(visiterRemoveFeatB);
                 Expr er= ExprBinary.Op.INTERSECT.make(((ExprBinary) left).left.pos,
                         ((ExprBinary) left).left.closingBracket,((ExprBinary) left).right,((ExprBinary) right).right,((ExprBinary) left).left.color);
@@ -38,9 +40,10 @@ public class VisitRefactor extends VisitReturn<Expr> {
             }else if(left instanceof ExprBinary && ((ExprBinary) left).op==ExprBinary.Op.JOIN &&
                     right instanceof ExprBinary && ((ExprBinary) right).op==ExprBinary.Op.JOIN &&
                     ((ExprBinary) left).right.toString().equals(((ExprBinary) right).right.toString())&&
-                    left.compareMergeLaw(right)!=null){
+                    featB!=null){
 
                 VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
+                visiterRemoveFeatB.setFeatB(featB);
                 ((ExprBinary) left).right.accept(visiterRemoveFeatB);
                 Expr er= ExprBinary.Op.INTERSECT.make(((ExprBinary) x.left).right.pos,
                         ((ExprBinary) left).right.closingBracket,((ExprBinary) left).left,
@@ -54,6 +57,7 @@ public class VisitRefactor extends VisitReturn<Expr> {
                     right instanceof ExprBinary && ((ExprBinary) right).op == ExprBinary.Op.JOIN &&
                     ((ExprBinary) left).left.toString().equals(((ExprBinary) right).left.toString())){
                 VisiterRemoveFeatB visiterRemoveFeatB = new VisiterRemoveFeatB();
+                visiterRemoveFeatB.setFeatB(featB);
                 ((ExprBinary) left).left.accept(visiterRemoveFeatB);
                 Expr er = ExprBinary.Op.AND.make(((ExprBinary) left).left.pos,
                         ((ExprBinary) left).left.closingBracket, ((ExprBinary) left).right,
@@ -65,6 +69,7 @@ public class VisitRefactor extends VisitReturn<Expr> {
                     right instanceof ExprBinary && ((ExprBinary) right).op == ExprBinary.Op.JOIN &&
                     ((ExprBinary) left).right.toString().equals(((ExprBinary) right).right.toString())) {
                 VisiterRemoveFeatB visiterRemoveFeatB = new VisiterRemoveFeatB();
+                visiterRemoveFeatB.setFeatB(featB);
                 ((ExprBinary) left).right.accept(visiterRemoveFeatB);
                 Expr er = ExprBinary.Op.AND.make(((ExprBinary) left).right.pos,
                         ((ExprBinary) left).right.closingBracket, ((ExprBinary) left).left, ((ExprBinary) right).left, ((ExprBinary) left).right.color);
@@ -74,17 +79,19 @@ public class VisitRefactor extends VisitReturn<Expr> {
             }
         }else if(x.op.equals(ExprBinary.Op.PLUS)){
 
-           // featB=new HashSet<>();
             if(left.toString().equals(right.toString()) ){
-                VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
+
                 if(left.color.keySet().equals(right.color.keySet())){
                     return  left;
-                } else if( left.compareMergeLaw(right)!=null){
-                   return left.accept(visiterRemoveFeatB);
+                } else {
+                    featB=  left.compareMergeLaw(right);
+                    if( featB!=null){
+                        VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
+                        visiterRemoveFeatB.setFeatB(featB);
+                        return left.accept(visiterRemoveFeatB);
+                    }
                 }
-
             }
-
         }
 
         return x.op.make(x.pos, x.closingBracket,  left, right, x.color);
@@ -115,8 +122,8 @@ public class VisitRefactor extends VisitReturn<Expr> {
                         for(Expr e2:temp2.makeConst()){
                             if(visit.contains(e2)) continue;
                             if(e2 instanceof ExprQt){
-                               // featB=new HashSet<>();
-                                if(e.compareMergeLaw(e2)!=null){
+                                featB=e.compareMergeLaw(e2);
+                                if(featB!=null){
                                     if(((ExprQt) e).decls.size()== (((ExprQt) e2).decls.size())){
                                         boolean match=true;
                                         for(Decl d1i:((ExprQt) e).decls){
@@ -139,10 +146,9 @@ public class VisitRefactor extends VisitReturn<Expr> {
                                             visit.add(e2);
 
                                             Map cl=new HashMap(e.color);
-                                            for(Integer i:featB){
-                                                cl.remove(i);
-                                                cl.remove(-i);
-                                            }
+                                                cl.remove(featB);
+                                                cl.remove(-featB);
+
                                             ConstList.TempList<Decl> decls = new ConstList.TempList<Decl>(((ExprQt) e).decls.size());
                                             //merge Decl
                                             for(Decl d1i:((ExprQt) e).decls){
@@ -185,6 +191,7 @@ public class VisitRefactor extends VisitReturn<Expr> {
                                     if(((ExprBinary) e).left.toString().equals(((ExprBinary) e2).left.toString())){
                                         visit.add(e2);
                                         VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
+                                        visiterRemoveFeatB.setFeatB(featB);
                                         ((ExprBinary) e).left.accept(visiterRemoveFeatB);
                                         Expr eNew=ExprBinary.Op.INTERSECT.make(e.pos,e.closingBracket,visitThis(((ExprBinary) e).right),visitThis(((ExprBinary) e2).right),((ExprBinary) e).left.color);
                                         e=ExprBinary.Op.IN.make(e.pos,e.closingBracket,((ExprBinary) e).left,eNew,((ExprBinary) e).left.color);
@@ -222,12 +229,13 @@ public class VisitRefactor extends VisitReturn<Expr> {
             for(Expr e2:temp.clone().makeConst()){
                 if(visit.contains(e2)) continue;
 
-               // featB=new HashSet<>();
-                if(e.toString().equals(e2.toString()) && e.compareMergeLaw(e2)!=null){
+                featB=e.compareMergeLaw(e2);
+                if(e.toString().equals(e2.toString()) && featB!=null){
                     temp.remove(temp.indexOf(e));
                     temp.remove(temp.indexOf(e2));
                     changed=true;
                     VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
+                    visiterRemoveFeatB.setFeatB(featB);
                     e.accept(visiterRemoveFeatB);
 
                     visit.add(e2);
@@ -254,19 +262,18 @@ public class VisitRefactor extends VisitReturn<Expr> {
 
     @Override
     public Expr visit(ExprLet x) throws Err {
-        return ExprLet.make(x.pos, x.var, visitThis(x.expr), visitThis(x.sub), x.color); // [HASLab] colorful Alloy
-
+        return ExprLet.make(x.pos, x.var, visitThis(x.expr), visitThis(x.sub), x.color);
     }
 
     @Override
     public Expr visit(ExprQt x) throws Err {
         ConstList.TempList<Decl> decls = new ConstList.TempList<Decl>(x.decls.size());
         for (Decl d : x.decls) {
-            Decl dd = new Decl(d.isPrivate, d.disjoint, d.disjoint2, d.names, visitThis(d.expr), d.color); // [HASLab] colorful Alloy
+            Decl dd = new Decl(d.isPrivate, d.disjoint, d.disjoint2, d.names, visitThis(d.expr), d.color);
             decls.add(dd);
         }
 
-        return x.op.make(x.pos, x.closingBracket, decls.makeConst(), visitThis(x.sub), x.color); // [HASLab] colorful Alloy
+        return x.op.make(x.pos, x.closingBracket, decls.makeConst(), visitThis(x.sub), x.color);
     }
 
     @Override
@@ -282,8 +289,6 @@ public class VisitRefactor extends VisitReturn<Expr> {
 
     @Override
     public Expr visit(Sig x) throws Err {
-
-
         return x;
     }
 
@@ -293,22 +298,24 @@ public class VisitRefactor extends VisitReturn<Expr> {
     }
 
     private  class VisiterRemoveFeatB extends VisitReturn<Expr> {
+        public void setFeatB(Integer featB) {
+            this.featB = featB;
+        }
 
+        Integer featB;
         @Override
         public  Expr visit(ExprCall x) {
-            for(Integer b: featB){
-                x.color.remove(b);
-                x.color.remove(-b);
-            }
+                x.color.remove(featB);
+                x.color.remove(-featB);
+
             return x;
         }
 
         @Override
         public Expr visit(ExprBinary x) throws Err {
-            for(Integer b: featB){
-                x.color.remove(b);
-                x.color.remove(-b);
-            }
+            x.color.remove(featB);
+            x.color.remove(-featB);
+
             visitThis(x.left);
             visitThis(x.right);
             return x;
@@ -316,10 +323,8 @@ public class VisitRefactor extends VisitReturn<Expr> {
 
         @Override
         public Expr visit(ExprList x) throws Err {
-            for(Integer b: featB){
-                x.color.remove(b);
-                x.color.remove(-b);
-            }
+            x.color.remove(featB);
+            x.color.remove(-featB);
             for(Expr e: x.args)
                 visitThis(e);
             return x;
@@ -327,19 +332,15 @@ public class VisitRefactor extends VisitReturn<Expr> {
 
         @Override
         public Expr visit(ExprConstant x) throws Err {
-            for(Integer b: featB){
-                x.color.remove(b);
-                x.color.remove(-b);
-            }
+            x.color.remove(featB);
+            x.color.remove(-featB);
             return x;
         }
 
         @Override
         public Expr visit(ExprITE x) throws Err {
-            for(Integer b: featB){
-                x.color.remove(b);
-                x.color.remove(-b);
-            }
+            x.color.remove(featB);
+            x.color.remove(-featB);
             visitThis(x.cond);
             visitThis(x.left);
             visitThis(x.right);
@@ -348,10 +349,8 @@ public class VisitRefactor extends VisitReturn<Expr> {
 
         @Override
         public Expr visit(ExprLet x) throws Err {
-            for(Integer b: featB){
-                x.color.remove(b);
-                x.color.remove(-b);
-            }
+            x.color.remove(featB);
+            x.color.remove(-featB);
             visitThis(x.expr);
             visitThis(x.sub);
             return x;
@@ -359,10 +358,8 @@ public class VisitRefactor extends VisitReturn<Expr> {
 
         @Override
         public Expr visit(ExprQt x) throws Err {
-            for(Integer b: featB){
-                x.color.remove(b);
-                x.color.remove(-b);
-            }
+            x.color.remove(featB);
+            x.color.remove(-featB);
             for(Decl d:x.decls){
                 for(Expr n:d.names)
                     visitThis(n);
@@ -375,20 +372,16 @@ public class VisitRefactor extends VisitReturn<Expr> {
 
         @Override
         public Expr visit(ExprUnary x) throws Err {
-            for(Integer b: featB){
-                x.color.remove(b);
-                x.color.remove(-b);
-            }
+            x.color.remove(featB);
+            x.color.remove(-featB);
             visitThis(x.sub);
             return x;
         }
 
         @Override
         public Expr visit(ExprVar x) throws Err {
-            for(Integer b: featB){
-                x.color.remove(b);
-                x.color.remove(-b);
-            }
+            x.color.remove(featB);
+            x.color.remove(-featB);
             return x;
         }
 
@@ -401,7 +394,6 @@ public class VisitRefactor extends VisitReturn<Expr> {
         public Expr visit(Sig.Field x) throws Err {
             return x;
         }
-
     }
 
 }
