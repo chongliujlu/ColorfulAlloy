@@ -1475,8 +1475,14 @@ public final class CompModule extends Browsable implements Module {
                 ArrayList<Func> x = m.funcs.get(name);
                 if (x != null)
                     for (Func y : x)
-                        if (m == start || y.isPrivate == null)
-                            ans.add(y);
+                        if (m == start || y.isPrivate == null){
+                            if(checkColor(color.keySet(),y.color.keySet())){
+                                ans.add(y);
+                                break;
+                            }
+
+                        }
+
             }
         }
         return ans;
@@ -2979,7 +2985,7 @@ public final class CompModule extends Browsable implements Module {
             } else if (x instanceof Func) {
                 Func f = (Func) x;
                 if (!Context.contextFeats.containsAll(f.color.keySet()))
-                    throw new ErrorSyntax(pos, "features are not compatible. \r\n" + (f.isPred ? "pred \"" : "func \"") + f.label.substring(5) + "\":" + f.color + "\r\n Expression " + Context.contextFeats); //colorful Alloy
+                    throw new ErrorSyntax(pos, "features are111 not compatible. \r\n" + (f.isPred ? "pred \"" : "func \"") + f.label.substring(5) + "\":" + f.color + "\r\n Expression " + Context.contextFeats); //colorful Alloy
                 int fn = f.count();
                 int penalty = 0;
                 if (resolution == 1 && fn > 0 && rootsig != null && THIS != null && THIS.type().hasArity(1) && f.get(0).type().intersects(THIS.type())) {

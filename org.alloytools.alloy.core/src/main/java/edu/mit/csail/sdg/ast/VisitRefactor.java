@@ -342,7 +342,7 @@ public class VisitRefactor extends VisitReturn<Expr> {
         return x;
     }
 
-    private  class VisiterRemoveFeatB extends VisitReturn<Expr> {
+  /*  public class VisiterRemoveFeatB extends VisitReturn<Expr> {
         public void setFeatB(Integer featB) {
             this.featB = featB;
         }
@@ -439,7 +439,7 @@ public class VisitRefactor extends VisitReturn<Expr> {
         public Expr visit(Sig.Field x) throws Err {
             return x;
         }
-    }
+    }*/
     private  class VisiterExprBreak extends VisitReturn<List<Expr>> {
         @Override
         public  List<Expr> visit(ExprCall x) {

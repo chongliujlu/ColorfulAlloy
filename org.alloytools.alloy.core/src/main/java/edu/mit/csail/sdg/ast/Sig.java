@@ -21,6 +21,7 @@ import static edu.mit.csail.sdg.ast.ExprUnary.Op.SOMEOF;
 
 import java.util.*;
 
+import edu.mit.csail.sdg.parser.CompModule;
 import org.alloytools.util.table.Table;
 
 import edu.mit.csail.sdg.alloy4.ConstList;
@@ -230,6 +231,7 @@ public abstract class Sig extends Expr implements Clause {
     /**
      * The declaration that quantifies over each atom in this sig.
      */
+
     public final Decl            decl;
 
     /**
@@ -1038,9 +1040,7 @@ public abstract class Sig extends Expr implements Clause {
         feats.remove(b);
         feats.remove(-b);
         signew.color.putAll(feats);
-
-
-
+        
         //add feature b or -b to fields.
        // Sig finalSignew = signew;
         VisitOld2new sigold2newVisitor = new VisitOld2new();
@@ -1065,7 +1065,6 @@ public abstract class Sig extends Expr implements Clause {
             signew.addTrickyField(d.span(),d.isPrivate,d.disjoint,d.disjoint2,null,labels,exprNew,d.color);
         }
 
-        //已经将s替换成了sigBinary.
         Sig sigBinaryField=signew.mergeField(fact);
 
         return sigBinaryField;
@@ -1091,96 +1090,102 @@ public abstract class Sig extends Expr implements Clause {
         else if (this instanceof Sig.SubsetSig)
             signew=new Sig.SubsetSig(label,((Sig.SubsetSig) this).parents,attributes);
         signew.color=color;
-
         sigOld2new.getSigOld2new().put(this,signew);
 
 
-        ArrayList<Decl> fieldVisited=new ArrayList<>();
-        for(Decl d: getFieldDecls()) {
-            if (fieldVisited.contains(d)) continue;
+        //prepare the order of features
+        Set<Integer> temp=new HashSet<>();
+        for(Integer i: CompModule.feats)
+            temp.add(i>0? i: -i);
+        Set <Integer> feat=new TreeSet<>(temp);
 
-            fieldVisited.add(d);
+        //merge Field with order of colors
+        List<Decl> clone=getFieldDecls().makeCopy();
+        for(Integer curMergFeat: feat){
+            ArrayList<Decl> fieldVisited=new ArrayList<>();
+            List<Decl> clonetemp=new ArrayList<>(clone);
+            for(Decl d: clonetemp){
+                if (fieldVisited.contains(d)) continue;
+                fieldVisited.add(d);
 
-            boolean merged=false;
+                for(Decl d2: clonetemp){
+                    if (fieldVisited.contains(d2)) continue;
+                    if (d.names.get(0).label.equals(d2.names.get(0).label)) {
+                        b=compareMergeLaw(d.color.keySet(), d2.color.keySet());
 
-            String[] labels = new String[d.names.size()];
-            for (int i = 0; i < d.names.size(); i++) {
-                labels[i] = d.names.get(i).label;
-            }
+                        if (b==curMergFeat) {
+                            if(d.expr.toString().equals(d2.expr.toString())){
+                                fieldVisited.add(d2);
+                                VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
+                                visiterRemoveFeatB.setFeatB(b);
+                                d.expr=d.expr.accept(visiterRemoveFeatB);
+                                d.color=d.expr.color;
+                                clone.remove(d2);
 
-            for (Decl d2 : getFieldDecls()) {
-                if (fieldVisited.contains(d2)) continue;
-                //只比较第一个名字。
-                if (d.names.get(0).label.equals(d2.names.get(0).label)) {
-                    b=compareMergeLaw(d.color.keySet(), d2.color.keySet());
-                    if (b!=null) {
-                        merged=true;
-                        Expr exprNew = d.expr.accept(sigOld2new);
+                            }else if(d.expr instanceof ExprUnary && d2.expr instanceof ExprUnary){
+                                fieldVisited.add(d2);
 
-                        if(d.expr instanceof ExprUnary && d2.expr instanceof ExprUnary){
+                                ExprUnary.Op op=((ExprUnary) d.expr).op;
+                                if(!((ExprUnary) d.expr).op.equals(((ExprUnary) d2.expr).op)){// 修改multiplicity
+                                    op= ExprUnary.Op.SETOF;
+                                    if(!((ExprUnary) d.expr).op.equals(ExprUnary.Op.SETOF)){
+                                        StringBuilder coloF, colorB;
+                                        String name = "set";
+                                        if(((ExprUnary) d.expr).op.equals(LONEOF))
+                                            name="lone";
+                                        else if(((ExprUnary) d.expr).op.equals(ONEOF))
+                                            name="one";
+                                        else if(((ExprUnary) d.expr).op.equals(SOMEOF))
+                                            name="some";
 
-                            ExprUnary.Op op=((ExprUnary) d.expr).op;
-                            if(!((ExprUnary) d.expr).op.equals(((ExprUnary) d2.expr).op)){// 修改multiplicity
-                                op= ExprUnary.Op.SETOF;
-                                if(!((ExprUnary) d.expr).op.equals(ExprUnary.Op.SETOF)){
-                                    StringBuilder coloF, colorB;
-                                    String name = "set";
-                                    if(((ExprUnary) d.expr).op.equals(LONEOF))
-                                        name="lone";
-                                    else if(((ExprUnary) d.expr).op.equals(ONEOF))
-                                        name="one";
-                                    else if(((ExprUnary) d.expr).op.equals(SOMEOF))
-                                        name="some";
-
-                                    coloF = new StringBuilder();
-                                    colorB = new StringBuilder();
-                                    if (d.expr.color != null)
-                                        d.expr.printcolor(coloF, colorB);
-                                    fact.append("\r\n        "+coloF+"all s:"+label.substring(5)+" | "+ name+" s."+d.names.get(0).label+colorB);
+                                        coloF = new StringBuilder();
+                                        colorB = new StringBuilder();
+                                        if (d.expr.color != null)
+                                            d.expr.printcolor(coloF, colorB);
+                                        fact.append("\r\n        "+coloF+"all s:"+label.substring(5)+" | "+ name+" s."+d.names.get(0).label+colorB);
+                                    }
+                                    if(!((ExprUnary) d2.expr).op.equals(ExprUnary.Op.SETOF)){
+                                        String name = "set";
+                                        if(((ExprUnary) d2.expr).op.equals(LONEOF))
+                                            name="lone";
+                                        else if(((ExprUnary) d2.expr).op.equals(ONEOF))
+                                            name="one";
+                                        else if(((ExprUnary) d2.expr).op.equals(SOMEOF))
+                                            name="some";
+                                        StringBuilder coloF, colorB;
+                                        coloF = new StringBuilder();
+                                        colorB = new StringBuilder();
+                                        if (d2.expr.color != null)
+                                            d2.expr.printcolor(coloF, colorB);
+                                        fact.append("\r\n        "+coloF+"all s:"+label.substring(5)+" | "+ name+" s."+d2.names.get(0).label+colorB);
+                                    }
                                 }
-                                if(!((ExprUnary) d2.expr).op.equals(ExprUnary.Op.SETOF)){
-                                    String name = "set";
-                                    if(((ExprUnary) d2.expr).op.equals(LONEOF))
-                                        name="lone";
-                                    else if(((ExprUnary) d2.expr).op.equals(ONEOF))
-                                        name="one";
-                                    else if(((ExprUnary) d2.expr).op.equals(SOMEOF))
-                                        name="some";
-                                    StringBuilder coloF, colorB;
-                                    coloF = new StringBuilder();
-                                    colorB = new StringBuilder();
-                                    if (d2.expr.color != null)
-                                        d2.expr.printcolor(coloF, colorB);
-                                    fact.append("\r\n        "+coloF+"all s:"+label.substring(5)+" | "+ name+" s."+d2.names.get(0).label+colorB);
-                                }
-                            }
-
-
                                 d.color.remove(b);
                                 d.color.remove(-b);
 
-                            exprNew=ExprBinary.Op.PLUS.make(exprNew.pos,null,((ExprUnary)exprNew).sub,((ExprUnary) d2.expr).sub,d.color);
-                            exprNew=op.make(d.expr.pos,exprNew,null,0,d.color);
+                                Expr exprNew=ExprBinary.Op.PLUS.make(d.expr.pos,null,((ExprUnary)d.expr).sub,((ExprUnary) d2.expr).sub,d.color);
+                                exprNew=op.make(d.expr.pos,exprNew,null,0,d.color);
+                                VisitRefactor refactor =new VisitRefactor();
+                                d.expr=exprNew.accept(refactor);
+                                clone.remove(d2);
+                            }
                         }
-
-                        VisitRefactor refactor =new VisitRefactor();
-                        signew.addTrickyField(d.span(), d.isPrivate, d.disjoint, d.disjoint2, null, labels, exprNew.accept(refactor), d.color);
-                        fieldVisited.add(d2);
-                        break;
                     }
                 }
             }
-
-            //add field that can not be merged
-            if(!merged){
-                Expr exprNew = d.expr.accept(sigOld2new);
-                VisitRefactor refactor =new VisitRefactor();
-                signew.addTrickyField(d.span(), d.isPrivate, d.disjoint, d.disjoint2, null, labels, exprNew.accept(refactor), d.color);
-            }
         }
 
+        //add Field to new sig
+        for(Decl d: clone){
+            String[] labels = new String[d.names.size()];
+            for (int i = 0; i < d.names.size(); i++) {
+                labels[i] = d.names.get(i).label; }
+            Expr exprNew = d.expr.accept(sigOld2new);
+            signew.addTrickyField(d.span(), d.isPrivate, d.disjoint, d.disjoint2, null, labels, exprNew, d.color);
+        }
         return signew;
     }
+    //colorful merge
     public void addSomeFact(StringBuilder sigfact) {
         StringBuilder coloF, colorB;
         coloF = new StringBuilder();
@@ -1190,7 +1195,7 @@ public abstract class Sig extends Expr implements Clause {
 
         sigfact.append("\r\n      "+coloF+"some "+ label.substring(5)+colorB);
     }
-
+    //colorful merge
     public void addOneFact(StringBuilder sigfact) {
         StringBuilder coloF, colorB;
         coloF = new StringBuilder();
@@ -1200,7 +1205,7 @@ public abstract class Sig extends Expr implements Clause {
 
         sigfact.append("\r\n      "+coloF+"one "+ label.substring(5)+colorB);
     }
-
+    //colorful merge
     public void addLoneFact(StringBuilder sigfact) {
         StringBuilder coloF, colorB;
         coloF = new StringBuilder();
@@ -1210,7 +1215,7 @@ public abstract class Sig extends Expr implements Clause {
 
         sigfact.append("\r\n      "+coloF+"lone "+ label.substring(5)+colorB);
     }
-
+    //colorful merge
     public void addAbstractFact(SafeList<Sig> sigSafeList, StringBuilder sigfact) {
         Set<Sig> children = new HashSet<>();
         for (Sig s : sigSafeList) {
@@ -1241,7 +1246,7 @@ public abstract class Sig extends Expr implements Clause {
         }
 
     }
-
+    //colorful merge
     public void printSig(StringBuilder print){
         StringBuilder coloF,colorB,coloFieldF,colorFieldB;
         coloF=new StringBuilder();
@@ -1337,7 +1342,7 @@ public abstract class Sig extends Expr implements Clause {
         print.append("\r\n");
 
     }
-
+    //colorful merge
     private class VisitOld2new extends VisitReturn<Expr> {
         public Map<Sig, Sig> getSigOld2new() {
             return sigOld2new;

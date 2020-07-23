@@ -66,9 +66,9 @@ public final class Decl {
 
     /** The list of names. */
     public final ConstList< ? extends ExprHasName> names;
-
+    //colorful merge,remove final
     /** The value that the list of names are bound to. */
-    public final Expr                              expr;
+    public Expr                              expr;
     //colorful merge remove public
     /** Caches the span() result. */
     public Pos                                    span;
