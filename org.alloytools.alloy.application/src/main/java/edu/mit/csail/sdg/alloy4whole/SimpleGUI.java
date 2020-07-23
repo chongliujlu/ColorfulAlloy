@@ -1313,7 +1313,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                         }
                         if(fact.length()>0)
                         text.get().appendText("\r\nfact RemoveQualtifier {" +fact+"\r\n        }");
-                        
+
                         StringBuilder print=new StringBuilder();
                         sig.printSig(print);
                         text.changeText(sig.pos,print.toString());
@@ -3364,7 +3364,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
     }
 
 
-    private class VisitOld2new extends VisitReturn<Expr> {
+  /*  private class VisitOld2new extends VisitReturn<Expr> {
         @Override
         public  Expr visit(ExprCall x) {
             return x;
@@ -3435,9 +3435,9 @@ public final class SimpleGUI implements ComponentListener, Listener {
             return x;
         }
 
-    }
+    }*/
 
-    private class VisitRefactor extends VisitReturn<Expr> {
+   /* private class VisitRefactor extends VisitReturn<Expr> {
         Set<Integer> featB=new HashSet<>();
         @Override
         public  Expr visit(ExprCall x) {
@@ -3840,14 +3840,14 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
         }
 
-    }
+    }*/
 
-    /**
+/*    *//**
      * return sub set (a-b)
      * @param a
      * @param b
      * @return
-     */
+     *//*
     private HashSet<Integer> sub(Set<Integer> a, Set<Integer> b) {
         List<Integer> list1 = new ArrayList<>(a);
 
@@ -3857,7 +3857,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
             result.removeAll(b);
         }
         return new HashSet<Integer>(result);
-    }
+    }*/
 
 
 

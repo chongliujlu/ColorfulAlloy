@@ -2,33 +2,58 @@ fact FeatureModel {
 	➁➊some none➊➁
 	➂➊some none➊➂
 	}
-sig    Product{
-        ➀➋➌category:  one Category➌➋➀,
-        images:  set Image,
-        ➊➋➌catalog:  one Catalog➌➋➊,
-        ➀➁➌category:  one Category➌➁➀,
-        ➂category:  some Category➂
-        }
-
-
-➀➂sig Image{ }➂➀
-➋➌sig Image{ }➌➋
-➀➌➁sig Image{ }➁➌➀
-
-➀➂sig Catalog{
-        thumbnails:  set Image
-        }➂➀
-➀➌➁sig Catalog{
-        thumbnails:  set Image
-        }➁➌➀
-➋➌sig Catalog{
-        thumbnails:  set Image
-        }➌➋
-
-➀sig Category{
-        inside:  one ((➋➂Catalog➂➋ + (➁➂Catalog + Category➂➁)) + (➌➋Catalog➋ + (➁Catalog + Category➁)➌))
-        }➀
-
+➊➋➌sig Product {
+ 	catalog : one Catalog ,
+    	images : set Image
+    	}➌➋➊
+➀➋➌sig Product {
+    	category : one Category ,
+    	images : set Image
+    	}➌➋➀
+➀➁➌sig Product {
+     	category : one Category ,
+    	images : set Image
+   	 }➌➁➀
+➀➋➂ sig Product {
+     	category : some Category ,
+    	 images : set Image
+    	}➂➋➀
+➀➁➂sig Product {
+     	category : some Category ,
+    	 images : set Image
+    	}➂➁➀
+➊➋➌sig Image {}➌➋➊
+➀➋➌sig Image {}➌➋➀
+➀➁➌sig Image {}➌➁➀
+➀➋➂ sig Image {}➂➋➀
+➀➁➂sig Image {}➂➁➀
+➊➋➌sig Catalog {
+	thumbnails : set Image
+	}➌➋➊
+➀➋➌sig Catalog {
+	thumbnails : set Image
+	}➌➋➀
+➀➁➌sig Catalog {
+	thumbnails : set Image
+	}➌➁➀
+➀➋➂ sig Catalog {
+	thumbnails : set Image
+	}➂➋➀
+➀➁➂sig Catalog {
+	thumbnails: set Image
+	}➂➁➀
+➀➋➌ sig Category {
+	inside : one Catalog
+    } ➌➋➀
+➀➁➌sig Category {
+	inside : one Catalog + Category
+	}➌➁➀
+➀➋➂ sig Category {
+	inside : one Catalog
+	} ➂➋➀
+➀➁➂sig Category {
+	inside : one Catalog + Category
+	}➂➁➀
 ➀➁➌fact Acyclic {
     	all c : Category | c not in c.^inside
     }➌➁➀
@@ -85,14 +110,4 @@ run Scenario with ➀,➋,➂ for 10
 run Scenario with ➀,➁,➂ for 10
 check AllCataloged with ➀,➁,➌ for 10
 check AllCataloged with ➀,➁,➂ for 10
-
-
-
-
-
-
-
-
-
-
 

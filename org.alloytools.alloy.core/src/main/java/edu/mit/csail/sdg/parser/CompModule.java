@@ -311,7 +311,7 @@ public final class CompModule extends Browsable implements Module {
     //colorful merge
     /**
      * merge sigs, find a pair of sigs that can be merge in the group. sigs with different quantifier must be removed in advance
-     * @param values a map of sigs to be merge
+     * @param
      * @return return true means the process is not finish, false means there is no sigs can be merge in the given group
      */
     public void mergeSigs(Map<Map<Integer, Pos>, Sig> sigMap, StringBuilder attributefact) {

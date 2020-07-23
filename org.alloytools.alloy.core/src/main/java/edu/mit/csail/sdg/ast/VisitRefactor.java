@@ -2,11 +2,10 @@ package edu.mit.csail.sdg.ast;
 
 import edu.mit.csail.sdg.alloy4.ConstList;
 import edu.mit.csail.sdg.alloy4.Err;
+import edu.mit.csail.sdg.alloy4.Pos;
+import edu.mit.csail.sdg.parser.CompModule;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class VisitRefactor extends VisitReturn<Expr> {
      Integer featB=null;
@@ -84,11 +83,57 @@ public class VisitRefactor extends VisitReturn<Expr> {
                 if(left.color.keySet().equals(right.color.keySet())){
                     return  left;
                 } else {
+
                     featB=  left.compareMergeLaw(right);
                     if( featB!=null){
                         VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
                         visiterRemoveFeatB.setFeatB(featB);
                         return left.accept(visiterRemoveFeatB);
+                    }else if(left instanceof ExprBinary || right instanceof ExprBinary){
+                        VisiterExprBreak exprBreak=new VisiterExprBreak();
+                        // break the + to List
+                        List<Expr> list=x.accept(exprBreak);
+
+                        Set <Integer> feat=new TreeSet<>(getModuleFeatSet());
+                        for(Integer curMergFeat: feat){
+                            List<Expr> exprclone= new ArrayList<>(list);
+                            Set<Expr> visit=new HashSet();
+                            for(Expr e1 : exprclone){
+                                if(visit.contains(e1))
+                                    continue;
+                                visit.add(e1);
+                                for(Expr e2 : exprclone){
+                                    if(visit.contains(e2))
+                                        continue;
+                                    if(!e2.color.keySet().contains(curMergFeat) && !e2.color.keySet().contains(-curMergFeat) )
+                                        continue;
+                                    if(e1.toString().equals(e2.toString())){
+                                        if(e1.color.keySet().equals(e2.color.keySet())){
+                                            list.remove(e2);
+                                            visit.add(e2);
+                                        }else{
+                                            Integer b=e1.compareMergeLaw(e2);
+                                            if(b==curMergFeat){
+                                                VisiterRemoveFeatB visiterRemoveFeatB = new VisiterRemoveFeatB();
+                                                visiterRemoveFeatB.setFeatB(b);
+                                                e1.accept(visiterRemoveFeatB);
+                                                visit.add(e2);
+                                                list.remove(e2);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Expr e=null;
+
+                       if(list.size()>0) e=list.get(0);
+                       if( list.size()>1)
+                        for (int i=1;i<list.size();i++){
+                            e=ExprBinary.Op.PLUS.make(x.pos,x.closingBracket,e,list.get(i));
+                        }
+                       return e;
                     }
                 }
             }
@@ -395,5 +440,79 @@ public class VisitRefactor extends VisitReturn<Expr> {
             return x;
         }
     }
+    private  class VisiterExprBreak extends VisitReturn<List<Expr>> {
+        @Override
+        public  List<Expr> visit(ExprCall x) {
+            return null;
+        }
 
+        @Override
+        public List<Expr> visit(ExprBinary x) throws Err {
+            List<Expr> list=new ArrayList<>();
+            List<Expr> left=visitThis(x.left);
+            List<Expr> right=visitThis(x.right);
+
+          if(left!=null)
+              list.addAll(left);
+          else list.add(x.left);
+
+          if(right!=null)
+                list.addAll(right);
+          else
+              list.add(x.right);
+            return list;
+        }
+
+        @Override
+        public List<Expr> visit(ExprList x) throws Err {
+            return null;
+        }
+
+        @Override
+        public List<Expr> visit(ExprConstant x) throws Err {
+            return null;
+        }
+
+        @Override
+        public List<Expr> visit(ExprITE x) throws Err {
+            return null;
+        }
+
+        @Override
+        public List<Expr> visit(ExprLet x) throws Err {
+            return null;
+        }
+
+        @Override
+        public List<Expr> visit(ExprQt x) throws Err {
+            return null;
+        }
+
+        @Override
+        public List<Expr> visit(ExprUnary x) throws Err {
+            return null;
+        }
+
+        @Override
+        public List<Expr> visit(ExprVar x) throws Err {
+            return null;
+        }
+
+        @Override
+        public List<Expr> visit(Sig x) throws Err {
+            return null;
+        }
+
+        @Override
+        public List<Expr> visit(Sig.Field x) throws Err {
+            return null;
+        }
+    }
+    private Collection<? extends Integer> getModuleFeatSet() {
+        Set<Integer> temp=new HashSet<>();
+        for(Integer i: CompModule.feats){
+            temp.add(i>0? i: -i);
+        }
+        return temp;
+    }
 }
