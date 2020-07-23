@@ -831,6 +831,108 @@ public abstract class Sig extends Expr implements Clause {
             return sb.toString();
         }
 
+        public Field mergeField(Field field,StringBuilder fact){
+           Integer b=compareMergeLaw(color.keySet(), field.color.keySet());
+
+                if(decl.expr.toString().equals(field.decl.expr.toString())){
+                    if(color.keySet().equals(field.color.keySet())){
+                        return this;
+                    }
+
+                    if(b!=null){
+                        VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
+                        visiterRemoveFeatB.setFeatB(b);
+                        decl.expr=decl.expr.accept(visiterRemoveFeatB);
+                        decl.color=decl.expr.color;
+
+                        color.remove(b);
+                        color.remove(-b);
+                        return this;
+                    }
+
+
+                }else if(decl.expr instanceof ExprUnary && field.decl.expr instanceof ExprUnary){
+                    ExprUnary.Op op=((ExprUnary) decl.expr).op;
+                    if(!((ExprUnary) decl.expr).op.equals(((ExprUnary) field.decl.expr).op)){// 修改multiplicity
+                        op= ExprUnary.Op.SETOF;
+                        if(!((ExprUnary) decl.expr).op.equals(ExprUnary.Op.SETOF)){
+                            StringBuilder coloF, colorB;
+                            String name = "set";
+                            if(((ExprUnary) decl.expr).op.equals(LONEOF))
+                                name="lone";
+                            else if(((ExprUnary) decl.expr).op.equals(ONEOF))
+                                name="one";
+                            else if(((ExprUnary) decl.expr).op.equals(SOMEOF))
+                                name="some";
+
+                            coloF = new StringBuilder();
+                            colorB = new StringBuilder();
+                            if (decl.expr.color != null)
+                                decl.expr.printcolor(coloF, colorB);
+                            fact.append("\r\n        "+coloF+"all s:"+label.substring(5)+" | "+ name+" s."+decl.names.get(0).label+colorB);
+                        }
+                        if(!((ExprUnary) field.decl.expr).op.equals(ExprUnary.Op.SETOF)){
+                            String name = "set";
+                            if(((ExprUnary) field.decl.expr).op.equals(LONEOF))
+                                name="lone";
+                            else if(((ExprUnary) field.decl.expr).op.equals(ONEOF))
+                                name="one";
+                            else if(((ExprUnary) field.decl.expr).op.equals(SOMEOF))
+                                name="some";
+                            StringBuilder coloF, colorB;
+                            coloF = new StringBuilder();
+                            colorB = new StringBuilder();
+                            if (field.decl.expr.color != null)
+                                field.decl.expr.printcolor(coloF, colorB);
+                            fact.append("\r\n        "+coloF+"all s:"+label.substring(5)+" | "+ name+" s."+field.decl.names.get(0).label+colorB);
+                        }
+                    }
+                    decl.color.remove(b);
+                    decl.color.remove(-b);
+
+                    Expr exprNew=ExprBinary.Op.PLUS.make(decl.expr.pos,null,((ExprUnary)decl.expr).sub,((ExprUnary) field.decl.expr).sub,decl.color);
+                    exprNew=op.make(decl.expr.pos,exprNew,null,0,decl.color);
+                    VisitRefactor refactor =new VisitRefactor();
+                    decl.expr=exprNew.accept(refactor);
+
+                    return this;
+
+                }
+
+
+            return null;
+        }
+
+         public String printField(){
+            StringBuilder print=new StringBuilder();
+             StringBuilder  coloFieldF=new StringBuilder();
+             StringBuilder colorFieldB =new StringBuilder();
+             if(color!=null){
+                 Map<Integer,Pos> fcol=new HashMap<>(color);
+                 if(color!=null)
+                     for (Map.Entry<Integer,Pos> col:color.entrySet()){
+                         fcol.remove(col.getKey());
+                     }
+
+                 printcolor(coloFieldF,colorFieldB,fcol.keySet());
+             }
+             print.append(coloFieldF);
+             print.append(decl.disjoint!=null? "disj ": "");
+
+                 print.append(label);
+                 print.append(": ");
+
+                 //get the first Field
+
+                 VisitprintmergeExpr visitprintmergeExpr=new VisitprintmergeExpr();
+                 visitprintmergeExpr.setParentFeats(decl().color.keySet());
+                 print.append(decl().expr.accept(visitprintmergeExpr));
+                 print.append(colorFieldB);
+
+
+             return print.toString();
+         }
+
     }
 
     // ==============================================================================================================//
@@ -1020,11 +1122,6 @@ public abstract class Sig extends Expr implements Clause {
      * @param b  feature to be remove
      */
     public Sig mergeSig(Sig sig,Integer b,StringBuilder fact){
-        /** used to change the sigs after merge*///colorful merge
-
-        /** used to change the sigs after merge*///colorful merge
-        // Map<Field,Field> fieldOld2new=new HashMap();
-
         //used to generate new Sig
         Attr[] attributes = new Attr[this.attributes.size()];
         for (int i = 0; i < this.attributes.size(); i++) {
@@ -1040,7 +1137,7 @@ public abstract class Sig extends Expr implements Clause {
         feats.remove(b);
         feats.remove(-b);
         signew.color.putAll(feats);
-        
+
         //add feature b or -b to fields.
        // Sig finalSignew = signew;
         VisitOld2new sigold2newVisitor = new VisitOld2new();
@@ -1185,6 +1282,7 @@ public abstract class Sig extends Expr implements Clause {
         }
         return signew;
     }
+
     //colorful merge
     public void addSomeFact(StringBuilder sigfact) {
         StringBuilder coloF, colorB;

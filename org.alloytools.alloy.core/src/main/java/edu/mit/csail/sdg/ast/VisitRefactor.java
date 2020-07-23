@@ -78,14 +78,11 @@ public class VisitRefactor extends VisitReturn<Expr> {
             }
         }else if(x.op.equals(ExprBinary.Op.PLUS)){
 
-            if(left.toString().equals(right.toString()) ){
-
-                if(left.color.keySet().equals(right.color.keySet())){
+                if(left.color.keySet().equals(right.color.keySet()) && left.toString().equals(right.toString())){
                     return  left;
                 } else {
-
                     featB=  left.compareMergeLaw(right);
-                    if( featB!=null){
+                    if( featB!=null && left.toString().equals(right.toString())){
                         VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
                         visiterRemoveFeatB.setFeatB(featB);
                         return left.accept(visiterRemoveFeatB);
@@ -136,7 +133,7 @@ public class VisitRefactor extends VisitReturn<Expr> {
                        return e;
                     }
                 }
-            }
+
         }
 
         return x.op.make(x.pos, x.closingBracket,  left, right, x.color);

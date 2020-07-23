@@ -1282,7 +1282,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
             }
             for(Sig s:new_mergeField){
-                JMenuItem sig=new JMenuItem(s.label.substring(5)+s.getColorString());
+                String name=s.color.keySet().isEmpty()?"": s.getColorString();
+                JMenuItem sig=new JMenuItem(s.label.substring(5)+name);
                 new_sigLists.add(sig);
                 sig.addActionListener(new ActionListener() {
                     @Override

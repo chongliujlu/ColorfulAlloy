@@ -440,17 +440,17 @@ public final class OurSyntaxWidget {
                                       }
                                   }
                                   //deleter a feature of a sig/Field
-                                  doFeatRmOrAdd(featRmSet,featsBefore,er,point.x, point.y);
+                                  doFeatRmOrAdd(module,featRmSet,featsBefore,er,point.x, point.y);
                                   //merge Sigs/Fields
                                   //addMergeMenu(module,er);
 
 
                               }else if(er instanceof Expr){
                                   //delete features for facts/assert/Expr
-                                  doFeatRmOrAdd(featRmSet,new HashSet<>(featsBefore),er,point.x, point.y);
+                                  doFeatRmOrAdd(module,featRmSet,new HashSet<>(featsBefore),er,point.x, point.y);
                               }else if(er instanceof Func){
                                   //delete features for the whole pred/fun
-                                  doFeatRmOrAdd(featRmSet,er.color.keySet(),er,point.x, point.y);
+                                  doFeatRmOrAdd(module,featRmSet,er.color.keySet(),er,point.x, point.y);
                               }else if(er instanceof Command){
                                   doFeatRM(featRmSet, (Command) er,point.x, point.y);
                               }
@@ -510,8 +510,6 @@ public final class OurSyntaxWidget {
                         }
                     }
 
-                }else if (er instanceof Sig.Field){
-
                 }
             }
 
@@ -525,7 +523,7 @@ public final class OurSyntaxWidget {
              * @param x x position to show the popup menu
              * @param y y position to show the popup menu
              */
-            private void doFeatRmOrAdd(Map<Set<Integer>, Integer> featRmSet, Set<Integer> featsBefore, Browsable e, int x, int y) {
+            private void doFeatRmOrAdd(CompModule module,Map<Set<Integer>, Integer> featRmSet, Set<Integer> featsBefore, Browsable e, int x, int y) {
                 Set <Integer> menu=new HashSet<>();
                 for(Map.Entry<Set<Integer>, Integer> entry:featRmSet.entrySet()){
                    if(featsBefore.containsAll(entry.getKey()) && e.color.keySet().contains(entry.getValue())){
@@ -578,7 +576,58 @@ public final class OurSyntaxWidget {
                     }
                 }
                 if(e instanceof Sig){
-                    addMergeMenu(getModule(),e);
+                    addMergeMenu(module,e);
+                }else if(e instanceof Sig.Field){
+                    ArrayList<Sig.Field> mergeField=new ArrayList<>();
+                    for(Sig.Field f:((Sig.Field) e).sig.getFields()){
+                        if(e!=f){
+                            if(((Sig.Field) e).label.equals(f.label) && ((Sig.Field) e).sig.compareMergeLaw(e.color.keySet(),f.color.keySet())!=null){
+                                if((((Sig.Field) e).decl().expr instanceof ExprUnary && f.decl().expr instanceof ExprUnary)||((Sig.Field) e).decl().expr.equals(f.decl().expr) )
+                                    mergeField.add(f);
+                            }
+                        }
+                    }
+
+                    for(Sig.Field field:mergeField){
+                        JMenuItem fieldItem = new JMenuItem("Merge "+field.label + field.getColorString());
+                        pop.add(fieldItem);
+                        fieldItem.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent excep) {
+                                StringBuilder fact=new StringBuilder();
+
+                                Sig.Field fi = ((Sig.Field) e).mergeField(field,fact);
+
+                                String print=fi.printField();
+                                Map col=new HashMap<>(field.color);
+                                for(Map.Entry<Integer,Pos> p:field.sig.color.entrySet()){
+                                    if(col.get(p.getKey()).equals(p.getValue()))
+                                        field.color.remove(p.getKey());
+                                }
+
+                                for(Pos pos: field.color.values()){
+                                    field.pos=field.pos.merge(pos);
+                                }
+
+                                int d2 = getLineStartOffset(field.pos.y2 - 1) + field.pos.x2 - 1;
+                                int c2= getLineStartOffset(field.pos.y - 1) + field.pos.x - 1;
+                                int d = getLineStartOffset(((Sig.Field) e).pos.y2 - 1) + ((Sig.Field) e).pos.x2 - 1;
+                                int c= getLineStartOffset(((Sig.Field) e).pos.y - 1) + ((Sig.Field) e).pos.x - 1;
+
+                                if(((Sig.Field) e).pos.y<field.pos.y || (((Sig.Field) e).pos.y==field.pos.y && ((Sig.Field) e).pos.x<field.pos.x)){
+                                    changeText(c2,d2+1,"");
+                                    changeText(c,d+1,print);
+
+                                }else{
+                                    changeText(c,d+1,"");
+                                    changeText(c2,d2+1,print);
+                                }
+
+                                appendText(fact.toString());
+                            }
+                        });
+
+                    }
                 }
 
 
