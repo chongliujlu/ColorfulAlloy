@@ -156,15 +156,18 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
             else PFeatures.add(i);
         }
 
+        String name=x.op.name();
+        if(name.equals("AND")) name=" and";
+        else if(name.equals("OR")) name=" or";
+
 
         //x marked
         if(!xcolor.isEmpty()){
+            str.append("(");
             //Marked with NFeature
             if(!NFeatures.isEmpty()){
-                str.append("(");
                 addFeatureprefix(NFeatures,str, "not in","and");
-
-                for(Expr arg: x.args){
+           /*     for(Expr arg: x.args){
                     parentFeats=x.color.keySet();
                    String subExpr= visitThis(arg);
                    if(x.op.equals(ExprList.Op.OR)){
@@ -173,29 +176,30 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
                        str.append("("+subExpr+")");
                    }
                     else str.append(" "+subExpr);
-                    str.append(" "+x.op.name());
+                    str.append(" "+name);
+                }*/
+                if(PFeatures.isEmpty()){
+                str.deleteCharAt(str.length()-1);
+                str.deleteCharAt(str.length()-1);
+                str.deleteCharAt(str.length()-1);
                 }
 
             }
 
             if(!PFeatures.isEmpty()){
                 //F in Product implies
-                str.append("(");
                 addFeatureprefix(PFeatures,str, "in","and");
                 str.deleteCharAt(str.length()-1);
                 str.deleteCharAt(str.length()-1);
-                //if(x.op.equals(ExprList.Op.AND))
-                    str.deleteCharAt(str.length()-1);
-                str.append(")");
-                str.append(" implies ");
-
+                str.deleteCharAt(str.length()-1);
             }
+
+            str.append(")");
+            str.append(" implies ");
         }
 
 //--------------------x.argi (i=0,1,2,3)----------------
-        String name=x.op.name();
-        if(name.equals("AND")) name=" and";
-        if(name.equals("OR")) name=" or";
+
 
         if(!x.args.isEmpty())
             str.append("(");
@@ -203,16 +207,7 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
         for(Expr arg: x.args){
             parentFeats=x.color.keySet();
             String subExpr= visitThis(arg);
-
-            if(x.op.equals(ExprList.Op.OR) && !(arg.color.isEmpty())){
-                //subExpr=subExpr.replaceAll("implies","and");
-                if(subExpr.endsWith("]"))
-                    str.append("("+subExpr +" else some none)");
-                else
-                str.append("("+subExpr.substring(0,subExpr.length()-1) +" else some none))");
-            }
-            else
-                str.append("("+subExpr+")");
+            str.append("("+subExpr+")");
             str.append(name);
             str.append("\r\n        ");
 
@@ -572,83 +567,88 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
     @Override
     public String visit(ExprUnary x) throws Err {
-        Set <Integer> xcolor=sub(x.color.keySet(),parentFeats);
-        parentFeats=x.color.keySet();
-        Set<Integer> NFeatures=new HashSet<>();
-        Set<Integer> PFeatures=new HashSet<>();
-        for(Integer i : xcolor){
-            if(i<0)
+        if (x.op.equals(ExprUnary.Op.NOOP) && !(x.sub instanceof Sig) && !(x.sub instanceof Sig.Field)) {
+            return visitThis(x.sub);
+        }else {
+            if(x.op.equals(ExprUnary.Op.CAST2SIGINT))
+                return visitThis(x.sub);
+        Set<Integer> xcolor = sub(x.color.keySet(), parentFeats);
+        parentFeats = x.color.keySet();
+        Set<Integer> NFeatures = new HashSet<>();
+        Set<Integer> PFeatures = new HashSet<>();
+        for (Integer i : xcolor) {
+            if (i < 0)
                 NFeatures.add(-i);
             else PFeatures.add(i);
         }
 
 
-
-        StringBuilder tempExpr= new StringBuilder();
-        if(x.op.equals(ExprUnary.Op.SETOF))
+        StringBuilder tempExpr = new StringBuilder();
+        if (x.op.equals(ExprUnary.Op.SETOF))
             tempExpr.append(" set ");
-        else if(x.op.equals(ExprUnary.Op.SOMEOF))
+        else if (x.op.equals(ExprUnary.Op.SOMEOF))
             tempExpr.append(" some ");
-        else if(x.op.equals(ExprUnary.Op.LONEOF))
+        else if (x.op.equals(ExprUnary.Op.LONEOF))
             tempExpr.append(" lone ");
-        else if(x.op.equals(ExprUnary.Op.ONEOF))
+        else if (x.op.equals(ExprUnary.Op.ONEOF))
             tempExpr.append(" ");
-        else if(x.op.equals(ExprUnary.Op.EXACTLYOF))
+        else if (x.op.equals(ExprUnary.Op.EXACTLYOF))
             tempExpr.append(" exactly ");
-        else if(x.op.equals(ExprUnary.Op.RCLOSURE)||x.op.equals(ExprUnary.Op.CLOSURE)||
+        else if (x.op.equals(ExprUnary.Op.RCLOSURE) || x.op.equals(ExprUnary.Op.CLOSURE) ||
                 x.op.equals(ExprUnary.Op.CARDINALITY))
-            tempExpr.append(" "+x.op.getOpLabel()+"("); // (
+            tempExpr.append(" " + x.op.getOpLabel() + "("); // (
 
-        else if(x.op.equals(ExprUnary.Op.NOT)||x.op.equals(ExprUnary.Op.NO)||
-                x.op.equals(ExprUnary.Op.SOME)||x.op.equals(ExprUnary.Op.ONE)||
-                x.op.equals(ExprUnary.Op.LONE)||x.op.equals(ExprUnary.Op.TRANSPOSE))
-            tempExpr.append(" "+x.op.getOpLabel()+" ");
-            tempExpr.append(visitThis(x.sub));
+        else if (x.op.equals(ExprUnary.Op.NOT) || x.op.equals(ExprUnary.Op.NO) ||
+                x.op.equals(ExprUnary.Op.SOME) || x.op.equals(ExprUnary.Op.ONE) ||
+                x.op.equals(ExprUnary.Op.LONE) || x.op.equals(ExprUnary.Op.TRANSPOSE))
+            tempExpr.append(" " + x.op.getOpLabel() + " ");
+        tempExpr.append(visitThis(x.sub));
 
 
-        if(x.op.equals(ExprUnary.Op.RCLOSURE)||x.op.equals(ExprUnary.Op.CLOSURE)||
+        if (x.op.equals(ExprUnary.Op.RCLOSURE) || x.op.equals(ExprUnary.Op.CLOSURE) ||
                 x.op.equals(ExprUnary.Op.CARDINALITY))
             tempExpr.append(")");  // )
 
-        StringBuilder str=new StringBuilder();
+        StringBuilder str = new StringBuilder();
 
-        if(!xcolor.isEmpty())
-             str.append("(");
+        if (!xcolor.isEmpty())
+            str.append("(");
 
-        if(!NFeatures.isEmpty()){
-            if(xcolor.size()>1)
+        if (!NFeatures.isEmpty()) {
+            if (xcolor.size() > 1)
                 str.append("(");
-            addFeatureprefix(NFeatures,str, "not in","and");
-            if(PFeatures.isEmpty()) {
-                str.deleteCharAt(str.length()-1);
-                str.deleteCharAt(str.length()-1);
-                str.deleteCharAt(str.length()-1);
+            addFeatureprefix(NFeatures, str, "not in", "and");
+            if (PFeatures.isEmpty()) {
+                str.deleteCharAt(str.length() - 1);
+                str.deleteCharAt(str.length() - 1);
+                str.deleteCharAt(str.length() - 1);
 
-                if(xcolor.size()>1)
+                if (xcolor.size() > 1)
                     str.append(")");
                 str.append(" implies ");
             }
 
         }
-        if(!PFeatures.isEmpty()){
-            if(xcolor.size()>1 && NFeatures.isEmpty())
+        if (!PFeatures.isEmpty()) {
+            if (xcolor.size() > 1 && NFeatures.isEmpty())
                 str.append("(");
-            addFeatureprefix(PFeatures,str, "in","and");
-            str.deleteCharAt(str.length()-1);
-            str.deleteCharAt(str.length()-1);
-            str.deleteCharAt(str.length()-1);
-            if(xcolor.size()>1)
+            addFeatureprefix(PFeatures, str, "in", "and");
+            str.deleteCharAt(str.length() - 1);
+            str.deleteCharAt(str.length() - 1);
+            str.deleteCharAt(str.length() - 1);
+            if (xcolor.size() > 1)
                 str.append(")");
             str.append(" implies ");
         }
 
         str.append(tempExpr);
-       if (!(xcolor.isEmpty())){
-           str.append(")");
+        if (!(xcolor.isEmpty())) {
+            str.append(")");
 
-       }
+        }
 
         return str.toString();
+        }
     }
 
     /**

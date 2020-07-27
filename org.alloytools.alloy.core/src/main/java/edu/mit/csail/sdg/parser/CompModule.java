@@ -1020,6 +1020,15 @@ public final class CompModule extends Browsable implements Module {
             this.filename = filename;
             this.expressions = expressions;
         }
+        private Open(Pos pos, boolean isPrivate, String alias, ConstList<String> args, String filename, List<Expr> expressions,Map<Integer,Pos> color) {
+            this.pos = pos;
+            this.isPrivate = isPrivate;
+            this.alias = alias;
+            this.args = args;
+            this.filename = filename;
+            this.expressions = expressions;
+            this.color=color;
+        }
 
         /**
          * Connect this OPEN statement to a module that it points to.
@@ -1647,6 +1656,9 @@ public final class CompModule extends Browsable implements Module {
         }
         if (s2 != null && !s.contains(s2))
             s.add(s2);
+         Expr e= (Expr) unique(pos, name, s);
+         if(!(e instanceof Sig))
+             throw new ErrorSyntax(pos, "Sig ambiguous: Sig " +name);
         return (Sig) (unique(pos, name, s));
     }
 
@@ -1803,7 +1815,7 @@ public final class CompModule extends Browsable implements Module {
                         a = base;
                 }
             }
-            opens.put(a, new Open(m.pos, m.isPrivate, a, m.args, m.filename, m.expressions));
+            opens.put(a, new Open(m.pos, m.isPrivate, a, m.args, m.filename, m.expressions,m.color));
         }
     }
 
@@ -2577,7 +2589,13 @@ public final class CompModule extends Browsable implements Module {
             e = ExprConstant.TRUE;
         TempList<CommandScope> sc = new TempList<CommandScope>(cmd.scope.size());
         for (CommandScope et : cmd.scope) {
-            Sig s = getRawSIG(et.sig.pos, et.sig.label,et.sig.color);//colorful merge
+            Map feat=new HashMap(); //colorful merge
+            if(cmd.feats!=null) //colorful merge
+            for(Integer i : cmd.feats.feats){//colorful merge
+                feat.put(i,cmd.feats.pos); //colorful merge
+            }
+            feat.putAll(et.sig.color); //colorful merge
+            Sig s = getRawSIG(et.sig.pos, et.sig.label,feat);//colorful merge
             if (s == null)
                 throw new ErrorSyntax(et.sig.pos, "The sig \"" + et.sig.label + "\" cannot be found.");
             sc.add(new CommandScope(null, s, et.isExact, et.startingScope, et.endingScope, et.increment));
@@ -2971,7 +2989,16 @@ public final class CompModule extends Browsable implements Module {
         //colorful merge
         final List<Object> ans = name.indexOf('/') >= 0 ? getRawQS(fun ? 5 : 1, name, color) : getRawNQS(this, fun ? 5 : 1, name, color);
         //colorful merge
-        final Sig param = params.get(name) == null ? null : params.get(name).get(color);
+        Sig param=null;
+
+        if(params.get(name)!=null)
+        for(Map.Entry<Map<Integer, Pos>, Sig> ma: params.get(name).entrySet()){
+            if(ma.getKey().keySet().containsAll(color.keySet())){
+                param=ma.getValue();
+                break;
+            }
+        }
+        //final Sig param = params.get(name) == null ? null : params.get(name).get(color);
         if (param != null && !ans.contains(param))
             ans.add(param);
         for (Object x : ans) {
