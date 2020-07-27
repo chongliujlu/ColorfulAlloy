@@ -8,11 +8,19 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="apple-osx-ui" level="project" />
-    <orderEntry type="library" name="apple-osx-ui" level="project" />
     <orderEntry type="module" module-name="org.alloytools.kodkod.core1" />
     <orderEntry type="module" module-name="org.alloytools.alloy.core" />
     <orderEntry type="module" module-name="org.alloytools.alloy.core" />
     <orderEntry type="module" module-name="org.alloytools.kodkod.core1" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../cnf/jars/java-cup-runtime-0.11-a-czt01-cdh.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="org.sat4j.core" level="project" />
   </component>
 </module>

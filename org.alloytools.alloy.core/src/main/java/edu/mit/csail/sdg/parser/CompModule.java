@@ -1719,9 +1719,9 @@ public final class CompModule extends Browsable implements Module {
             status = oldStatus;
         }
     }
-
+    //colorful Alloy,add return type.
     /** Add an OPEN declaration. */
-    void addOpen(Pos pos, Pos isPrivate, ExprVar name, List<ExprVar> args, ExprVar alias) throws Err {
+    Open addOpen(Pos pos, Pos isPrivate, ExprVar name, List<ExprVar> args, ExprVar alias) throws Err {
         if (status > 2)
             throw new ErrorSyntax(pos, "The \"open\" declaration must occur before any\n" + "sig/pred/fun/fact/assert/check/run command.");
         String as = (alias == null ? "" : alias.label);
@@ -1765,7 +1765,8 @@ public final class CompModule extends Browsable implements Module {
         if (x != null) {
             // we allow this, especially because of util/sequniv
             if (x.args.equals(newlist.makeConst()) && x.filename.equals(name.label))
-                return;
+               // return;
+                return x; //colorful Alloy
             throw new ErrorSyntax(pos, "You cannot import two different modules\n" + "using the same alias.");
         }
         List<Expr> expressions = new ArrayList<>(args == null ? Collections.emptySet() : args);
@@ -1773,6 +1774,7 @@ public final class CompModule extends Browsable implements Module {
         expressions.add(alias);
         x = new Open(pos, isPrivate != null, as, newlist.makeConst(), name.label, expressions);
         opens.put(as, x);
+        return x; //colorful Alloy
     }
 
     /** Do any post-parsing processig. */
