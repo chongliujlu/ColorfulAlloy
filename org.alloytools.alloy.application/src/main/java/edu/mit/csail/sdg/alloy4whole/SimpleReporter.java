@@ -870,6 +870,16 @@ final class SimpleReporter extends A4Reporter {
             AmalgamatedExprPrinterVisitor printAmalgamatedExpr=new AmalgamatedExprPrinterVisitor();
             ExprPrinterVisitor printExprs=new ExprPrinterVisitor();
 
+            for(Map.Entry<String, Map<Map<Integer, Pos>, Sig>> sig_map:((CompModule) world).sigs.entrySet()){
+                if(sig_map.getValue().size()>1){
+                    int i=0;
+                    for(Map.Entry<Map<Integer, Pos>, Sig> sig_old:sig_map.getValue().entrySet()){
+                        sig_old.getValue().label=sig_old.getValue().label+"_"+i+"_";
+                        i++;
+                    }
+                }
+            }
+
             //print module keyword
             if(!world.getModelName().equals("unknown")){
                 print.append("module "+world.getModelName()+"\r\n\r\n");
@@ -881,15 +891,7 @@ final class SimpleReporter extends A4Reporter {
 
             if(cmd!=null)
                 addAuxiliarySignatures(allFeats,print);
-            for(Map.Entry<String, Map<Map<Integer, Pos>, Sig>> sig_map:((CompModule) world).sigs.entrySet()){
-                if(sig_map.getValue().size()>1){
-                    int i=0;
-                    for(Map.Entry<Map<Integer, Pos>, Sig> sig_old:sig_map.getValue().entrySet()){
-                        sig_old.getValue().label=sig_old.getValue().label+"_"+i+"_";
-                        i++;
-                    }
-                }
-            }
+
 
             printAmalgamatedSigs(print,world,printExprs,printAmalgamatedExpr);
 
@@ -2069,7 +2071,12 @@ final class SimpleReporter extends A4Reporter {
                     if(open.args.size()!=0){
                         print.append("[");
                         for(String s:open.args) {
-                            print.append(s+",");
+                            for(Map.Entry<Map<Integer,Pos>,Sig>  entry:root.sigs.get(s).entrySet()){
+                                if(open.color.keySet().containsAll(entry.getKey().keySet())){
+                                    print.append(entry.getValue().label.substring(5)+",");
+                                    break;
+                                }
+                            }
                         }
                         print.deleteCharAt(print.length()-1);
                         print.append("] \r\n");
