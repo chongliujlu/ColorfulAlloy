@@ -14,5 +14,8 @@
     <orderEntry type="module" module-name="org.alloytools.alloy.core" />
     <orderEntry type="module" module-name="org.alloytools.kodkod.core" />
     <orderEntry type="module" module-name="org.alloytools.alloy.core" />
+    <orderEntry type="library" name="jni" level="project" />
+    <orderEntry type="library" name="org.sat4j.core" level="project" />
+    <orderEntry type="library" name="x86-mac" level="project" />
   </component>
 </module>

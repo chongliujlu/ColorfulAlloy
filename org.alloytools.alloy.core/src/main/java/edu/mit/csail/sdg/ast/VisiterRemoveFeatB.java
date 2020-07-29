@@ -10,6 +10,9 @@ public class VisiterRemoveFeatB extends VisitReturn<Expr> {
     public  Expr visit(ExprCall x) {
         x.color.remove(featB);
         x.color.remove(-featB);
+        for(Expr e:x.args){
+            visitThis(e);
+        }
 
         return x;
     }

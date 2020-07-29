@@ -1396,6 +1396,15 @@ public final class CompModule extends Browsable implements Module {
         ArrayList<Sig> resultSig=new ArrayList<>();
        // ArrayList<Field> resultField=new ArrayList<>();
         for (CompModule m : getAllNameableModules()) {
+            //colorful merge,filter  irrelevant open modules， opens with other feature set
+            if(m.path!="" && m.world.opens.get(path)!=null){
+                if(m!=this && !m.world.opens.get(path).color.keySet().equals(color)) continue;
+            }else if(m.path.contains("$")){
+                String openName=m.path.contains("/")? m.path.substring(0,m.path.indexOf("/")):m.path;
+                if(m.world.opens.get(openName)==null) continue;
+                else if(!m.world.opens.get(openName).color.keySet().equals(color)) continue;
+            }
+
             if ((r & 1) != 0) {
                 //Sig x = m.sigs.get(name);
                 //colorful merge
@@ -2208,6 +2217,8 @@ public final class CompModule extends Browsable implements Module {
                 TempList<Decl> tmpdecls = new TempList<Decl>();
                 boolean err = false;
                 for (Decl d : f.decls) {
+                    d.color.putAll(f.color);//colorful merge
+                    d.expr.color.putAll(f.color);//colorful merge
                     TempList<ExprVar> tmpvars = new TempList<ExprVar>();
 
                     Context.contextFeats.addAll(d.color.keySet()); //colorful Alloy

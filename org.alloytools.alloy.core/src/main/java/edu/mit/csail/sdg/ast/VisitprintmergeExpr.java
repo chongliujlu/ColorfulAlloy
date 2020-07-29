@@ -40,7 +40,6 @@ public class VisitprintmergeExpr extends VisitReturn<String>{
             for (Expr arg : x.args) {
                 parentFeats=x.color.keySet();
                 print.append(visitThis(arg) + ",");
-
             }
 
             print.deleteCharAt(print.length() - 1);
@@ -66,11 +65,12 @@ public class VisitprintmergeExpr extends VisitReturn<String>{
             print.append("(");
 
         print.append(coloF+visitThis(x.left));
-
         print.append(x.op==ExprBinary.Op.JOIN? x.op :" "+x.op+" ");
 
         parentFeats=x.color.keySet();
-        print.append(visitThis(x.right)+colorB);
+        print.append(x.op.equals(ExprBinary.Op.JOIN) && x.right instanceof ExprBinary &&
+                ((ExprBinary)x.right).op.equals(ExprBinary.Op.JOIN)? "("+visitThis(x.right)+")"+
+                    colorB:visitThis(x.right)+colorB);
 
         if(x.op==ExprBinary.Op.PLUS||x.op==ExprBinary.Op.INTERSECT)
             print.append(")");
