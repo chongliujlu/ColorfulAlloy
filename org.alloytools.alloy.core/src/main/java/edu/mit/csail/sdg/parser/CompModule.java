@@ -1398,11 +1398,11 @@ public final class CompModule extends Browsable implements Module {
         for (CompModule m : getAllNameableModules()) {
             //colorful merge,filter  irrelevant open modules， opens with other feature set
             if(m.path!="" && m.world.opens.get(path)!=null){
-                if(m!=this && !m.world.opens.get(path).color.keySet().equals(color)) continue;
+                if(m!=this && !m.world.opens.get(path).color.keySet().equals(color.keySet())) continue;
             }else if(m.path.contains("$")){
                 String openName=m.path.contains("/")? m.path.substring(0,m.path.indexOf("/")):m.path;
                 if(m.world.opens.get(openName)==null) continue;
-                else if(!m.world.opens.get(openName).color.keySet().equals(color)) continue;
+                else if(!m.world.opens.get(openName).color.keySet().equals(color.keySet())) continue;
             }
 
             if ((r & 1) != 0) {
@@ -2971,6 +2971,9 @@ public final class CompModule extends Browsable implements Module {
     private Expr populate(TempList<Expr> ch, TempList<String> re, Decl rootfield, Sig rootsig, boolean rootfunparam, Func rootfunbody, Pos pos, String fullname, Expr THIS,Map<Integer,Pos> color) {
         // Return object can be Func(with > 0 arguments) or Expr
         final String name = (fullname.charAt(0) == '@') ? fullname.substring(1) : fullname;
+        if(name.equals("prevs")){
+            System.out.println("");
+        }
         boolean fun = (rootsig != null && (rootfield == null || rootfield.expr.mult() == ExprUnary.Op.EXACTLYOF)) || (rootsig == null && !rootfunparam);
         if (name.equals("univ"))
             return ExprUnary.Op.NOOP.make(pos, UNIV);
@@ -3025,7 +3028,7 @@ public final class CompModule extends Browsable implements Module {
             } else if (x instanceof Func) {
                 Func f = (Func) x;
                 if (!Context.contextFeats.containsAll(f.color.keySet()))
-                    throw new ErrorSyntax(pos, "features are111 not compatible. \r\n" + (f.isPred ? "pred \"" : "func \"") + f.label.substring(5) + "\":" + f.color + "\r\n Expression " + Context.contextFeats); //colorful Alloy
+                    throw new ErrorSyntax(pos, "features are not compatible. \r\n" + (f.isPred ? "pred \"" : "func \"") + f.label.substring(5) + "\":" + f.color + "\r\n Expression " + Context.contextFeats); //colorful Alloy
                 int fn = f.count();
                 int penalty = 0;
                 if (resolution == 1 && fn > 0 && rootsig != null && THIS != null && THIS.type().hasArity(1) && f.get(0).type().intersects(THIS.type())) {

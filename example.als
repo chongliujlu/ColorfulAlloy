@@ -1,47 +1,29 @@
-fact FeatureModel {
-	➁➊some none➊➁
-	➂➊some none➊➂
+module chapter6/ringElection2 --- the final version (as depicted in Fig 6.1)
+open util/ordering[Time] as TO
+open util/ordering[Process] as PO
+sig Time {}
+sig Process {
+	succ: Process,
+	toSend: Process -> Time,
+	elected: set Time
 	}
-sig Product{
-        ➀category:  set Category➀,
-        images:  set Image,
-        ➊➋➌catalog:  one Catalog➌➋➊
-        }
-sig Image{ }
 
 
-sig Catalog{
-        thumbnails:  set Image
-        }
-
-
-➀sig Category{
-        inside:  one (➀Catalog➀ + ➀➁Category➁➀)
-        }➀
-
-fact Acyclic{
-        ➀➁all  c :  one Category |  c  !in  c . ^(inside)➁➀
-        }
-fact Thumbnails{
-        ➊➋➌all  c :  one Catalog |  c .thumbnails in catalog. c .images➌➋➊   and ➀all  c :  one Catalog |  c .thumbnails in category.(➋inside➋ & ➁ ^(inside)➁). c .images   ➀
-        }
-pred Scenario{
-        some Product.images   and ➀ some Category➀
-        }
-assert AllCataloged{
-        ➀➁all  p :  one Product |  some ( p .category. ^(inside) & Catalog)➁➀
-        }
-
-
-check AllCataloged for 10
-
-fact RemoveQualtifier{
-        ➀all  s :  one Product | ➌ one  s .category➌   and ➂ some  s .category➂   ➀
-        }
+pred step [t, t': Time, p: Process] {
+	let from = p.toSend, to = p.succ.toSend |
+		some id: from.t {
+			from.t' = from.t - id
+			to.t' = to.t + (id - p.succ.prevs)
+		}
+	}
 
 
 
 
+assert AtMostOneElected { lone elected.Time }
 
+
+check AtMostOneElected for 3 Process, 7 Time--
+--check AtLeastOneElected with ➀ for 3 Process, 7 Time--
 
 
