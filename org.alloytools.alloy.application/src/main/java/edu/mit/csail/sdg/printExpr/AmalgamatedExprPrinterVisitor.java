@@ -9,7 +9,11 @@ import java.util.*;
  * This class implements a visitor that print the expressions for the Amalgamated approach.
  */
 public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
-    public Set<Integer> parentFeats=new HashSet<>();
+    public void setParentFeats(Set<Integer> parentFeats) {
+        this.parentFeats = parentFeats;
+    }
+
+    private Set<Integer> parentFeats=new HashSet<>();
     @Override
     public String visit(ExprBinary x) throws Err {
         //only for + ,&  operator
@@ -643,9 +647,10 @@ public class AmalgamatedExprPrinterVisitor extends VisitReturn<String> {
 
         str.append(tempExpr);
         if (!(xcolor.isEmpty())) {
+            str.append(" else some none");
             str.append(")");
-
         }
+
 
         return str.toString();
         }

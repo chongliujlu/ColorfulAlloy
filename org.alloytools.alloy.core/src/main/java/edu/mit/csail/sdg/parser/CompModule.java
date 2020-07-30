@@ -724,6 +724,25 @@ public final class CompModule extends Browsable implements Module {
             contextFeats.addAll(temp);//colorful Alloy
             Expr right = visitThis(x.right);
 
+        //colorful Alloy 需要优化
+            if(x.op.equals(ExprBinary.Op.DOMAIN)){
+                ArrayList<Expr> li= split(right);
+               // Expr right = visitThis(x.right);
+
+                for(Expr e :new ArrayList<>(li)){
+                    if(e instanceof ExprUnary && ((ExprUnary) e).op.equals(ExprUnary.Op.NOOP)){
+                        if(((ExprUnary) e).sub instanceof Sig.Field && x.left instanceof ExprUnary && ((ExprUnary) x.left).sub instanceof Sig){
+                            if(!((Field) ((ExprUnary) e).sub).sig.equals(((ExprUnary)left).sub)){
+                                li.remove(e);
+                            }
+                        }
+                    }
+                }
+                if(li.size()>0){
+                    right=li.get(0);
+                    //需要改
+                }
+            }
             if (x.op == ExprBinary.Op.JOIN) {
                 // If it's a macro invocation, instantiate it
                 if (right instanceof Macro)
@@ -739,6 +758,17 @@ public final class CompModule extends Browsable implements Module {
             }
             CompModule.feats.addAll(x.color.keySet()); //colorful Alloy
             return x.op.make(x.pos, x.closingBracket, left, right, x.color); // [HASLab] colorful Alloy
+        }
+
+        private ArrayList<Expr> split(Expr x) {
+            ArrayList<Expr> list=new ArrayList<>();
+            if(x instanceof ExprBinary && ((ExprBinary) x).op.equals(ExprBinary.Op.PLUS)){
+                list.addAll(split(((ExprBinary) x).left));
+                list.addAll(split(((ExprBinary) x).right));
+            }else{
+                list.add(x);
+            }
+            return list;
         }
 
         /** {@inheritDoc} */

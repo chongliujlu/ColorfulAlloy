@@ -1125,6 +1125,12 @@ final class SimpleReporter extends A4Reporter {
                                }
                                print.deleteCharAt(print.length() - 1);
                                print.append(": ");
+                               HashSet par=new HashSet();
+                               for(Func ent:enty.getValue()){
+                                   par.addAll(ent.color.keySet());
+                               }
+                               par.add(decl.color.keySet());
+                               printAmalgamatedExpr.setParentFeats(par);
                                print.append(decl.expr.accept(printAmalgamatedExpr)+",");
                            }
                            print.deleteCharAt(print.length()-1);

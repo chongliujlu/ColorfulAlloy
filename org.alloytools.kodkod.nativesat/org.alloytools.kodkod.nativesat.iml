@@ -7,8 +7,5 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="jni" level="project" />
-    <orderEntry type="library" name="org.sat4j.core" level="project" />
-    <orderEntry type="library" name="x86-mac" level="project" />
   </component>
 </module>
