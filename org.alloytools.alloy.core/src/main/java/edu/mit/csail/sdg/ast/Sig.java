@@ -1211,15 +1211,16 @@ public abstract class Sig extends Expr implements Clause {
                         b=compareMergeLaw(d.color.keySet(), d2.color.keySet());
 
                         if (b==curMergFeat) {
-                            if(d.expr.toString().equals(d2.expr.toString())){
-                                fieldVisited.add(d2);
-                                VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
-                                visiterRemoveFeatB.setFeatB(b);
-                                d.expr=d.expr.accept(visiterRemoveFeatB);
-                                d.color=d.expr.color;
-                                clone.remove(d2);
+                           // if(d.expr.toString().equals(d2.expr.toString())){
+                              //  fieldVisited.add(d2);
+                              //  VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
+                             //   visiterRemoveFeatB.setFeatB(b);
+                             //   d.expr=d.expr.accept(visiterRemoveFeatB);
+                             //   d.color=d.expr.color;
+                              //  clone.remove(d2);
 
-                            }else if(d.expr instanceof ExprUnary && d2.expr instanceof ExprUnary){
+                           // }else
+                                if(d.expr instanceof ExprUnary && d2.expr instanceof ExprUnary){
                                 fieldVisited.add(d2);
 
                                 ExprUnary.Op op=((ExprUnary) d.expr).op;
@@ -1239,7 +1240,7 @@ public abstract class Sig extends Expr implements Clause {
                                         colorB = new StringBuilder();
                                         if (d.expr.color != null)
                                             d.expr.printcolor(coloF, colorB);
-                                        fact.append("\r\n        "+coloF+"all s:"+label.substring(5)+" | "+ name+" s."+d.names.get(0).label+colorB);
+                                        fact.append("\r\nfact RemoveQualtifier {\r\n      "+coloF+"all s:"+label.substring(5)+" | "+ name+" s."+d.names.get(0).label+colorB +"\r\n        }");
                                     }
                                     if(!((ExprUnary) d2.expr).op.equals(ExprUnary.Op.SETOF)){
                                         String name = "set";
@@ -1254,7 +1255,7 @@ public abstract class Sig extends Expr implements Clause {
                                         colorB = new StringBuilder();
                                         if (d2.expr.color != null)
                                             d2.expr.printcolor(coloF, colorB);
-                                        fact.append("\r\n        "+coloF+"all s:"+label.substring(5)+" | "+ name+" s."+d2.names.get(0).label+colorB);
+                                        fact.append("\r\nfact RemoveQualtifier {\r\n        "+coloF+"all s:"+label.substring(5)+" | "+ name+" s."+d2.names.get(0).label+colorB+"\r\n        }");
                                     }
                                 }
                                 d.color.remove(b);

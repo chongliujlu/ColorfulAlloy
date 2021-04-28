@@ -78,6 +78,10 @@ public final class ExprCall extends Expr {
     @Override
     public void toString(StringBuilder out, int indent) {
         if (indent < 0) {
+            //colorful merge
+            if(fun.label.contains("/"))
+                out.append(fun.label.substring(fun.label.indexOf("/")+1));
+            else
             out.append(fun.label);
             if (args.size() == 0)
                 return;

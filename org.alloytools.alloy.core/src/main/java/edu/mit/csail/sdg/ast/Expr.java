@@ -194,7 +194,7 @@ public abstract class Expr extends Browsable {
         if (!errors.isEmpty() || type.is_bool)
             return this;
         String msg = "This must be a formula expression.\nInstead, it has the following possible type(s):\n" + type;
-        return NOOP.make(null, this, new ErrorType(span(), msg), 0);
+        return NOOP.make(null, this, new ErrorType(span(), msg), 0,color); //colorful merge
     }
 
     /**
@@ -489,7 +489,7 @@ public abstract class Expr extends Browsable {
      * 3. at most one of them can be a unary set
      */
     public final Expr join(Expr x) {
-        return ExprBinary.Op.JOIN.make(span().merge(x.span()), null, this, x);
+        return ExprBinary.Op.JOIN.make(span().merge(x.span()), null, this, x,x.color);// colorful Alloy
     }
 
     /**
@@ -1212,6 +1212,7 @@ public abstract class Expr extends Browsable {
         Set<Integer> feats2= expr.color.keySet();
         return compareMergeLaw(feats1,feats2);
     }
+
     //colorful merge
 
     public String getColorString() {

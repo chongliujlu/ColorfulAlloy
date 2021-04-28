@@ -38,6 +38,7 @@ import edu.mit.csail.sdg.ast.*;
 import edu.mit.csail.sdg.ast.Sig.Field;
 import edu.mit.csail.sdg.ast.Sig.PrimSig;
 import edu.mit.csail.sdg.ast.Sig.SubsetSig;
+import kodkod.engine.bool.Int;
 
 /**
  * Mutable; this class represents an Alloy module; equals() uses object
@@ -395,7 +396,7 @@ public final class CompModule extends Browsable implements Module {
                             Sig s= sig1.getValue().mergeSig(sig2.getValue(),b,sigfact);
 
                             if(sigfact.length()>0){
-                                attributefact.append("\r\nfact RemoveQualtifier {" +sigfact+"\r\n        }");
+                                attributefact.append(sigfact);
                             }
                             visit.add(sig2.getValue());
                             sigMap.put(s.color,s);
@@ -404,10 +405,7 @@ public final class CompModule extends Browsable implements Module {
                             break;
                         }
                     }
-
                 }
-
-
             }
         }
     }
@@ -554,8 +552,9 @@ public final class CompModule extends Browsable implements Module {
                 return ExprChoice.make(isIntsNotUsed, pos, asList(match), asList(name));
             }
             Expr th = env.get("this");
+            if(th!=null) th.color=color;//coloreful Alloy
             if (th != null)
-                th = ExprUnary.Op.NOOP.make(pos, th);
+                th = ExprUnary.Op.NOOP.make(pos, th,th.color); //colorfull Alloy
             TempList<Expr> ch = new TempList<Expr>();
             TempList<String> re = new TempList<String>();
             Expr ans = rootmodule.populate(ch, re, rootfield, rootsig, rootfunparam, rootfunbody, pos, name, th,color);
@@ -617,10 +616,13 @@ public final class CompModule extends Browsable implements Module {
                             if(!contextFeats.containsAll(bc.fun.color.keySet()))//colorful Alloy
                                 throw new ErrorSyntax(bc.pos, "Features are not compatible at line "+ bc.pos.y+" column "+bc.pos.x+".\r\n"+(bc.fun.isPred? "pred \"": "fun \"")+bc.fun.label.substring(5)+"\":"+bc.fun.color+"\r\n expression \""+bc.toString().substring(5)+"\":"+bc.color); //colorful Alloy
                             y = ExprCall.make(bc.pos, bc.closingBracket, bc.fun, newargs, bc.extraWeight, color);//colorful Alloy
-                        }
-                        else
-                        {y = ExprBadCall.make(bc.pos, bc.closingBracket, bc.fun, newargs, bc.extraWeight);
-                            y.paint(color);} //colorful Alloy
+                        }else {
+                            //colorful merge
+
+                                y = ExprBadCall.make(bc.pos, bc.closingBracket, bc.fun, newargs, bc.extraWeight);
+                                y.paint(color); //colorful Alloy
+                            }
+
                     } else {
                         y = ExprBinary.Op.JOIN.make(pos, closingBracket, arg, y,color);//colorful Alloy
                     }
@@ -731,7 +733,7 @@ public final class CompModule extends Browsable implements Module {
 
                 for(Expr e :new ArrayList<>(li)){
                     if(e instanceof ExprUnary && ((ExprUnary) e).op.equals(ExprUnary.Op.NOOP)){
-                        if(((ExprUnary) e).sub instanceof Sig.Field && x.left instanceof ExprUnary && ((ExprUnary) x.left).sub instanceof Sig){
+                        if(((ExprUnary) e).sub instanceof Sig.Field && left instanceof ExprUnary && ((ExprUnary) left).sub instanceof Sig){
                             if(!((Field) ((ExprUnary) e).sub).sig.equals(((ExprUnary)left).sub)){
                                 li.remove(e);
                             }
@@ -1003,7 +1005,7 @@ public final class CompModule extends Browsable implements Module {
          * The position in the original model where this "open" statement was declared;
          * never null.
          */
-        public final Pos               pos;
+        public Pos               pos;
 
         /**
          * The alias for this open declaration; always a nonempty string.
@@ -1468,10 +1470,10 @@ public final class CompModule extends Browsable implements Module {
 
                     if(x==null){
                         Set<Set<Set<Integer>>> featsets = computingFeatSets(require);
-
+                       ArrayList<Set<Set<Integer>>> orderFeats= OrderFeaset(featsets);
                         //find a set of Sigs that meet the required feature: e.g. resolve sig A{} in expression ➀➌some A➌➀, can be set  ➀➁sig A{}➁➀ ➀➋sig A{}➋➀
                         //the result is ➀➌some (➀➁A➁➀ + ➀➋A➋➀➌➀)
-                        for(Set<Set<Integer>> fcolset:featsets){
+                        for(Set<Set<Integer>> fcolset:orderFeats){
                                 for(Set<Integer>col: fcolset){
                                     for(Sig s: map.values()){
                                         if(checkColor(col,s.color.keySet())){
@@ -1536,6 +1538,30 @@ public final class CompModule extends Browsable implements Module {
         return ans;
     }
 
+    private ArrayList<Set<Set<Integer>>> OrderFeaset(Set<Set<Set<Integer>>> featsets) {
+        ArrayList<Set<Set<Integer>>> feat=new ArrayList<>();
+        Map<Integer,Set<Set<Set<Integer>> >> temp=new HashMap<>();
+
+        for(Set<Set<Integer>> tempset:featsets){
+            if (temp.containsKey(tempset.size())){
+                temp.get(tempset.size()).add(tempset);
+            }else {
+                Set<Set<Set<Integer>> > value=new HashSet<>();
+                value.add(tempset);
+                temp.put(tempset.size(),value);
+            }
+        }
+        Set <Integer> key=temp.keySet();
+        Object[] arr=key.toArray();
+        Arrays.sort(arr);
+        for(Object k:arr){
+            for( Set<Set<Integer>> set :temp.get(k))
+            feat.add(set);
+        }
+
+        return feat;
+    }
+
     private Map<Set<Integer>, Set<Integer>> computeFMCompFeats(Set<Set<Integer>> imComp) {
         Map<Set<Integer>, Set<Integer>> result=new HashMap<>();
         for(Set<Integer> set:imComp){
@@ -1571,7 +1597,6 @@ public final class CompModule extends Browsable implements Module {
      */
     private boolean colorNL(Set<Integer> color, Set<Integer> key) {
         if(color.containsAll(key)) return true;
-
         return  false;
     }
 
@@ -2082,7 +2107,7 @@ public final class CompModule extends Browsable implements Module {
         if (oldS instanceof SubsetSig) {
             List<Sig> parents = new ArrayList<Sig>();
             for (Sig n : ((SubsetSig) oldS).parents) {
-                Sig parentAST = u.getRawSIG(n.pos, n.label,n.color);//colorful merge
+                Sig parentAST = u.getRawSIG(n.pos, n.label,oldS.color);//colorful merge
                 if (parentAST == null)
                     throw new ErrorSyntax(n.pos, "The sig \"" + n.label + "\" cannot be found.");
                 parents.add(resolveSig(res, topo, parentAST));
@@ -2258,7 +2283,8 @@ public final class CompModule extends Browsable implements Module {
                         errors = errors.make(val.errors);
                     }
                     for (ExprHasName n : d.names) {
-                        ExprVar v = ExprVar.make(n.span(), n.label, val.type());
+                        n.color.putAll(d.color); //colorful merge
+                        ExprVar v = ExprVar.make(n.span(), n.label, val.type(),n.color);//colorful merge
                         cx.put(n.label, v);
                         tmpvars.add(v);
                         rep.typecheck((f.isPred ? "pred " : "fun ") + fullname + ", Param " + n.label + ": " + v.type() + "\n");
@@ -2267,6 +2293,7 @@ public final class CompModule extends Browsable implements Module {
                 }
                 Expr ret = null;
                 if (!f.isPred) {
+                    f.returnDecl.color.putAll(f.color);
                     ret = cx.check(f.returnDecl).resolve_as_set(warns);
                     if (!ret.errors.isEmpty()) {
                         err = true;
@@ -2577,6 +2604,34 @@ public final class CompModule extends Browsable implements Module {
                 Map map=new HashMap();
                 for(Integer i:cmd.feats.feats)
                     map.put(i,cmd.feats.pos);
+                if(cmd.feats.isExact){
+                    Set<Integer> modelfeats=new HashSet<>();
+                    for(Integer i: feats){
+                        modelfeats.add(i<0?-i:i);
+                    }
+                    if(cmd.feats.feats.size()<modelfeats.size()){
+                        Set<Integer> PFeat1=new HashSet();
+                        Set<Integer> NFeat1=new HashSet();
+
+                        for(Integer i: cmd.feats.feats){
+                            if(i>0) PFeat1.add(i);
+                            else NFeat1.add(-i);
+                        }
+                        if(PFeat1.size()>0){
+                            for(Integer i: modelfeats){
+                                if (!PFeat1.contains(i)){
+                                    map.put(-i,Pos.UNKNOWN);
+                                }
+                            }
+                        }else{
+                            for(Integer i: modelfeats){
+                                if (!NFeat1.contains(-i)){
+                                    map.put(-i,Pos.UNKNOWN);
+                                }
+                            }
+                        }
+                    }
+                }
                 m = getRawQS(2, cname,map); // We prefer assertion in the topmost module
             }else
                 m = getRawQS(2, cname,cmd.color);
@@ -2592,8 +2647,8 @@ public final class CompModule extends Browsable implements Module {
             if(expr instanceof ExprUnary){ //colorful Alloy
                 if(cmd.feats==null &&  !(((ExprUnary) expr).sub.color).isEmpty())
                     throw new ErrorSyntax(cmd.pos,"features are not compatible. \r\nassert \""+cmd.label+"\": "+(((ExprUnary) expr).sub.color)+"\r\nCommand:[]");//colorful Alloy
-                if(cmd.feats!=null &&!(cmd.feats.feats.containsAll(((ExprUnary) expr).sub.color.keySet()))) //colorful Alloy
-                throw new ErrorSyntax(cmd.pos,"features are not compatible. \r\nassert \""+cmd.label+"\": "+(((ExprUnary) expr).sub.color)+"\r\nCommand:"+cmd.feats.feats);//colorful Alloy
+                //if(cmd.feats!=null &&!(checkColor (cmd.feats.feats.,expr.color.keySet())) //colorful Alloy
+                //throw new ErrorSyntax(cmd.pos,"features are not compatible. \r\nassert \""+cmd.label+"\": "+(((ExprUnary) expr).sub.color)+"\r\nCommand:"+cmd.feats.feats);//colorful Alloy
 
             }
             e = expr.not();
@@ -3001,9 +3056,13 @@ public final class CompModule extends Browsable implements Module {
     private Expr populate(TempList<Expr> ch, TempList<String> re, Decl rootfield, Sig rootsig, boolean rootfunparam, Func rootfunbody, Pos pos, String fullname, Expr THIS,Map<Integer,Pos> color) {
         // Return object can be Func(with > 0 arguments) or Expr
         final String name = (fullname.charAt(0) == '@') ? fullname.substring(1) : fullname;
-        if(name.equals("prevs")){
-            System.out.println("");
-        }
+       // if(name.equals("prevs")){
+          //  System.out.println("");
+      //  }
+      //  if(name.equals("p")){
+         //   System.out.println("p");
+
+        //}
         boolean fun = (rootsig != null && (rootfield == null || rootfield.expr.mult() == ExprUnary.Op.EXACTLYOF)) || (rootsig == null && !rootfunparam);
         if (name.equals("univ"))
             return ExprUnary.Op.NOOP.make(pos, UNIV);
@@ -3150,7 +3209,8 @@ public final class CompModule extends Browsable implements Module {
                     // the result will be:
                     //➀➁➌r➌➁➀+ ➀➁➂r➂➁➀ +➀➋➌r➌➋➀ + ➀➋➂r➂➋➀)
                     Set<Set<Set<Integer>>> featsets = computingFeatSets(require);
-                    for (Set<Set<Integer>> fcolset : featsets) {
+                    ArrayList<Set<Set<Integer>>> orderFeats= OrderFeaset(featsets);
+                    for (Set<Set<Integer>> fcolset : orderFeats) {
                             for (Set<Integer> col : fcolset) {
                                 for (Field fitem : fieldCandidate.get(name))
                                 if (checkColor(col,fitem.color.keySet()))
@@ -3195,8 +3255,9 @@ public final class CompModule extends Browsable implements Module {
                                     }
                                 }
                             }
-                            if (fullname.charAt(0) != '@')
+                            if (fullname.charAt(0) != '@'){
                                 x = THIS.join(x);
+                            }
                         }else if (rootfield == null || rootfield.expr.mult() == ExprUnary.Op.EXACTLYOF) {
                             if (fieldFinal.size() == 1) {
                                 x = ExprUnary.Op.NOOP.make(pos, fieldFinal.get(0), null, 1, color);
@@ -3307,8 +3368,16 @@ public final class CompModule extends Browsable implements Module {
             if(i>0) PFeat2.add(i);
             else NFeat2.add(-i);
         }
-
-            if(PFeat1.containsAll(PFeat2) && (NFeat2.contains(NFeat1)))
+        for(Integer i:PFeat1){
+            if(NFeat2.contains(i)){
+                return false;
+            }
+        }
+        for(Integer i: NFeat1){
+            if(PFeat2.contains(i))
+                return false;
+        }
+            if(PFeat1.containsAll(PFeat2) && (NFeat2.containsAll(NFeat1)))
                 match=true;
 
         return match;

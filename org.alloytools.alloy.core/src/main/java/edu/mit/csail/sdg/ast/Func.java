@@ -77,7 +77,8 @@ public final class Func extends Browsable implements Clause {
     public final ConstList<Decl> decls;
 
     /** The declared return type; never null. */
-    public final Expr            returnDecl;
+   // public final Expr            returnDecl;
+    public  Expr            returnDecl; //colorful merge
 
     /** Return the number of parameters. */
     public int count() {

@@ -8,7 +8,7 @@ import edu.mit.csail.sdg.parser.CompModule;
 import java.util.*;
 
 public class VisitRefactor extends VisitReturn<Expr> {
-     Integer featB=null;
+     Integer featB=0;
     @Override
     public  Expr visit(ExprCall x) {
         return x;
@@ -128,7 +128,7 @@ public class VisitRefactor extends VisitReturn<Expr> {
                        if(list.size()>0) e=list.get(0);
                        if( list.size()>1)
                         for (int i=1;i<list.size();i++){
-                            e=ExprBinary.Op.PLUS.make(x.pos,x.closingBracket,e,list.get(i));
+                            e=ExprBinary.Op.PLUS.make(x.pos,x.closingBracket,e,list.get(i),x.color);
                         }
                        return e;
                     }
@@ -226,7 +226,8 @@ public class VisitRefactor extends VisitReturn<Expr> {
                         for(Expr e2:temp2.makeConst()){
                             if(visit.contains(e2)) continue;
                             if(e2 instanceof ExprBinary && ((ExprBinary) e).op.equals(ExprBinary.Op.IN)){
-                                if(e.compareMergeLaw(e2)!=null){
+                                featB=e.compareMergeLaw(e2);
+                                if(featB!=null){
                                     temp.remove(temp.indexOf(e));
                                     temp.remove(temp.indexOf(e2));
                                     changed=true;
@@ -437,7 +438,7 @@ public class VisitRefactor extends VisitReturn<Expr> {
             return x;
         }
     }*/
-    private  class VisiterExprBreak extends VisitReturn<List<Expr>> {
+    public  class VisiterExprBreak extends VisitReturn<List<Expr>> {
         @Override
         public  List<Expr> visit(ExprCall x) {
             return null;
@@ -446,17 +447,22 @@ public class VisitRefactor extends VisitReturn<Expr> {
         @Override
         public List<Expr> visit(ExprBinary x) throws Err {
             List<Expr> list=new ArrayList<>();
-            List<Expr> left=visitThis(x.left);
-            List<Expr> right=visitThis(x.right);
 
-          if(left!=null)
-              list.addAll(left);
-          else list.add(x.left);
+            if(x.op.equals(ExprBinary.Op.PLUS)){
+                List<Expr> left=visitThis(x.left);
+                if(left!=null)
+                    list.addAll(left);
+                else
+                list.add(x.left);
 
-          if(right!=null)
-                list.addAll(right);
-          else
-              list.add(x.right);
+                List<Expr> right=visitThis(x.right);
+                if(right!=null)
+                    list.addAll(right);
+                else
+                    list.add(x.right);
+            }
+            if(list.size()==0)
+                return null;
             return list;
         }
 

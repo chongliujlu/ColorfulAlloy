@@ -189,6 +189,11 @@ public  class ExprPrinterVisitor extends VisitReturn<String> {
         if (x.builtin){
             return x.label;
         }else
+            if(x.label.contains("/")){
+                String strSlash=x.label.substring(0, x.label.indexOf("/"));
+                return x.label.substring(strSlash.length()+1,x.label.length());
+            }
+
             return x.label.substring(5);
     }
 

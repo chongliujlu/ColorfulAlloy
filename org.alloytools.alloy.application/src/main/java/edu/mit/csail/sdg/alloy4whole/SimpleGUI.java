@@ -47,7 +47,6 @@ import static edu.mit.csail.sdg.alloy4.A4Preferences.Welcome;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menu;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menuItem;
 import static edu.mit.csail.sdg.alloy4.Pos.UNKNOWN;
-import static edu.mit.csail.sdg.ast.ExprUnary.Op.*;
 import static edu.mit.csail.sdg.ast.Sig.UNIV;
 import static java.awt.event.KeyEvent.VK_A;
 import static java.awt.event.KeyEvent.VK_ALT;
@@ -151,7 +150,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
      * The "File", "Edit", "Run", "Option", "Window", and "Help" menus.
      */
     //colorful merge
-    private JMenu                 filemenu, editmenu, runmenu, optmenu, windowmenu, windowmenu2, helpmenu,mergemenu;
+    private JMenu                 filemenu, editmenu, runmenu, optmenu, windowmenu, windowmenu2, helpmenu,mergemenu,automerge;
 
     /** The toolbar. */
     private JToolBar              toolbar;
@@ -200,7 +199,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
      * The system-specific file separator (forward-slash on UNIX, back-slash on
      * Windows, etc.)
      */
-    private static final String   fs                     = System.getProperty("file.separator");
+    private static final String commandP = System.getProperty("file.separator");
 
     /**
      * The darker background color (for the MessageLog window and the Toolbar and
@@ -388,11 +387,11 @@ public final class SimpleGUI implements ComponentListener, Listener {
             arch = "x86-mac"; // our pre-compiled binaries are all universal
                              // binaries
                              // Find out the appropriate Alloy directory
-        final String platformBinary = alloyHome() + fs + "binary";
+        final String platformBinary = alloyHome() + commandP + "binary";
         // Write a few test files
         try {
             (new File(platformBinary)).mkdirs();
-            Util.writeAll(platformBinary + fs + "tmp.cnf", "p cnf 3 1\n1 0\n");
+            Util.writeAll(platformBinary + commandP + "tmp.cnf", "p cnf 3 1\n1 0\n");
         } catch (Err er) {
             // The error will be caught later by the "berkmin" or "spear" test
         }
@@ -402,7 +401,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
         // Copy the model files
         Util.copy(false, true, alloyHome(), "models/book/appendixA/addressBook1.als", "models/book/appendixA/addressBook2.als", "models/book/appendixA/barbers.als", "models/book/appendixA/closure.als", "models/book/appendixA/distribution.als", "models/book/appendixA/phones.als", "models/book/appendixA/prison.als", "models/book/appendixA/properties.als", "models/book/appendixA/ring.als", "models/book/appendixA/spanning.als", "models/book/appendixA/tree.als", "models/book/appendixA/tube.als", "models/book/appendixA/undirected.als", "models/book/appendixE/hotel.thm", "models/book/appendixE/p300-hotel.als", "models/book/appendixE/p303-hotel.als", "models/book/appendixE/p306-hotel.als", "models/book/chapter2/addressBook1a.als", "models/book/chapter2/addressBook1b.als", "models/book/chapter2/addressBook1c.als", "models/book/chapter2/addressBook1d.als", "models/book/chapter2/addressBook1e.als", "models/book/chapter2/addressBook1f.als", "models/book/chapter2/addressBook1g.als", "models/book/chapter2/addressBook1h.als", "models/book/chapter2/addressBook2a.als", "models/book/chapter2/addressBook2b.als", "models/book/chapter2/addressBook2c.als", "models/book/chapter2/addressBook2d.als", "models/book/chapter2/addressBook2e.als", "models/book/chapter2/addressBook3a.als", "models/book/chapter2/addressBook3b.als", "models/book/chapter2/addressBook3c.als", "models/book/chapter2/addressBook3d.als", "models/book/chapter2/theme.thm", "models/book/chapter4/filesystem.als", "models/book/chapter4/grandpa1.als", "models/book/chapter4/grandpa2.als", "models/book/chapter4/grandpa3.als", "models/book/chapter4/lights.als", "models/book/chapter5/addressBook.als", "models/book/chapter5/lists.als", "models/book/chapter5/sets1.als", "models/book/chapter5/sets2.als", "models/book/chapter6/hotel.thm", "models/book/chapter6/hotel1.als", "models/book/chapter6/hotel2.als", "models/book/chapter6/hotel3.als", "models/book/chapter6/hotel4.als", "models/book/chapter6/mediaAssets.als", "models/book/chapter6/memory/abstractMemory.als", "models/book/chapter6/memory/cacheMemory.als", "models/book/chapter6/memory/checkCache.als", "models/book/chapter6/memory/checkFixedSize.als", "models/book/chapter6/memory/fixedSizeMemory.als", "models/book/chapter6/memory/fixedSizeMemory_H.als", "models/book/chapter6/ringElection.thm", "models/book/chapter6/ringElection1.als", "models/book/chapter6/ringElection2.als", "models/examples/algorithms/dijkstra.als", "models/examples/algorithms/dijkstra.thm", "models/examples/algorithms/messaging.als", "models/examples/algorithms/messaging.thm", "models/examples/algorithms/opt_spantree.als", "models/examples/algorithms/opt_spantree.thm", "models/examples/algorithms/peterson.als", "models/examples/algorithms/ringlead.als", "models/examples/algorithms/ringlead.thm", "models/examples/algorithms/s_ringlead.als", "models/examples/algorithms/stable_mutex_ring.als", "models/examples/algorithms/stable_mutex_ring.thm", "models/examples/algorithms/stable_orient_ring.als", "models/examples/algorithms/stable_orient_ring.thm", "models/examples/algorithms/stable_ringlead.als", "models/examples/algorithms/stable_ringlead.thm", "models/examples/case_studies/INSLabel.als", "models/examples/case_studies/chord.als", "models/examples/case_studies/chord2.als", "models/examples/case_studies/chordbugmodel.als", "models/examples/case_studies/com.als", "models/examples/case_studies/firewire.als", "models/examples/case_studies/firewire.thm", "models/examples/case_studies/ins.als", "models/examples/case_studies/iolus.als", "models/examples/case_studies/sync.als", "models/examples/case_studies/syncimpl.als", "models/examples/puzzles/farmer.als", "models/examples/puzzles/farmer.thm", "models/examples/puzzles/handshake.als", "models/examples/puzzles/handshake.thm", "models/examples/puzzles/hanoi.als", "models/examples/puzzles/hanoi.thm", "models/examples/systems/file_system.als", "models/examples/systems/file_system.thm", "models/examples/systems/javatypes_soundness.als", "models/examples/systems/lists.als", "models/examples/systems/lists.thm", "models/examples/systems/marksweepgc.als", "models/examples/systems/views.als", "models/examples/toys/birthday.als", "models/examples/toys/birthday.thm", "models/examples/toys/ceilingsAndFloors.als", "models/examples/toys/ceilingsAndFloors.thm", "models/examples/toys/genealogy.als", "models/examples/toys/genealogy.thm", "models/examples/toys/grandpa.als", "models/examples/toys/grandpa.thm", "models/examples/toys/javatypes.als", "models/examples/toys/life.als", "models/examples/toys/life.thm", "models/examples/toys/numbering.als", "models/examples/toys/railway.als", "models/examples/toys/railway.thm", "models/examples/toys/trivial.als", "models/examples/tutorial/farmer.als", "models/util/boolean.als", "models/util/graph.als", "models/util/integer.als", "models/util/natural.als", "models/util/ordering.als", "models/util/relation.als", "models/util/seqrel.als", "models/util/sequence.als", "models/util/sequniv.als", "models/util/ternary.als", "models/util/time.als");
         // Record the locations
-        System.setProperty("alloy.theme0", alloyHome() + fs + "models");
+        System.setProperty("alloy.theme0", alloyHome() + commandP + "models");
         System.setProperty("alloy.home", alloyHome());
     }
 
@@ -688,7 +687,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
     private Runner doBuiltin() {
         if (wrap)
             return wrapMe();
-        File file = getFile(alloyHome() + fs + "models");
+        File file = getFile(alloyHome() + commandP + "models");
         if (file != null) {
             doOpenFile(file.getPath());
         }
@@ -1034,14 +1033,13 @@ public final class SimpleGUI implements ComponentListener, Listener {
         //a list of all sigs in this module. used for compute the sig that need to merge.
         SafeList<Sig> sigSafeList=new SafeList<>();
 
-
         Map<Pair,ArrayList<Pair>>fact_Merge_List=new LinkedHashMap<>();
         HashMap <String, ArrayList<Expr>> fact_Merge=new LinkedHashMap<>();
 
 
         Set <String> sigName =new HashSet<>();
         Set<Sig> new_mergeField =new HashSet<>();
-
+        Set<Expr> fmExpr=new HashSet<>();
 
         //parser the model， get elements that can be merge.
         if (sigp == null) {
@@ -1179,6 +1177,16 @@ public final class SimpleGUI implements ComponentListener, Listener {
             }
             sigs=sigp;
         }
+        if(factp!=null){
+            Expr factExpr= world.getAllReachableFacts();
+            if(factExpr instanceof ExprList){
+                for(Expr expr: ((ExprList) factExpr).args){
+                    if(expr.toString().equals("some none")){
+                        fmExpr.add(expr);
+                    }
+                }
+            }
+        }
 /*
         if(redundantSigs.isEmpty())
             mergemenu.remove(remRedundantFeat);
@@ -1254,6 +1262,28 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
                         StringBuilder attributefact=new StringBuilder();
                         finalWorld.mergeSigs(finalSigp.get(name),attributefact);
+
+                        //get all FM expressions
+                        if(finalSigp.get(name).size()>1){
+                            if(fmExpr.size()>0){
+                                while (removeOrAddFeats(finalSigp.get(name),fmExpr)){
+                                    finalWorld.mergeSigs(finalSigp.get(name),attributefact);
+                                }
+                            }
+
+                            //remove feat?
+                            for(Sig s:finalSigp.get(name).values()){
+                                if(s.getFieldDecls().size()>1){
+                                    finalSigp.get(name).remove(s.color);
+                                    StringBuilder fact=new StringBuilder();
+                                    while(removeOrAddFeats(s,fmExpr)){
+                                        s=s.mergeField(fact);
+                                    }
+                                    finalSigp.get(name).put(s.color,s);
+                                }
+                            }
+                        }
+
                      /*   boolean notFinish=true;
 
                         while(notFinish){
@@ -1278,6 +1308,104 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
                         text.changeText(pos.get(pos.size()-1),print.toString());
                     }
+
+                    private boolean removeOrAddFeats(Map<Map<Integer, Pos>, Sig> sigMap, Set<Expr> fmExpr) {
+                        boolean changed=false;
+                        //get all feature set in FM
+                        Set<Set<Integer>> fmFeats=new HashSet<>();
+                        if(fmExpr.size()>0){
+                            for(Expr e: fmExpr){
+                                fmFeats.add(e.color.keySet());
+                            }
+                        }
+                        //can remove?
+                        for( Sig siga:sigMap.values()){
+                            if(changed)
+                                break;
+                            for( Sig sigb:sigMap.values()){
+                                if(changed)
+                                    break;
+                                if(siga.equals(sigb))
+                                    break;
+
+                                Set<Integer> featsa=siga.color.keySet();
+                                Set<Integer> featsb=sigb.color.keySet();
+                                if(featsa.size()==featsb.size())
+                                    break;
+                                Set<Integer> commonFeats=new HashSet<>();
+                                Set<Integer> toRmFeats=new HashSet<>();
+                                Set<Integer> fmToRmFeatsTemp=new HashSet<>();
+                                Set<Integer> k=new HashSet<>();
+                                Sig tochange=siga.color.keySet().size()>sigb.color.keySet().size()? siga: sigb;
+                                for(Integer i: featsa){
+                                    if(featsb.contains(i)){
+                                        commonFeats.add(i);
+                                    }else if(featsb.contains(-i)){
+                                        k.add(i>0?i:-i);
+                                    }else{
+                                        toRmFeats.add(i);
+                                    }
+                                }
+
+                                for(Integer i: featsb){
+                                    if(featsa.contains(i)){
+                                        commonFeats.add(i);
+                                    }else if(featsa.contains(-i)){
+                                        k.add(i>0?i:-i);
+                                    }else{
+                                        toRmFeats.add(i);
+                                    }
+                                }
+                                if(k.size()!=1)
+                                    break;
+                                Integer kb=k.iterator().next();
+
+                                if(tochange.color.keySet().contains(-kb)){
+                                    kb=-kb;
+                                }
+                                addfeatures(kb,fmToRmFeatsTemp,fmFeats);
+
+                                for(Integer i : commonFeats) {
+                                    addfeatures(i, fmToRmFeatsTemp, fmFeats);
+                                }
+                                if(fmToRmFeatsTemp.containsAll(toRmFeats)){
+                                        for(Integer feat:toRmFeats){
+                                            tochange.color.remove(feat);
+                                        }
+                                        changed=true;
+                                        break;
+                                    }
+                            }
+                        }
+                        return changed;
+                    }
+                    private boolean removeOrAddFeats( Sig sig, Set<Expr> fmExpr){
+                        boolean changed=false;
+
+                        List<Decl> clone=sig.getFieldDecls().makeCopy();
+                        List<Decl> clonetemp=new ArrayList<>(clone);
+
+                        for(Decl d: clonetemp){
+                            if(changed)
+                                break;
+                            for(Decl d2: clonetemp){
+                                if(d.equals(d2))
+                                    continue;
+                                //name equal?
+                                if (!d.names.get(0).label.equals(d2.names.get(0).label))
+                                    continue;
+
+                                //remove feats
+                                if(computeRemove(d.color,d2.color,fmExpr)){
+                                    changed=true;
+
+                                }
+                            }
+                        }
+                        return changed;
+                    }
+
+
                 });
 
             }
@@ -1343,7 +1471,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
                     ArrayList<Pos> pos=new ArrayList<>();
                     ArrayList<Expr> list=new ArrayList<>();
                     for(Expr fa: f.getValue()){
-
                         for (Map.Entry<Integer,Pos> ent:fa.color.entrySet()){
                             fa.pos=fa.pos.merge(ent.getValue());
                         }
@@ -1359,13 +1486,9 @@ public final class SimpleGUI implements ComponentListener, Listener {
                             if(!pos.contains(fa.pos))
                                 pos.add(fa.pos);
                         }
-
-
                         if(fa instanceof ExprUnary)
                             fa=((ExprUnary) fa).sub;
-
                         list.add( (fa instanceof ExprUnary && ((ExprUnary) fa).op.equals(ExprUnary.Op.NOOP)? ((ExprUnary) fa).sub: fa));
-
                     }
 
                     if(pos.size()>1)
@@ -1374,13 +1497,19 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
                         Expr enew=ExprList.make(pos.get(0), pos.get(0), ExprList.Op.AND,  list, new HashMap<Integer,Pos>());
                     VisitRefactor refactorExpr=new VisitRefactor();
-                    enew= enew.accept(refactorExpr);
+                        enew= enew.accept(refactorExpr);
+                    if(((ExprList)enew).args.size()>1){
+                        if(fmExpr.size()>0){
+                            while (removeOrAddFeats(((ExprList)enew),fmExpr)){
+                                enew= enew.accept(refactorExpr);
+                            }
+                        }
+                    }
 
                     StringBuilder print = new StringBuilder();
                     print.append("fact "+f.getKey() +"{\r\n        ");
                     VisitprintmergeExpr visitprintmergeExpr=new VisitprintmergeExpr();
                     print.append(enew.accept(visitprintmergeExpr));
-
                     print.append("\r\n        }");
                     text.changeText(pos.get(pos.size()-1),print.toString());
                 }
@@ -1440,6 +1569,13 @@ public final class SimpleGUI implements ComponentListener, Listener {
                         Expr enew=ExprList.make(pos.get(0), pos.get(0), ExprList.Op.AND,  list, new HashMap<Integer,Pos>());
                         VisitRefactor refactorExpr=new VisitRefactor();
                         enew= enew.accept(refactorExpr);
+                        if(((ExprList)enew).args.size()>1){
+                            if(fmExpr.size()>0){
+                                while (removeOrAddFeats(((ExprList)enew),fmExpr)){
+                                    enew= enew.accept(refactorExpr);
+                                }
+                            }
+                        }
 
                         StringBuilder print = new StringBuilder();
                         print.append("assert "+ass.getKey() +"{\r\n        ");
@@ -1467,6 +1603,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
             for(Map.Entry<String,ArrayList<Func>> fun: funp.entrySet()){
                 JMenuItem funtitem=new JMenuItem(fun.getKey());
                 mergefun.add(funtitem);
+
+              //  CompModule finalWorld1 = world;
                 funtitem.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
@@ -1493,7 +1631,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                             }
 
                             if ( fun1.getBody() instanceof ExprUnary&&((ExprUnary) fun1.getBody()).op.equals(ExprUnary.Op.NOOP))
-                                list.add(((ExprUnary) ((ExprUnary) fun1.getBody())));
+                                list.add(((ExprUnary) fun1.getBody()));
 
                         }
 
@@ -1505,6 +1643,13 @@ public final class SimpleGUI implements ComponentListener, Listener {
                         VisitRefactor refactorExpr=new VisitRefactor();
                         enew= enew.accept(refactorExpr);
 
+                        if(((ExprList)enew).args.size()>1){
+                            if(fmExpr.size()>0){
+                                while (removeOrAddFeats(((ExprList)enew),fmExpr)){
+                                    enew= enew.accept(refactorExpr);
+                                }
+                            }
+                        }
                         StringBuilder print = new StringBuilder();
                         VisitprintmergeExpr visitprintmergeExpr=new VisitprintmergeExpr();
                         print.append(fun.getValue().get(0).isPred? "pred "+fun.getKey()  : "fun "+fun.getKey() );
@@ -1533,11 +1678,18 @@ public final class SimpleGUI implements ComponentListener, Listener {
                         }
 
                         print.append("{\r\n        ");
+                        if(!fun.getValue().get(0).isPred){
+                            String temp=enew.accept(visitprintmergeExpr);
+                            temp=temp.replaceAll("and","+");
+                            print.append(temp);
+                        }else
                         print.append(enew.accept(visitprintmergeExpr));
 
                         print.append("\r\n        }");
                         text.changeText(pos.get(pos.size()-1),print.toString());
                     }
+
+
                 });
             }
 
@@ -1761,11 +1913,453 @@ public final class SimpleGUI implements ComponentListener, Listener {
         return null;
     }
 
+    private boolean removeOrAddFeats(Map<Map<Integer, Pos>, Sig> sigMap, Set<Expr> fmExpr) {
+        boolean changed=false;
+        //get all feature set in FM
+        Set<Set<Integer>> fmFeats=new HashSet<>();
+        if(fmExpr.size()>0){
+            for(Expr e: fmExpr){
+                fmFeats.add(e.color.keySet());
+            }
+        }
+
+
+        //can remove?
+        for( Sig siga:sigMap.values()){
+            if(changed)
+                break;
+            for( Sig sigb:sigMap.values()){
+                if(changed)
+                    break;
+                if(siga.equals(sigb))
+                    continue;
+                if(computeRemove(siga.color,sigb.color,fmExpr)){
+                    changed=true;
+                    break;
+                }
+
+               /* Set<Integer> featsa=siga.color.keySet();
+                Set<Integer> featsb=sigb.color.keySet();
+                if(featsa.size()==featsb.size())
+                    break;
+                Set<Integer> commonFeats=new HashSet<>();
+                Set<Integer> toRmFeats=new HashSet<>();
+                Set<Integer> fmToRmFeatsTemp=new HashSet<>();
+                Set<Integer> k=new HashSet<>();
+                Sig tochange=siga.color.keySet().size()>sigb.color.keySet().size()? siga: sigb;
+                for(Integer i: featsa){
+                    if(featsb.contains(i)){
+                        commonFeats.add(i);
+                    }else if(featsb.contains(-i)){
+                        k.add(i>0?i:-i);
+                    }else{
+                        toRmFeats.add(i);
+                    }
+                }
+
+                for(Integer i: featsb){
+                    if(featsa.contains(i)){
+                        commonFeats.add(i);
+                    }else if(featsa.contains(-i)){
+                        k.add(i>0?i:-i);
+                    }else{
+                        toRmFeats.add(i);
+                    }
+                }
+                if(k.size()!=1)
+                    break;
+                Integer kb=k.iterator().next();
+
+                if(tochange.color.keySet().contains(-kb)){
+                    kb=-kb;
+                }
+                addfeatures(kb,fmToRmFeatsTemp,fmFeats);
+
+                for(Integer i : commonFeats) {
+                    addfeatures(i, fmToRmFeatsTemp, fmFeats);
+                }
+                if(fmToRmFeatsTemp.containsAll(toRmFeats)){
+                    for(Integer feat:toRmFeats){
+                        tochange.color.remove(feat);
+                    }
+                    changed=true;
+                    break;
+                }*/
+            }
+        }
+        return changed;
+    }
+    private boolean removeFeats(ArrayList<CompModule.Open> openList, Set<Expr> fmExpr) {
+        boolean changed=false;
+        if(openList.size()<2)
+            return changed;
+        for(CompModule.Open e: openList) {
+            if (changed)
+                break;
+            for (CompModule.Open e2 : openList) {
+                if (e.equals(e2))
+                    continue;
+                //name equal?
+                if (!e.filename.equals(e2.filename))
+                    continue;
+
+                //to get the pos
+                for (Map.Entry<Integer, Pos> ent : e.color.entrySet()) {
+                    e.pos = e.pos.merge(ent.getValue());
+                }
+                for (Map.Entry<Integer, Pos> ent : e2.color.entrySet()) {
+                    e2.pos = e2.pos.merge(ent.getValue());
+                }
+                //remove feats
+                if (computeRemove(e.color, e2.color, fmExpr)) {
+                    changed = true;
+                }
+            }
+        }
+
+        return changed;
+    }
+    private boolean removeOrAddFeats(Sig sig, Set<Expr> fmExpr){
+        boolean changed=false;
+
+        List<Decl> clone=sig.getFieldDecls().makeCopy();
+        List<Decl> clonetemp=new ArrayList<>(clone);
+
+        for(Decl d: clonetemp){
+            if(changed)
+                break;
+            for(Decl d2: clonetemp){
+                if(d.equals(d2))
+                    continue;
+                //name equal?
+                if (!d.names.get(0).label.equals(d2.names.get(0).label))
+                    continue;
+
+                //remove feats
+                if(computeRemove(d.color,d2.color,fmExpr)){
+                    changed=true;
+                    if(d.expr instanceof ExprUnary && d2.expr instanceof ExprUnary){
+                        VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
+                        Set<Integer> diff=new HashSet<>();
+
+                        if(((ExprUnary) d.expr).sub.color.size()>d.color.size()){
+                            diff.addAll(((ExprUnary) d.expr).sub.color.keySet());
+                            diff.removeAll(d.color.keySet());
+                            for(Integer b:diff){
+                                visiterRemoveFeatB.setFeatB(b);
+                                d.expr=d.expr.accept(visiterRemoveFeatB);
+                            }
+                        }else {
+                            diff.addAll(((ExprUnary) d2.expr).sub.color.keySet());
+                            diff.removeAll(d2.color.keySet());
+                            for(Integer b:diff){
+                                visiterRemoveFeatB.setFeatB(b);
+                                d2.expr=d2.expr.accept(visiterRemoveFeatB);
+                            }
+                        }
+
+
+                    }
+                }
+            }
+        }
+        return changed;
+    }
+    private boolean removeOrAddFeats(List<Expr> list, Set<Expr> fmExpr){
+        boolean changed=false;
+        for(Expr e: list) {
+            if (changed)
+                break;
+            for (Expr e2 : list) {
+                if (e.equals(e2))
+                    continue;
+                //name equal?
+                if (!e.toString().equals(e2.toString())){
+                    if(e instanceof ExprQt && e2 instanceof ExprQt){
+                        if(((ExprQt) e).op.equals(((ExprQt) e2).op) ){
+                            if (computeRemove(e, e2, fmExpr)) {
+                                changed = true;
+                            }
+                        }
+
+
+                    }
+                    continue;
+                }
+
+                //remove feats
+                if (computeRemove(e, e2, fmExpr)) {
+                    changed = true;
+                }
+            }
+        }
+        return changed;
+    }
+    private boolean removeOrAddFeats(ExprList enew, Set<Expr> fmExpr) {
+        boolean changed;
+        changed= removeOrAddFeats(enew.args,fmExpr);
+        return changed;
+    }
+    private boolean removeOrAddFeats(ArrayList<Func> funcs, Set<Expr> fmExpr){
+        boolean changed=false;
+        if(funcs.size()<2){
+            return changed;
+        }
+        for(Func e: funcs) {
+            if (changed)
+                break;
+            for (Func e2 : funcs) {
+                if (e.equals(e2))
+                    continue;
+                //name equal?
+                if (!e.label.equals(e2.label))
+                    continue;
+
+                //remove feats
+                if (computeRemove(e.color, e2.color, fmExpr)) {
+                    changed = true;
+                    Func fchange=e.color.size()>e.getBody().color.size()?e:e2;
+                    VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
+                    Set<Integer> diff=new HashSet<>();
+                    diff.addAll(fchange.getBody().color.keySet());
+                    diff.removeAll(fchange.color.keySet());
+                    if(fchange.decls.size()>0){
+                    for(Decl decl: fchange.decls){
+                        for(Integer b:diff){
+                            visiterRemoveFeatB.setFeatB(b);
+                            decl.expr=decl.expr.accept(visiterRemoveFeatB);
+                            for(Expr n:decl.names){
+                                n.color.remove(b);
+                            }
+                        }
+                    }
+                }
+                    if(!fchange.isPred){
+                        for(Integer b:diff){
+                            visiterRemoveFeatB.setFeatB(b);
+                            fchange.returnDecl=fchange.returnDecl.accept(visiterRemoveFeatB);
+                        }
+                    }
+                    for(Integer b:diff){
+                        visiterRemoveFeatB.setFeatB(b);
+                        fchange.getBody().accept(visiterRemoveFeatB);
+                    }
+                }
+            }
+        }
+        return changed;
+    }
+
+    private boolean computeRemove(Map<Integer, Pos> color, Map<Integer, Pos> color1, Set<Expr> fmExpr) {
+        if(color.keySet().size()==color1.keySet().size())
+            return false;
+        Set<Set<Integer>> fmFeats=new HashSet<>();
+        if(fmExpr.size()>0){
+            for(Expr e: fmExpr){
+                fmFeats.add(e.color.keySet());
+            }
+        }
+        Set<Integer> featsa=color.keySet();
+        Set<Integer> featsb=color1.keySet();
+        if(featsa.size()==featsb.size())
+            return false;
+        Set<Integer> commonFeats=new HashSet<>();
+        Set<Integer> toRmFeats=new HashSet<>();
+        Set<Integer> toRmFeatstemp=new HashSet<>();
+        Set<Integer> fmToRmFeatsTemp=new HashSet<>();
+        Set<Integer> k=new HashSet<>();
+
+        Map<Integer, Pos>  tochange=color.keySet().size()>color1.keySet().size()? color: color1;
+        for(Integer i: featsa){
+            if(featsb.contains(i)){
+                commonFeats.add(i);
+            }else if(featsb.contains(-i)){
+                k.add(i>0?i:-i);
+            }else{
+                toRmFeats.add(i);
+            }
+        }
+
+        for(Integer i: featsb){
+            if(featsa.contains(i)){
+                commonFeats.add(i);
+            }else if(featsa.contains(-i)){
+                k.add(i>0?i:-i);
+            }else{
+                toRmFeats.add(i);
+            }
+        }
+        if(k.size()!=1)
+            return false;
+        Integer kb=k.iterator().next();
+
+        if(tochange.keySet().contains(-kb)){
+            kb=-kb;
+        }
+
+        toRmFeatstemp.addAll(toRmFeats);
+
+        Set<Integer> removeSet=new HashSet<>();
+
+        Set<Integer> remain=new HashSet<>();
+        remain.addAll(commonFeats);
+        remain.add(kb);
+        removeoraddFeats(toRmFeats,removeSet,fmFeats,remain);
+        while(removeSet.size()>0 && toRmFeats.size()>0){
+            remain.clear();
+            remain.addAll(removeSet);
+            removeSet.clear();
+            removeoraddFeats(toRmFeats,removeSet,fmFeats,remain);
+        }
+
+        if(toRmFeats.isEmpty()) {
+            for(Integer i:toRmFeatstemp){
+                tochange.remove(i);
+            }
+            return true;
+        }
+
+      //  addfeatures(kb,fmToRmFeatsTemp,fmFeats);
+
+     //   for(Integer i : commonFeats) {
+     //       addfeatures(i, fmToRmFeatsTemp, fmFeats);
+     //   }
+     //   if(fmToRmFeatsTemp.containsAll(toRmFeats)){
+      //      for(Integer feat:toRmFeats){
+      //          tochange.remove(feat);
+      //      }
+      //      return true;
+     //   }
+        return false;
+    }
+    private boolean computeRemove(Expr e, Expr e2, Set<Expr> fmExpr){
+        boolean changed;
+        Expr toChange=e.color.size()>e2.color.size()?e:e2;
+        Set<Integer> color=new HashSet<>();
+        color.addAll(toChange.color.keySet());
+        changed=computeRemove(e.color, e2.color, fmExpr);
+        if(changed){
+            Set<Integer> diff=new HashSet<>();
+            diff.addAll(color);
+            diff.removeAll(toChange.color.keySet());
+            VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
+            for(Integer b:diff){
+                visiterRemoveFeatB.setFeatB(b);
+                toChange.accept(visiterRemoveFeatB);
+            }
+        }else{
+            changed=computeAdd(e.color, e2.color, fmExpr);
+        }
+        return changed;
+    }
+
+    private boolean computeAdd(Map<Integer, Pos> color, Map<Integer, Pos> color1, Set<Expr> fmExpr) {
+        if(color.keySet().size()==color1.keySet().size())
+            return false;
+        Set<Set<Integer>> fmFeats=new HashSet<>();
+        if(fmExpr.size()>0){
+            for(Expr e: fmExpr){
+                fmFeats.add(e.color.keySet());
+            }
+        }
+        Set<Integer> featsa=color.keySet();
+        Set<Integer> featsb=color1.keySet();
+        if(featsa.size()==featsb.size())
+            return false;
+        Set<Integer> commonFeats=new HashSet<>();
+        Set<Integer> toRmFeats=new HashSet<>();
+        Set<Integer> toRmFeatstemp=new HashSet<>();
+
+        Set<Integer> k=new HashSet<>();
+
+        Map<Integer, Pos>  tochange=color.keySet().size()<color1.keySet().size()? color: color1;
+        Map<Integer, Pos>  nochange=color.keySet().size()>color1.keySet().size()? color: color1;
+        for(Integer i: featsa){
+            if(featsb.contains(i)){
+                commonFeats.add(i);
+            }else if(featsb.contains(-i)){
+                k.add(i>0?i:-i);
+            }else{
+                toRmFeats.add(i);
+            }
+        }
+
+        for(Integer i: featsb){
+            if(featsa.contains(i)){
+                commonFeats.add(i);
+            }else if(featsa.contains(-i)){
+                k.add(i>0?i:-i);
+            }else{
+                toRmFeats.add(i);
+            }
+        }
+        if(k.size()!=1)
+            return false;
+        Integer kb=k.iterator().next();
+
+        if(tochange.keySet().contains(-kb)){
+            kb=-kb;
+        }
+
+        toRmFeatstemp.addAll(toRmFeats);
+
+        Set<Integer> addSet=new HashSet<>();
+        Set<Integer> remain=new HashSet<>();
+        remain.addAll(commonFeats);
+        remain.add(kb);
+        removeoraddFeats(toRmFeats,addSet,fmFeats,remain);
+        while(addSet.size()>0 && toRmFeats.size()>0){
+            remain.clear();
+            remain.addAll(addSet);
+            addSet.clear();
+            removeoraddFeats(toRmFeats,addSet,fmFeats,remain);
+        }
+
+        if(toRmFeats.isEmpty()){
+            for(Map.Entry<Integer, Pos> j:nochange.entrySet()){
+                if(toRmFeatstemp.contains(j.getKey())){
+                    tochange.put(j.getKey(),j.getValue());
+                }
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    private void removeoraddFeats(Set<Integer> toRmFeats, Set<Integer> removeSet, Set<Set<Integer>> fmFeats, Set<Integer> remain) {
+            for(Integer i:remain){
+                for(Set<Integer> j:fmFeats){
+                    if(j.contains(i) && j.size()==2){
+                        Set<Integer> result=new HashSet();
+                        result.addAll(j);
+                        result.remove(i);
+                        Integer k=-result.iterator().next();
+                       if( toRmFeats.contains(k)){
+                           toRmFeats.remove(k);
+                           removeSet.add(k);
+                       }
+                    }
+                }
+            }
+    }
+
+    private void addfeatures(Integer i, Set<Integer> fmToRmFeatsTemp, Set<Set<Integer>> fmFeats) {
+        for(Set<Integer> j: fmFeats){
+            if(j.contains(i)){
+                for(Integer feat: j){
+                    if(feat!=i){
+                        fmToRmFeatsTemp.add(-feat);
+                        addfeatures(-i,fmToRmFeatsTemp,fmFeats);
+                    }
+                }
+            }
+        }
+    }
+
     private HashMap<String, ArrayList<Command>> compCommand(ConstList<Command> allCommands) {
         HashMap<String, ArrayList<Command>> command=new HashMap<>();
         for(Command com:allCommands){
-            if(com.feats!=null && com.feats.isExact)continue;
-
             if(command.containsKey(com.label)){
                 command.get(com.label).add(com);
             }else{
@@ -2051,8 +2645,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
         SimpleCallback1 cb = new SimpleCallback1(this, null, log, VerbosityPref.get().ordinal(), latestAlloyVersionName, latestAlloyVersion);
         SimpleTask1 task = new SimpleTask1();
         A4Options opt = new A4Options();
-        opt.tempDirectory = alloyHome() + fs + "tmp";
-        opt.solverDirectory = alloyHome() + fs + "binary";
+        opt.tempDirectory = alloyHome() + commandP + "tmp";
+        opt.solverDirectory = alloyHome() + commandP + "binary";
         opt.recordKodkod = RecordKodkod.get();
         opt.noOverflow = NoOverflow.get();
         opt.unrolls = Version.experimental ? Unrolls.get() : (-1);
@@ -2079,7 +2673,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
             if (AlloyCore.isDebug() && VerbosityPref.get() == Verbosity.FULLDEBUG)
                 WorkerEngine.runLocally(task, cb);
             else
-                WorkerEngine.run(task, newmem, newstack, alloyHome() + fs + "binary", "", cb);
+                WorkerEngine.run(task, newmem, newstack, alloyHome() + commandP + "binary", "", cb);
             subMemoryNow = newmem;
             subStackNow = newstack;
         } catch (Throwable ex) {
@@ -2154,8 +2748,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
             try {
                 int resolutionMode = (Version.experimental && ImplicitThis.get()) ? 2 : 1;
                 A4Options opt = new A4Options();
-                opt.tempDirectory = alloyHome() + fs + "tmp";
-                opt.solverDirectory = alloyHome() + fs + "binary";
+                opt.tempDirectory = alloyHome() + commandP + "tmp";
+                opt.solverDirectory = alloyHome() + commandP + "binary";
                 opt.originalFilename = Util.canon(text.get().getFilename());
                 world = CompUtil.parseEverything_fromFile(A4Reporter.NOP, text.takeSnapshot(), opt.originalFilename, resolutionMode);
             } catch (Err er) {
@@ -2413,7 +3007,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                 }
             }
             //print fields
-            print.append("{ ");
+            print.append(" { ");
 
             for (Decl f:s.getFieldDecls()){
                 coloFieldF=new StringBuilder();
@@ -2449,7 +3043,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
             if(!s.getFieldDecls().isEmpty()){
                 print.deleteCharAt(print.length()-1);
                 //} of Sig
-                print.append("\r\n        }");
+                print.append("\r\n}");
             }else
                 //} of Sig
                 print.append("}");
@@ -2463,7 +3057,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                     temp=temp.replace(s.label.substring(5)+" .","");
                     print.append("\r\n        "+temp);
                 }
-                print.append("\r\n        }\r\n");
+                print.append("\r\n}\r\n");
             }
 
             print.append(colorB);
@@ -2728,7 +3322,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                 if (AlloyCore.isDebug())
                     WorkerEngine.runLocally(task, cb);
                 else
-                    WorkerEngine.run(task, SubMemory.get(), SubStack.get(), alloyHome() + fs + "binary", "", cb);
+                    WorkerEngine.run(task, SubMemory.get(), SubStack.get(), alloyHome() + commandP + "binary", "", cb);
                 // task.run(cb);
             } catch (Throwable ex) {
                 WorkerEngine.stop();
@@ -3079,7 +3673,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
         // Copy required files from the JAR
         copyFromJAR();
-        final String binary = alloyHome() + fs + "binary";
+        final String binary = alloyHome() + commandP + "binary";
 
         // Create the menu bar
         JMenuBar bar = new JMenuBar();
@@ -3099,6 +3693,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
             //colorful merge
           // refactormenu= menu(bar, "R&efactor", doRefreshRefactor());
             mergemenu= menu(bar, "M&erge", doRefreshmerge());
+            automerge=menu(bar, "Automatic M&erge", doAutoRefreshmerge());
         } finally {
             wrap = false;
         }
@@ -3223,6 +3818,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
         doRefreshWindow(false);
         OurUtil.enableAll(windowmenu);
 
+        doAutoRefreshmerge();
         //doRefreshRefactor();//colorful merge
         doRefreshmerge();//colorful merge
         OurUtil.enableAll(mergemenu);
@@ -3275,6 +3871,831 @@ public final class SimpleGUI implements ComponentListener, Listener {
             }
         });
         t.start();
+    }
+
+    private Runnable doAutoRefreshmerge() {
+        if (wrap)
+            return wrapMe();
+        incompatibleFeats=new HashSet<>();
+        CompModule world=null;
+        //store the sigs after parser
+        ConstList.TempList<CompModule.Open> openp=new ConstList.TempList<CompModule.Open>();
+        Map<String,Map<Map<Integer,Pos>,Sig>> sigp = sigs;
+        HashMap<String,ArrayList<Expr>> assertp=asserts;
+        HashMap<String,ArrayList<Func>> funp=funs;
+        SafeList<Pair<String, Expr>> factp = null;
+        HashMap <Object, ArrayList<Expr>> fact_Merge=new LinkedHashMap<>();
+        HashMap<String,ArrayList<Command>> commandP=null;
+        ArrayList<String> commandmergeName=new ArrayList<>();
+        //Feature Model expressions
+        Set<Expr> fmExpr=new HashSet<>();
+
+        //parser the model， get elements that can be merge.
+        if (world == null) {
+            try {
+                text.clearShade();
+                log.clearError(); // To clear any residual error message
+
+                int resolutionMode = (Version.experimental && ImplicitThis.get()) ? 2 : 1;
+                A4Options opt = new A4Options();
+                opt.originalFilename = Util.canon(text.get().getFilename());
+                //there's text in the text panel
+                if(!text.get().getText().equals("")){
+                    world = CompUtil.parseEverything_fromFile(A4Reporter.NOP, text.takeSnapshot(), opt.originalFilename, resolutionMode);
+                    sigp=world.getcolorfulSigSet();
+                    //filter sigs that without features
+                    Map<String,Map<Map<Integer,Pos>,Sig>> sigpclone=new HashMap<>(sigp);
+                    Iterator<Map.Entry<String, Map<Map<Integer,Pos>,Sig>>> entries = sigpclone.entrySet().iterator();
+                    while (entries.hasNext()) {
+                        Map.Entry<String, Map<Map<Integer,Pos>,Sig>> entry = entries.next();
+                        if(entry.getValue().size()<2){
+                            sigp.remove(entry.getKey());
+                        }
+                    }
+                    openp.addAll(world.getOpens());
+                    world.getOpens();
+                    factp=  world.getAllFacts();
+                    assertp= (HashMap<String, ArrayList<Expr>>) world.getAssertions();
+                    funp=(HashMap<String, ArrayList<Func>>)world.getFunc();
+                    commandP=compCommand(world.getAllCommands());
+                    if(factp!=null){
+                        Expr factExpr= world.getAllReachableFacts();
+                        if(factExpr instanceof ExprList)
+                            for(Expr expr: ((ExprList) factExpr).args)
+                                if(expr.toString().equals("some none")){
+                                    while(expr instanceof ExprUnary && ((ExprUnary) expr).op.equals(ExprUnary.Op.NOOP))
+                                          expr=((ExprUnary) expr).sub;
+                                    fmExpr.add(expr);
+                                }
+                    }
+                }
+
+               if(factp!=null){
+                    for(Pair p:factp){
+                        if(fact_Merge.containsKey(p.a)){
+                            if(p.b instanceof Expr)
+                            fact_Merge.get(p.a).add((Expr)(p.b));
+                        }else{
+                            if(p.b instanceof Expr)
+                                fact_Merge.put(p.a,new ArrayList<Expr>(){{add((Expr)(p.b));}});
+                        }
+                    }
+                }
+
+                if(commandP!=null){
+                    commandmergeName=new ArrayList<>();
+                    for(Map.Entry<String,ArrayList<Command>> entry: commandP.entrySet()){
+                        Set<Command> visit=new HashSet<>();
+                        for(Command c:entry.getValue()){
+                            if(visit.contains(c))
+                                continue;
+                            visit.add(c);
+                            for(Command c2: entry.getValue()){
+                                if(visit.contains(c2)) continue;
+                                if(c.feats!=null && c2.feats!=null){
+                                    if(compare(new HashSet<>(c.feats.feats),new HashSet<>(c2.feats.feats),new HashSet<>())){
+                                        commandmergeName.add(entry.getKey());
+                                        visit.add(c2);
+                                        break;
+                                    }
+                                }
+                            }
+                            if(!commandmergeName.isEmpty()) break;
+                        }
+                    }
+                }
+            } catch (Err er) {
+                log.logRed(er.toString() + "\n\n");
+                return null;
+            }catch (Throwable e) {
+                log.logRed("Cannot parse the model.\n" + e.toString() + "\n\n");
+                return null;
+            }
+            sigs=sigp;
+            asserts=assertp;
+            funs=funp;
+        }
+
+        StringBuilder print = new StringBuilder();
+        List<Pos> pos = new ArrayList<>();
+        VisitRefactor refactorExpr = new VisitRefactor();
+        VisitprintmergeExpr visitprintmergeExpr = new VisitprintmergeExpr();
+
+        List<Pos> posOpen = new ArrayList<>();
+        //merge opens
+        if(openp!=null && openp.size()>1){
+            for(CompModule.Open O: openp.makeConst()){
+                if(O.pos!=null)
+                    addPos(posOpen,O.pos,O.color);
+            }
+            ArrayList<CompModule.Open> openList= mergeOpens(openp,fmExpr);
+            openp=new ConstList.TempList<>();
+            openp.addAll(openList);
+            for(CompModule.Open O: openp.makeConst()){
+                if(O.pos!=null)
+                    addPos(posOpen,O.pos,O.color);
+            }
+        }
+
+
+        //merge all signatures
+        if(sigp!=null){
+            Iterator<Map.Entry<String, Map<Map<Integer,Pos>,Sig>>> entries = sigp.entrySet().iterator();
+            while (entries.hasNext()) {
+                Map.Entry<String, Map<Map<Integer,Pos>,Sig>> entry = entries.next();
+                Map<Map<Integer,Pos>,Sig> siglist=entry.getValue();
+                //寻找 pos,
+                for (Sig s : siglist.values()) {
+                    for (Map.Entry<Integer, Pos> ent : s.color.entrySet())
+                        s.pos = s.pos.merge(ent.getValue());
+
+                    if (pos.isEmpty())
+                        pos.add(s.pos);
+                    else {
+                        for (Pos p : new ArrayList<>(pos)) {
+                            if (s.pos.y > p.y || (s.pos.y == p.y && s.pos.x > p.x)) {
+                                pos.add(pos.indexOf(p), s.pos);
+                                break;
+                            }
+                        }
+                        if (!pos.contains(s.pos))
+                            pos.add(s.pos);
+                    }
+                }
+
+                StringBuilder attributefact = new StringBuilder();
+                world.mergeSigs(siglist, attributefact);
+
+                //remove redundant features
+                if (siglist.size() > 1) {
+                    if (fmExpr.size() > 0) {
+                        while (removeOrAddFeats(siglist, fmExpr)) {
+                            world.mergeSigs(siglist, attributefact);
+                        }
+                    }
+
+                    //remove feat?
+                   Set<Sig> cloneSig=new HashSet<>();
+                    cloneSig.addAll(siglist.values());
+                    for (Sig s : cloneSig) {
+                        if (s.getFieldDecls().size() > 1) {
+                            siglist.remove(s.color);
+                            StringBuilder fact = new StringBuilder();
+                            while (removeOrAddFeats(s, fmExpr)) {
+                                s = s.mergeField(fact);
+                            }
+                            siglist.put(s.color, s);
+                        }
+                    }
+                }
+
+                //需要修改
+                text.get().appendText(attributefact.toString());
+                printsigs(new ArrayList<>(siglist.values()), print);
+            }
+        }
+
+        for (Map.Entry<Object, ArrayList<Expr>> f : fact_Merge.entrySet()) {
+                    ArrayList<Expr> list = new ArrayList<>();
+                    for (Expr fa : f.getValue()) {
+                        addPos(pos,fa.pos,fa.color);
+
+                        if (fa instanceof ExprUnary)
+                            fa = ((ExprUnary) fa).sub;
+                        list.add((fa instanceof ExprUnary && ((ExprUnary) fa).op.equals(ExprUnary.Op.NOOP) ? ((ExprUnary) fa).sub : fa));
+                    }
+
+                    Expr enew = ExprList.make(pos.get(0), pos.get(0), ExprList.Op.AND, list, new HashMap<Integer, Pos>());
+                    enew = enew.accept(refactorExpr);
+                    if (((ExprList) enew).args.size() > 1) {
+                        if (fmExpr.size() > 0) {
+                            while (removeOrAddFeats(((ExprList) enew), fmExpr)) {
+                                enew = enew.accept(refactorExpr);
+                            }
+                        }
+                    }
+                    print.append("\r\nfact " + f.getKey() + " {\r\n        ");
+                    print.append(enew.accept(visitprintmergeExpr));
+                    print.append("\r\n}");
+                }
+
+        //merge assert
+        if (assertp != null) {
+            for (Map.Entry<String, ArrayList<Expr>> ass : ((Map<String, ArrayList<Expr>>) assertp.clone()).entrySet()) {
+                if (ass.getValue().size() < 2)
+                    assertp.remove(ass.getKey());
+            }
+            for (Map.Entry<String, ArrayList<Expr>> ass : assertp.entrySet()) {
+                ArrayList<Expr> list = new ArrayList<>();
+                for (Expr ass1 : ass.getValue()) {
+                    for (Map.Entry<Integer, Pos> ent : ass1.color.entrySet()) {
+                        ass1.pos = ass1.pos.merge(ent.getValue());
+                    }
+                    if (pos.isEmpty())
+                        pos.add(ass1.pos);
+                    else {
+                        for (Pos p : new ArrayList<>(pos)) {
+                            if (ass1.pos.y > p.y || (ass1.pos.y == p.y && ass1.pos.x > p.x)) {
+                                pos.add(pos.indexOf(p), ass1.pos);
+                                break;
+                            }
+                        }
+                        if (!pos.contains(ass1.pos))
+                            pos.add(ass1.pos);
+                    }
+                    if (ass1 instanceof ExprUnary)
+                        ass1 = ((ExprUnary) ass1).sub;
+
+                    list.add((ass1 instanceof ExprUnary && ((ExprUnary) ass1).op.equals(ExprUnary.Op.NOOP) ? ((ExprUnary) ass1).sub : ass1));
+                }
+
+                Expr enew = ExprList.make(pos.get(0), pos.get(0), ExprList.Op.AND, list, new HashMap<>());
+                enew = enew.accept(refactorExpr);
+
+                if (((ExprList) enew).args.size() > 1) {
+                    if (fmExpr.size() > 0)
+                        while (removeOrAddFeats(((ExprList) enew), fmExpr))
+                            enew = enew.accept(refactorExpr);
+                }
+
+                print.append("\r\n\r\nassert " + ass.getKey() + " {\r\n        ");
+                print.append(enew.accept(visitprintmergeExpr));
+                print.append("\r\n}");
+            }
+        }
+
+        //merge func/pred
+        if (funp != null) {
+            mergeFunc(funp,pos,fmExpr);
+            for (Map.Entry<String, ArrayList<Func>> fun : funp.entrySet()){
+                while (removeOrAddFeats(fun.getValue(), fmExpr)) {
+                    mergeFunc(fun,pos,fmExpr);
+                }
+            }
+           // print fun pred
+            for(Map.Entry<String, ArrayList<Func>> fun:funp.entrySet()){
+                if(fun.getKey().startsWith("$")) continue;
+                for(Func func:fun.getValue()){
+                    addPos(pos,func.pos,func.color);
+                    if(func.getBody() instanceof ExprUnary && ((ExprUnary) func.getBody()).op.equals(ExprUnary.Op.NOOP)){
+                        ((ExprUnary) func.getBody()).sub=refactorExpr(((ExprUnary) func.getBody()).sub,fmExpr);
+                    }
+
+                    StringBuilder coloFuncF,colorFuncB;
+                    coloFuncF=new StringBuilder();
+                    colorFuncB=new StringBuilder();
+                    printColorAnnotation(coloFuncF,colorFuncB,func.color.keySet());
+
+                    print.append("\r\n"+coloFuncF);
+                    print.append(fun.getValue().get(0).isPred ? "pred " + fun.getKey() : "fun " + fun.getKey());
+                    if(func.decls.size()>0){
+                        print.append("[");
+                        for(Decl decl : func.decls){
+                            if (decl.disjoint != null)
+                                print.append(" disj "); //"disj" key word
+                            for (Expr expr : decl.names) {
+                                print.append(expr + ",");
+                            }
+
+                            print.deleteCharAt(print.length() - 1);
+                            print.append(": ");
+                            visitprintmergeExpr.setParentFeats(func.color.keySet());
+                            print.append(decl.expr.accept(visitprintmergeExpr) + ",");
+                        }
+                        print.deleteCharAt(print.length() - 1);
+                        print.append("]");
+                    }
+
+                    //add return type for Func
+                    if (!func.isPred && !func.returnDecl.equals(ExprConstant.Op.FALSE)) {
+                        print.append(":");
+                        print.append(func.returnDecl.accept(visitprintmergeExpr));
+                    }
+
+                    print.append(" {\r\n        ");
+                    visitprintmergeExpr.setParentFeats(func.color.keySet());
+                    String temp = func.getBody().accept(visitprintmergeExpr);
+                    print.append(temp);
+                    print.append("\r\n}"+colorFuncB);
+                }
+            }
+        }
+
+        if(commandP!=null)
+            for(Map.Entry<String,ArrayList<Command>> commandList:commandP.entrySet()){
+                    for (Command comfinal : commandList.getValue()) {
+                        if (pos.isEmpty())
+                            pos.add(comfinal.pos);
+                        else {
+                            for (Pos p : new ArrayList<>(pos)) {
+                                if (comfinal.pos.y > p.y || (comfinal.pos.y == p.y && comfinal.pos.x > p.x)) {
+                                    pos.add(pos.indexOf(p), comfinal.pos);
+                                    break;
+                                }
+                            }
+                            if (!pos.contains(comfinal.pos))
+                                pos.add(comfinal.pos);
+                        }
+                    }
+
+                    boolean notFinish = true;
+                    while (notFinish) {
+                        ArrayList<Command> temp = (ArrayList<Command>) commandList.getValue().clone();
+                        ArrayList<Command> visit = new ArrayList<>();
+                        boolean changed = false;
+
+                        for (Command com : temp) {
+                            if (visit.contains(com)) continue;
+                            visit.add(com);
+                            for (Command com2 : temp) {
+                                if (visit.contains(com2)) continue;
+                                if (com.feats != null && com2.feats != null) {
+                                    Set<Integer> b = new HashSet<>();
+                                    if (compare(new HashSet<>(com.feats.feats), new HashSet<>(com2.feats.feats), b)) {
+                                        visit.add(com2);
+                                        if (com.feats.feats.containsAll(b)) {
+                                            com.feats.feats.removeAll(b);
+                                            commandList.getValue().remove(com2);
+                                        } else {
+                                            com2.feats.feats.removeAll(b);
+                                            commandList.getValue().remove(com);
+                                        }
+
+                                        changed = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (!changed) notFinish = false;
+                    }
+                    printCommand(commandList.getValue(), print, assertp, funp);
+            }
+
+
+
+       //print
+        if(sigp!=null){
+            if (pos.size() > 1)
+                for (int i = 0; i < pos.size() - 1; i++)
+                    text.changeText(pos.get(i), "");
+            if(posOpen.size()>1){
+                for (int i = 0; i < posOpen.size() - 1; i++)
+                    text.changeText(posOpen.get(i), "");
+            }
+
+            text.changeText(pos.get(pos.size() - 1), print.toString());
+
+          //print opens
+            print=new StringBuilder();
+            if(openp!=null && openp.size()>1){
+                for(CompModule.Open open:openp.makeConst()){
+                    printOpenLine(open,print);
+                }
+            }
+            if(posOpen.size()>1 && print.length()>0)
+            text.changeText(posOpen.get(posOpen.size() - 1), print.toString());
+        }
+        return null;
+    }
+
+    private void printOpenLine(CompModule.Open open, StringBuilder print) {
+        if(!open.filename.equals("util/integer")){
+
+            print.append("open "+open.filename+" ");
+
+            if(open.args.size()!=0){
+                print.append("[");
+                for(String s:open.args) {
+                    print.append(s+",");
+                }
+                print.deleteCharAt(print.length()-1);
+                print.append("] \r\n");
+            }
+        }
+    }
+
+    private ArrayList<CompModule.Open> mergeOpens(ConstList.TempList<CompModule.Open> opens,  Set<Expr> fmExpr) {
+        ArrayList<CompModule.Open> openList=new ArrayList<>();
+        openList.addAll(opens.makeConst());
+        boolean changed=true;
+        while(changed){
+            changed=mergeOpens(openList,fmExpr);
+        }
+       while( removeFeats(openList,fmExpr)){
+           mergeOpens(openList,fmExpr);
+       }
+
+        return openList;
+    }
+
+    private boolean mergeOpens(ArrayList<CompModule.Open> openList, Set<Expr> fmExpr) {
+        boolean changed=false;
+        Iterator it = openList.iterator();
+        while(it.hasNext()){
+            CompModule.Open open1 = (CompModule.Open) it.next();
+            for(CompModule.Open open2: openList){
+                if(open1.equals(open2))
+                    continue;
+                if(!open1.filename.equals(open2.filename))
+                    continue;
+                Integer k=compareMergeLaw(open1.color,open2.color);
+                if(k!=null){
+                    changed=true;
+                    open2.color.remove(k);
+                    open2.color.remove(-k);
+                    it.remove();
+                    break;
+                }
+            }
+        }
+        return changed;
+    }
+
+    private void addPos(List<Pos> pos, Pos pos1, Map<Integer, Pos> color) {
+
+        for (Map.Entry<Integer, Pos> ent : color.entrySet()) {
+            pos1 = pos1.merge(ent.getValue());
+        }
+        if (pos.isEmpty())
+            pos.add(pos1);
+        else {
+            for (Pos p : new ArrayList<>(pos)) {
+                if (pos1.y > p.y || (pos1.y == p.y && pos1.x > p.x)) {
+                    pos.add(pos.indexOf(p), pos1);
+                    break;
+                }
+            }
+            if (!pos.contains(pos1))
+                pos.add(pos1);
+        }
+    }
+
+    private void mergeFunc(HashMap<String, ArrayList<Func>> funp, List<Pos> pos,Set<Expr> fmExpr) {
+        for (Map.Entry<String, ArrayList<Func>> fun : funp.entrySet()) {
+            boolean finish=true;
+            while(finish){
+                finish=mergeFunc(fun,pos,fmExpr);
+            }
+        }
+    }
+    private boolean mergeFunc(Map.Entry<String, ArrayList<Func>> fun, List<Pos> pos, Set<Expr> fmExpr) {
+        ArrayList<Func> funclone=new ArrayList<>();
+        funclone.addAll(fun.getValue());
+        boolean change=false;
+        ArrayList<Func> visist=new ArrayList<>();
+        for (Func fun1 : funclone) {
+            if (visist.contains(fun1)||!fun.getValue().contains(fun1))
+                continue;
+            visist.add(fun1);
+            for (Func fun2 : fun.getValue()){
+                if (visist.contains(fun2))
+                    continue;
+                boolean notmatch=false;
+                if(!fun1.isPred){
+                    if(fun1.decls.size()!=fun2.decls.size())
+                        continue;
+                    for(int i=0 ; i< fun1.decls.size();i++){
+                        if(fun1.decls.get(i).names.size()!=fun2.decls.get(i).names.size()){
+                            notmatch=true;
+                        }
+                        if(!notmatch){
+                            for(int j=0; j<fun1.decls.get(i).names.size();j++){
+                                if(!fun1.decls.get(i).names.get(j).label.equals(fun2.decls.get(i).names.get(j).label)){
+                                    notmatch=true;
+                                    break;
+                                }
+                            }
+                        }
+                        if(notmatch){
+                            break;
+                        }
+                    }
+                }
+
+                //共有得出
+                if(!notmatch){
+                    Integer k=compareMergeLaw(fun1.color,fun2.color);
+                    if(k!=null){
+                        change=true;
+                        for (Map.Entry<Integer, Pos> ent : fun1.color.entrySet()) {
+                            fun1.pos = fun1.pos.merge(ent.getValue());
+                        }
+                        for (Map.Entry<Integer, Pos> ent : fun2.color.entrySet()) {
+                            fun2.pos = fun2.pos.merge(ent.getValue());
+                        }
+                        if (pos.isEmpty())
+                            pos.add(fun1.pos);
+                        else {
+                            for (Pos p : new ArrayList<>(pos)) {
+                                if (fun1.pos.y > p.y || (fun1.pos.y == p.y && fun1.pos.x > p.x)) {
+                                    pos.add(pos.indexOf(p), fun1.pos);
+                                    break;
+                                }
+                            }
+                            if (!pos.contains(fun1.pos))
+                                pos.add(fun1.pos);
+
+                            for (Pos p : new ArrayList<>(pos)) {
+                                if (fun2.pos.y > p.y || (fun2.pos.y == p.y && fun2.pos.x > p.x)) {
+                                    pos.add(pos.indexOf(p), fun2.pos);
+                                    break;
+                                }
+                            }
+                            if (!pos.contains(fun2.pos))
+                                pos.add(fun2.pos);
+                        }
+
+                        fun1.color.remove(k);
+                        fun1.color.remove(-k);
+                        Expr body1=fun1.getBody();
+                        Expr body2=fun2.getBody();
+                        if(body1 instanceof ExprUnary && ((ExprUnary) body1).op.equals(ExprUnary.Op.NOOP) &&
+                                body2 instanceof ExprUnary && ((ExprUnary) body2).op.equals(ExprUnary.Op.NOOP)){
+                            if(fun1.isPred) {
+                                ArrayList<Expr> list=new ArrayList<>();
+                                list.add(((ExprUnary) body1).sub);
+                                list.add(((ExprUnary) body2).sub);
+                                ((ExprUnary) body1).sub =ExprList.make(((ExprUnary) body1).sub.pos,((ExprUnary) body1).sub.closingBracket, ExprList.Op.AND,list,fun1.color);
+                            } else {
+                                ((ExprUnary) body1).sub = ExprBinary.Op.PLUS.make(((ExprUnary) body1).sub.pos, ((ExprUnary) body1).sub.closingBracket,
+                                        ((ExprUnary) body1).sub, ((ExprUnary) body2).sub, fun1.color);
+                            }
+
+                            ((ExprUnary) body1).sub=refactorExpr(((ExprUnary) body1).sub,fmExpr);
+                            body1.color.clear();
+                            body1.color.putAll(fun1.color);
+                        }
+                        //参数
+                        if(fun1.decls.size()>0){
+                            for(Decl d: fun1.decls){
+                                for(Expr v :d.names){
+                                    v.color.remove(k);
+                                    v.color.remove(-k);
+                                }
+
+                                for(Decl d2: fun2.decls){
+                                    if(d.names.toString().equals(d2.names.toString())){
+                                        d.expr=ExprBinary.Op.PLUS.make(d.expr.pos,d.expr.closingBracket,d.expr,d2.expr,fun1.color);
+                                       d.expr= refactorExpr(d.expr,fmExpr);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        //return
+                        if(!fun1.isPred){
+                            fun1.returnDecl=ExprBinary.Op.PLUS.make(fun1.returnDecl.pos,fun1.returnDecl.closingBracket,fun1.returnDecl,fun2.returnDecl,fun1.color);
+                            fun1.returnDecl=refactorExpr(fun1.returnDecl,fmExpr);
+
+                        }
+
+                        fun.getValue().remove(fun2);
+                        visist.add(fun2);
+                        break;
+                    }
+                }
+
+
+            }
+
+
+/*
+                    for (Map.Entry<Integer, Pos> ent : fun1.color.entrySet()) {
+                        fun1.pos = fun1.pos.merge(ent.getValue());
+                    }
+                    if (pos.isEmpty())
+                        pos.add(fun1.pos);
+                    else {
+                        for (Pos p : new ArrayList<>(pos)) {
+                            if (fun1.pos.y > p.y || (fun1.pos.y == p.y && fun1.pos.x > p.x)) {
+                                pos.add(pos.indexOf(p), fun1.pos);
+                                break;
+                            }
+                        }
+                        if (!pos.contains(fun1.pos))
+                            pos.add(fun1.pos);
+                    }
+
+                    if (fun1.getBody() instanceof ExprUnary && ((ExprUnary) fun1.getBody()).op.equals(ExprUnary.Op.NOOP))
+                        list.add(((ExprUnary) fun1.getBody()));*/
+
+
+        }
+   /*     for(Map.Entry<String, ArrayList<Func>> entry :removeFun.entrySet()){
+            fun.
+            fun.get(entry.getKey())
+            for(Map.Entry<String, ArrayList<Func>> funEntry :fun.e)
+        }*/
+
+
+
+        return change;
+    }
+
+    private Expr refactorExpr(Expr expr,Set<Expr> fmExpr) {
+        VisitRefactor refactorExpr = new VisitRefactor();
+        expr = expr.accept(refactorExpr);
+        if (expr instanceof ExprList){
+            if (((ExprList) expr).args.size() > 1) {
+                if (fmExpr.size() > 0) {
+                    while (removeOrAddFeats(((ExprList) expr), fmExpr)) {
+                        expr = expr.accept(refactorExpr);
+                    }
+                }
+            }
+    }else if(expr instanceof ExprBinary){
+            if(((ExprBinary) expr).op.equals(ExprBinary.Op.PLUS)){
+                VisiterExprBreak1 exprBreak = new VisiterExprBreak1();
+                // break the + to List
+                List<Expr> list=expr.accept(exprBreak);
+                ConstList.TempList<Expr> temp = new ConstList.TempList<Expr>(list);
+                Expr e=ExprList.make(expr.pos, expr.closingBracket, ExprList.Op.AND, temp.makeConst(),expr.color);
+
+                if(list.size()>1){
+                    if (fmExpr.size() > 0) {
+                        while (removeOrAddFeats( (ExprList)e, fmExpr)) {
+                            e = e.accept(refactorExpr);
+                        }
+                    }
+                }
+
+                if(e instanceof ExprList ){
+                    if(((ExprList) e).args.size()>0)
+                    expr=((ExprList) e).args.get(0);
+                    if(((ExprList) e).args.size()>1){
+                        for(int i=1;i<((ExprList) e).args.size();i++){
+                            expr=ExprBinary.Op.PLUS.make(expr.pos, expr.closingBracket,expr,((ExprList) e).args.get(i),e.color);
+                        }
+                    }
+                }
+            }
+        }
+return expr;
+    }
+
+    private Integer compareMergeLaw(Map<Integer, Pos> color, Map<Integer, Pos> color1) {
+        Set<Integer> feats1=color.keySet();
+        Set<Integer>  feats2=color1.keySet();
+        Set<Integer> k= new HashSet<>();
+        if(feats1.size()!=feats2.size())
+            return null;
+
+        for(int i: feats1){
+                if(feats2.contains(i) || feats2.contains(-i)){
+                    for(int j:feats2){
+                        if(i==-j){
+                            if(k.size()<1){
+                                k.add(j>0?j:-j);
+                                break;
+                            } else{
+                                k.clear();
+                                return null;
+                            }
+                        }else if(i==j){
+                            break;
+                        }
+                    }
+                }else
+                    return null;
+            }
+
+        if(k.size()==1)
+            return k.iterator().next();
+
+        return null;
+    }
+
+    private void printCommand(ArrayList<Command> commands, StringBuilder print, HashMap<String, ArrayList<Expr>> assertp, HashMap<String, ArrayList<Func>> funp) {
+        for(Command cmd:commands){
+            print.append(cmd.check ? "\r\ncheck " : "\r\nrun ");
+
+            if (cmd.label.startsWith("run$") || cmd.label.startsWith("check$")) {
+                print.append("{");
+                if(cmd.check){
+                    for (Map.Entry<String, ArrayList<Expr>> ass : assertp.entrySet()) {
+                        if (cmd.label.equals(ass.getKey())) {
+                            if(ass.getValue().size()>1){
+
+                                ArrayList<Pos> pos=new ArrayList<>();
+                                ArrayList<Expr> list=new ArrayList<>();
+                                for(Expr ass1: ass.getValue()){
+
+                                    for (Map.Entry<Integer,Pos> ent:ass1.color.entrySet()){
+                                        ass1.pos=ass1.pos.merge(ent.getValue());
+                                    }
+                                    if(pos.isEmpty())
+                                        pos.add(ass1.pos);
+                                    else{
+                                        for(Pos p:new ArrayList<>(pos)){
+                                            if(ass1.pos.y>p.y || (ass1.pos.y==p.y && ass1.pos.x>p.x)){
+                                                pos.add(pos.indexOf(p),ass1.pos);
+                                                break;
+                                            }
+                                        }
+                                        if(!pos.contains(ass1.pos))
+                                            pos.add(ass1.pos);
+                                    }
+
+
+                                    if(ass1 instanceof ExprUnary)
+                                        ass1=((ExprUnary) ass1).sub;
+
+                                    list.add( (ass1 instanceof ExprUnary && ((ExprUnary) ass1).op.equals(ExprUnary.Op.NOOP)? ((ExprUnary) ass1).sub: ass1));
+
+                                }
+
+
+
+                                Expr enew=ExprList.make(pos.get(0), pos.get(0), ExprList.Op.AND,  list, new HashMap<Integer,Pos>());
+                                VisitRefactor refactorExpr=new VisitRefactor();
+                                enew= enew.accept(refactorExpr);
+
+                                VisitprintmergeExpr visitprintmergeExpr=new VisitprintmergeExpr();
+                                print.append(enew.accept(visitprintmergeExpr));
+                            }else if(ass.getValue().size()==1){
+                                if(!(ass.getValue().get(0) instanceof ExprUnary && ((ExprUnary) ass.getValue().get(0) ).sub.isSame(ExprConstant.TRUE))){
+                                    VisitprintmergeExpr visitprintmergeExpr=new VisitprintmergeExpr();
+                                    print.append(ass.getValue().get(0).accept(visitprintmergeExpr));
+                                }
+                            }
+
+                        }
+                    }
+
+                }else{
+                    for (Map.Entry<String, ArrayList<Func>> runFunc : funp.entrySet()) {
+                        if (cmd.label.equals(runFunc.getKey())){
+
+                            ArrayList<Expr> list=new ArrayList<>();
+                            for(Func fun1: runFunc.getValue()){
+
+                                for (Map.Entry<Integer,Pos> ent:fun1.color.entrySet()){
+                                    fun1.pos=fun1.pos.merge(ent.getValue());
+                                }
+
+
+                                if ( fun1.getBody() instanceof ExprUnary&&((ExprUnary) fun1.getBody()).op.equals(ExprUnary.Op.NOOP))
+                                    list.add(fun1.getBody());
+
+                            }
+                            Expr enew=ExprList.make(cmd.pos, cmd.pos, ExprList.Op.AND,  list, new HashMap<Integer,Pos>());
+                            VisitRefactor refactorExpr=new VisitRefactor();
+                            enew= enew.accept(refactorExpr);
+
+
+                            VisitprintmergeExpr visitprintmergeExpr=new VisitprintmergeExpr();
+                            print.append(enew.accept(visitprintmergeExpr));
+
+                        }
+
+                    }
+                }
+                print.append("}");
+            } else{
+                print.append(cmd.label);
+                //print assert or pred in command
+                if(cmd.nameExpr!=null){
+                    if (cmd.nameExpr.isSame(ExprConstant.TRUE))
+                        print.append("{}");
+                    else{
+                        Expr e =null;
+                        if(!(cmd.nameExpr instanceof ExprVar)){
+                            e=cmd.nameExpr;
+                            print.append(e==null? "{}":("{ " +e  + " }"));
+                        }
+                    }
+                }
+            }
+            if(cmd.feats!=null && cmd.feats.feats.size()!=0)
+                print.append(" with "+cmd.getComandColorString());
+
+            print.append(" for ");
+            print.append(cmd.overall > 0 ? cmd.overall + " " : 4 + " ");
+
+            if (cmd.scope.size() >= 1 || cmd.bitwidth != -1)
+                print.append(" but ");
+            if (cmd.bitwidth != -1) {
+                print.append(cmd.bitwidth + " Int ");
+                if(!cmd.scope.isEmpty() )
+                    print.append(",");
+            }
+
+            for (CommandScope cs : cmd.scope) {
+
+                if (cs.isExact)
+                    print.append(" exactly ");
+                print.append(cs.startingScope + " ");
+                print.append(cs.sig.label.substring(5) + ",");
+            }
+
+            print.deleteCharAt(print.length() - 1);
+
+            if (cmd.expects >= 0)
+                print.append(" expect ").append(cmd.expects);
+
+        }
     }
 
     /** {@inheritDoc} */
@@ -3362,6 +4783,78 @@ public final class SimpleGUI implements ComponentListener, Listener {
                 r.run();
             }
         };
+    }
+
+    private class VisiterExprBreak1 extends VisitReturn<List<Expr>>{
+        @Override
+        public  List<Expr> visit(ExprCall x) {
+            return null;
+        }
+
+        @Override
+        public List<Expr> visit(ExprBinary x) throws Err {
+            List<Expr> list=new ArrayList<>();
+            if(x.op.equals(ExprBinary.Op.PLUS)){
+                List<Expr> left=visitThis(x.left);
+                List<Expr> right=visitThis(x.right);
+                if(left!=null && left.size()>0)
+                    list.addAll(left);
+                else list.add(x.left);
+
+                if(right!=null&& right.size()>0)
+                    list.addAll(right);
+                else
+                    list.add(x.right);
+            }
+
+            return list;
+        }
+
+        @Override
+        public List<Expr> visit(ExprList x) throws Err {
+            return null;
+        }
+
+        @Override
+        public List<Expr> visit(ExprConstant x) throws Err {
+            return null;
+        }
+
+        @Override
+        public List<Expr> visit(ExprITE x) throws Err {
+            return null;
+        }
+
+        @Override
+        public List<Expr> visit(ExprLet x) throws Err {
+            return null;
+        }
+
+        @Override
+        public List<Expr> visit(ExprQt x) throws Err {
+            return null;
+        }
+
+        @Override
+        public List<Expr> visit(ExprUnary x) throws Err {
+            return null;
+        }
+
+        @Override
+        public List<Expr> visit(ExprVar x) throws Err {
+            return null;
+        }
+
+        @Override
+        public List<Expr> visit(Sig x) throws Err {
+            return null;
+        }
+
+        @Override
+        public List<Expr> visit(Sig.Field x) throws Err {
+            return null;
+        }
+
     }
 
 
@@ -3861,5 +5354,91 @@ public final class SimpleGUI implements ComponentListener, Listener {
     }*/
 
 
+    //colorful merge
+    /**
+     * print color annotation, for example clor: -1,2,3, colfront :➊➁➂
+     * @param colfront record the front color annotation:➂➁➊
+     * @param colback record the back color annotation
+     */
+    public void printColorAnnotation(StringBuilder colfront, StringBuilder colback,Set<Integer> color) {
+        final String PFEAT1="\u2780";
+        final String PFEAT2="\u2781";
+        final String PFEAT3="\u2782" ;
+        final String PFEAT4="\u2783" ;
+        final String PFEAT5="\u2784" ;
+        final String PFEAT6="\u2785" ;
+        final String PFEAT7="\u2786" ;
+        final String PFEAT8="\u2787" ;
+        final String PFEAT9="\u2788" ;
+        final String NFEAT1="\u278A" ;
+        final String NFEAT2="\u278B" ;
+        final String NFEAT3="\u278C" ;
+        final String NFEAT4="\u278D" ;
+        final String NFEAT5="\u278E" ;
+        final String NFEAT6="\u278F" ;
+        final String NFEAT7="\u2790" ;
+        final String NFEAT8="\u2791" ;
+        final String NFEAT9="\u2792" ;
+        for(Integer i: color){
+            if(i==1) {
+                colfront.append(PFEAT1+" ");
+                colback.insert(0,PFEAT1);
+            }else if(i==2) {
+                colfront.append(PFEAT2+" ");
+                colback.insert(0,PFEAT2);
+            }else if(i==3) {
+                colfront.append(PFEAT3+" ");
+                colback.insert(0,PFEAT3);
+            }else if(i==4) {
+                colfront.append(PFEAT4+" ");
+                colback.insert(0,PFEAT4);
+            }else if(i==5) {
+                colfront.append(PFEAT5+" ");
+                colback.insert(0,PFEAT5);
+            }else if(i==6) {
+                colfront.append(PFEAT6+" ");
+                colback.insert(0,PFEAT6);
+            }else if(i==7) {
+                colfront.append(PFEAT7+" ");
+                colback.insert(0,PFEAT7);
+            }else if(i==8) {
+                colfront.append(PFEAT8+" ");
+                colback.insert(0,PFEAT8);
+            }else if(i==9) {
+                colfront.append(PFEAT9+" ");
+                colback.insert(0,PFEAT9);
+            }else if(i==-1) {
+                colfront.append(NFEAT1+" ");
+                colback.insert(0,NFEAT1);
+            }else if(i==-2) {
+                colfront.append(NFEAT2+" ");
+                colback.insert(0,NFEAT2);
+            }else if(i==-3) {
+                colfront.append(NFEAT3+" ");
+                colback.insert(0,NFEAT3);
+            }else if(i==-4) {
+                colfront.append(NFEAT4+" ");
+                colback.insert(0,NFEAT4);
+            }else if(i==-5) {
+                colfront.append(NFEAT5+" ");
+                colback.insert(0,NFEAT5);
+            }else if(i==-6) {
+                colfront.append(NFEAT6+" ");
+                colback.insert(0,NFEAT6);
+            }else if(i==-7) {
+                colfront.append(NFEAT7+" ");
+                colback.insert(0,NFEAT7);
+            }else if(i==-8) {
+                colfront.append(NFEAT8+" ");
+                colback.insert(0,NFEAT8);
+            }else if(i==-9) {
+                colfront.append(NFEAT9+" ");
+                colback.insert(0,NFEAT9);
+            }
 
+            if(colfront!=null)
+                colfront.deleteCharAt(colfront.length()-1);
+        }
+        return;
+    }
 }

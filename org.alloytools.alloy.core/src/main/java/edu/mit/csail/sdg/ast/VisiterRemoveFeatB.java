@@ -4,8 +4,8 @@ public class VisiterRemoveFeatB extends VisitReturn<Expr> {
     public void setFeatB(Integer featB) {
         this.featB = featB;
     }
-
-    Integer featB;
+    //0 means no feature to remove
+    Integer featB=0;
     @Override
     public  Expr visit(ExprCall x) {
         x.color.remove(featB);
