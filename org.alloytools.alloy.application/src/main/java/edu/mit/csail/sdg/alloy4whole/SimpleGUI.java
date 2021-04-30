@@ -4184,6 +4184,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
         if(commandP!=null)
             for(Map.Entry<String,ArrayList<Command>> commandList:commandP.entrySet()){
                     for (Command comfinal : commandList.getValue()) {
+                        if(comfinal.label.equals("Default"))continue;
                         if (pos.isEmpty())
                             pos.add(comfinal.pos);
                         else {
@@ -4256,6 +4257,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
             if(posOpen.size()>1 && print.length()>0)
             text.changeText(posOpen.get(posOpen.size() - 1), print.toString());
         }
+        sigp=null;
         return null;
     }
 

@@ -77,7 +77,6 @@ public class VisitRefactor extends VisitReturn<Expr> {
                         visitThis(er), ((ExprBinary) left).right, ((ExprBinary) left).right.color);
             }
         }else if(x.op.equals(ExprBinary.Op.PLUS)){
-
                 if(left.color.keySet().equals(right.color.keySet()) && left.toString().equals(right.toString())){
                     return  left;
                 } else {
@@ -216,6 +215,7 @@ public class VisitRefactor extends VisitReturn<Expr> {
                                             //mergr sub
                                             Expr sub=ExprBinary.Op.AND.make(e.pos,e.closingBracket,visitThis(((ExprQt) e).sub),visitThis(((ExprQt) e2).sub),cl);
                                             e=((ExprQt) e).op.make(x.pos, x.closingBracket, decls.makeConst(), sub, cl);
+                                            temp.add(e);
                                             changed=true;
                                         }
                                     }
@@ -239,6 +239,43 @@ public class VisitRefactor extends VisitReturn<Expr> {
                                         Expr eNew=ExprBinary.Op.INTERSECT.make(e.pos,e.closingBracket,visitThis(((ExprBinary) e).right),visitThis(((ExprBinary) e2).right),((ExprBinary) e).left.color);
                                         e=ExprBinary.Op.IN.make(e.pos,e.closingBracket,((ExprBinary) e).left,eNew,((ExprBinary) e).left.color);
                                     }
+                                }
+                            }
+                        }
+                    }else if(e instanceof ExprBinary && ((ExprBinary) e).op.equals(ExprBinary.Op.EQUALS)){
+                        for(Expr e2:temp2.makeConst()){
+                            if(visit.contains(e2)) continue;
+                            if(e2 instanceof ExprBinary && ((ExprBinary) e).op.equals(ExprBinary.Op.EQUALS)){
+                                featB=e.compareMergeLaw(e2);
+                                if(featB!=null){
+                                    temp.remove(temp.indexOf(e));
+                                    temp.remove(temp.indexOf(e2));
+                                    changed=true;
+                                    if(((ExprBinary) e).left.toString().equals(((ExprBinary) e2).left.toString())){
+                                        visit.add(e2);
+                                        VisiterRemoveFeatB visiterRemoveFeatB=new VisiterRemoveFeatB();
+                                        visiterRemoveFeatB.setFeatB(featB);
+                                        ((ExprBinary) e).left.accept(visiterRemoveFeatB);
+                                        Expr eNew=ExprBinary.Op.PLUS.make(e.pos,e.closingBracket,visitThis(((ExprBinary) e).right),visitThis(((ExprBinary) e2).right),((ExprBinary) e).left.color);
+                                        e=ExprBinary.Op.EQUALS.make(e.pos,e.closingBracket,((ExprBinary) e).left,eNew,((ExprBinary) e).left.color);
+                                    }
+                                }
+                            }
+                        }
+                    }else if(e instanceof ExprUnary ){
+                        for(Expr e2:temp2.makeConst()){
+                            if(visit.contains(e2)) continue;
+                            if(e2 instanceof ExprUnary && ((ExprUnary) e).op.equals(((ExprUnary) e2).op)){
+                                featB=e.compareMergeLaw(e2);
+                                if(featB!=null){
+                                    temp.remove(temp.indexOf(e));
+                                    temp.remove(temp.indexOf(e2));
+                                    changed=true;
+                                    e.color.remove(featB);
+                                    e.color.remove(-featB);
+                                    Expr eNew=ExprBinary.Op.PLUS.make(e.pos,e.closingBracket,visitThis(((ExprUnary) e).sub),visitThis(((ExprUnary) e2).sub),e.color);
+                                    e=((ExprUnary) e).op.make(e.pos,eNew,e.color);
+
                                 }
                             }
                         }

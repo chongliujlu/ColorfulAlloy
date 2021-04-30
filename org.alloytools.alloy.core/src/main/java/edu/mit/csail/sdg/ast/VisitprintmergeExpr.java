@@ -67,10 +67,18 @@ public class VisitprintmergeExpr extends VisitReturn<String>{
         print.append(coloF+visitThis(x.left));
         print.append(x.op==ExprBinary.Op.JOIN? x.op :" "+x.op+" ");
 
+        if(x.op.equals(ExprBinary.Op.EQUALS) && x.right instanceof ExprQt ){
+            print.append("{");
+        }
+
         parentFeats=x.color.keySet();
         print.append(x.op.equals(ExprBinary.Op.JOIN) && x.right instanceof ExprBinary &&
                 ((ExprBinary)x.right).op.equals(ExprBinary.Op.JOIN)? "("+visitThis(x.right)+")"+
                     colorB:visitThis(x.right)+colorB);
+
+        if(x.op.equals(ExprBinary.Op.EQUALS) && x.right instanceof ExprQt ){
+            print.append("}");
+        }
 
         if(x.op==ExprBinary.Op.PLUS||x.op==ExprBinary.Op.INTERSECT)
             print.append(")");
@@ -80,7 +88,6 @@ public class VisitprintmergeExpr extends VisitReturn<String>{
     @Override
     public String visit(ExprList x) throws Err {
         Set <Integer> xcolor=sub(x.color.keySet(),parentFeats);
-
 
         StringBuilder print=new StringBuilder();
         StringBuilder coloF=new StringBuilder();
@@ -97,13 +104,22 @@ public class VisitprintmergeExpr extends VisitReturn<String>{
             parentFeats=x.color.keySet();
             print.append(visitThis(e)+" ");
             print.append(x.op.name().equals(ExprBinary.Op.AND)?name:" "+name);
+            if(x.op.equals(ExprList.Op.AND)){
+                print.append("\r\n");
+            }
         }
 
         print.deleteCharAt(print.length()-1);
         print.deleteCharAt(print.length()-1);
         print.deleteCharAt(print.length()-1);
-        if(x.op.equals(ExprList.Op.AND))
+        if(x.op.equals(ExprList.Op.AND)){
+            //remove \r\n and empty
             print.deleteCharAt(print.length()-1);
+            print.deleteCharAt(print.length()-1);
+            print.deleteCharAt(print.length()-1);
+            print.deleteCharAt(print.length()-1);
+            print.deleteCharAt(print.length()-1);
+        }
         print.append(colorB);
         return print.toString();
     }
@@ -177,8 +193,13 @@ public class VisitprintmergeExpr extends VisitReturn<String>{
             x.printcolor(coloF,colorB,xcolor);
 
         print.append(coloF);
-
+        print.append("let ");
+        print.append(x.var);
+        print.append(" = ");
+        parentFeats=x.color.keySet();
         print.append(visitThis(x.expr));
+        print.append(" | ");
+        parentFeats=x.color.keySet();
         print.append(visitThis(x.sub));
 
         print.append(colorB);
@@ -210,17 +231,16 @@ public class VisitprintmergeExpr extends VisitReturn<String>{
             }
             print.deleteCharAt(print.length() - 1);
             print.append(": ");
-
-            //  for(Integer i:x.color.keySet()){
-            //     decl.expr.color.remove(i);
-            //  }
             parentFeats=x.color.keySet();
+            if(decl.expr instanceof ExprUnary && ((ExprUnary) decl.expr).op.equals(ONEOF)){
+                print.append(visitThis(((ExprUnary) decl.expr).sub)+",");
+            }else{
             print.append(visitThis(decl.expr)+",");
+            }
         }
 
         print.deleteCharAt(print.length()-1);
         print.append(" | ");
-        // x.sub.color.remove(x.color.keySet());
         parentFeats=x.color.keySet();
         print.append(visitThis(x.sub));
         print.append(colorB);
@@ -270,16 +290,7 @@ public class VisitprintmergeExpr extends VisitReturn<String>{
 
     @Override
     public String visit(ExprVar x) throws Err {
-        //  Set <Integer> xcolor=sub(x.color.keySet(),parentFeats);
-        //  parentFeats=x.color.keySet();
-
         StringBuilder print=new StringBuilder();
-        //   StringBuilder coloF=new StringBuilder();
-        //   StringBuilder colorB=new StringBuilder();
-        //  if(xcolor.size()>0)
-        //      printcolor(coloF,colorB,xcolor);
-
-        //  print.append(coloF);
         print.append(" "+x.label+ " ");
         return print.toString();
     }

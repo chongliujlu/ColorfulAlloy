@@ -1266,7 +1266,15 @@ public abstract class Sig extends Expr implements Clause {
                                 VisitRefactor refactor =new VisitRefactor();
                                 d.expr=exprNew.accept(refactor);
                                 clone.remove(d2);
-                            }
+                            }else if(d.expr.type().arity()==d2.expr.type().arity()){
+                                fieldVisited.add(d2);
+                                d.color.remove(b);
+                                d.color.remove(-b);
+                                Expr exprNew=ExprBinary.Op.PLUS.make(d.expr.pos,null,d.expr, d2.expr,d.color);
+                                VisitRefactor refactor =new VisitRefactor();
+                                d.expr=exprNew.accept(refactor);
+                                clone.remove(d2);
+                                }
                         }
                     }
                 }
