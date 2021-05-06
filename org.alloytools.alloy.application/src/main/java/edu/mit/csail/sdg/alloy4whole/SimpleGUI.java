@@ -3979,7 +3979,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
         StringBuilder print = new StringBuilder();
         List<Pos> pos = new ArrayList<>();
         VisitRefactor refactorExpr = new VisitRefactor();
-        VisitprintmergeExpr visitprintmergeExpr = new VisitprintmergeExpr();
 
         List<Pos> posOpen = new ArrayList<>();
         //merge opens
@@ -4074,8 +4073,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
                             }
                         }
                     }
-                    print.append("\r\nfact " + f.getKey() + " {\r\n        ");
-                    print.append(enew.accept(visitprintmergeExpr));
+                    print.append("\r\nfact " + f.getKey() + " {\r\n    ");
+                    enew.print(print,-1);
                     print.append("\r\n}");
                 }
 
@@ -4118,8 +4117,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
                             enew = enew.accept(refactorExpr);
                 }
 
-                print.append("\r\n\r\nassert " + ass.getKey() + " {\r\n        ");
-                print.append(enew.accept(visitprintmergeExpr));
+                print.append("\r\n\r\nassert " + ass.getKey() + " {\r\n    ");
+                enew.print(print,-1);
                 print.append("\r\n}");
             }
         }
@@ -4150,6 +4149,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
                     print.append(fun.getValue().get(0).isPred ? "pred " + fun.getKey() : "fun " + fun.getKey());
                     if(func.decls.size()>0){
                         print.append("[");
+                        Boolean first=true;
                         for(Decl decl : func.decls){
                             if (decl.disjoint != null)
                                 print.append(" disj "); //"disj" key word
@@ -4159,8 +4159,12 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
                             print.deleteCharAt(print.length() - 1);
                             print.append(": ");
-                            visitprintmergeExpr.setParentFeats(func.color.keySet());
-                            print.append(decl.expr.accept(visitprintmergeExpr) + ",");
+                            if(!first)
+                                print.append(",");
+
+                            decl.expr.parentColor=func.color.keySet();
+                            decl.expr.print(print,-1);
+                            first=false;
                         }
                         print.deleteCharAt(print.length() - 1);
                         print.append("]");
@@ -4169,14 +4173,14 @@ public final class SimpleGUI implements ComponentListener, Listener {
                     //add return type for Func
                     if (!func.isPred && !func.returnDecl.equals(ExprConstant.Op.FALSE)) {
                         print.append(":");
-                        print.append(func.returnDecl.accept(visitprintmergeExpr));
+                        func.returnDecl.parentColor=func.color.keySet();
+                        func.returnDecl.print(print,-1);
                     }
 
-                    print.append(" {\r\n        ");
-                    visitprintmergeExpr.setParentFeats(func.color.keySet());
-                    String temp = func.getBody().accept(visitprintmergeExpr);
-                    print.append(temp);
-                    print.append("\r\n}"+colorFuncB);
+                    print.append(" {\r\n    ");
+                    func.getBody().parentColor=func.color.keySet();
+                    func.getBody().print(print,-1);
+                    print.append("\r\n}").append(colorFuncB);
                 }
             }
         }

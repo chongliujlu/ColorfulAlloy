@@ -67,7 +67,14 @@ public final class ExprBadJoin extends Expr {
             right.toString(out, indent + 2);
         }
     }
-
+    public void print(StringBuilder out, int indent) {
+        if (indent < 0) {
+            left.print(out, -1);
+            out.append('.');
+            right.print(out, -1);
+        } else {
+        }
+    }
 
 
     /** Constructs an ExprBadJoin node. */

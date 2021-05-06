@@ -86,7 +86,18 @@ public final class ExprBadCall extends Expr {
             }
         }
     }
-
+    public void print(StringBuilder out, int indent) {
+        if (indent < 0) {
+            out.append(fun.label).append('[');
+            for (int i = 0; i < args.size(); i++) {
+                if (i > 0)
+                    out.append(", ");
+                args.get(i).print(out, -1);
+            }
+            out.append(']');
+        } else {
+        }
+    }
 
 
     /** Constructs an ExprBadCall object. */

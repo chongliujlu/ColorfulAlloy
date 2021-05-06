@@ -15,10 +15,7 @@
 
 package edu.mit.csail.sdg.ast;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.ErrorSyntax;
@@ -78,7 +75,28 @@ public final class ExprLet extends Expr {
             sub.toString(out, indent + 2);
         }
     }
+    public void print(StringBuilder out, int indent) {
+        Set<Integer> xcolor=new HashSet<>();
+        StringBuilder colorF=new StringBuilder();
+        StringBuilder colorB=new StringBuilder();
+        printcolor(colorF,colorB,xcolor);
+        out.append(colorF);
 
+            out.append("(").append(colorF).append("let ");
+            var.parentColor=color.keySet();
+            out.append(var.label).append("= ");
+
+            expr.parentColor=color.keySet();
+            out.append(expr.print()).append(" | ");
+
+            sub.parentColor=color.keySet();
+            if(sub instanceof ExprList)
+                sub.print(out, -2);
+            else
+                sub.print(out, -1);
+            out.append(colorB).append(')');
+
+    }
 
 
     // =============================================================================================================//

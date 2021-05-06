@@ -15,14 +15,10 @@
 
 package edu.mit.csail.sdg.ast;
 
+import static edu.mit.csail.sdg.ast.ExprUnary.Op.ONEOF;
 import static edu.mit.csail.sdg.ast.Type.EMPTY;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 import edu.mit.csail.sdg.alloy4.ConstList;
 import edu.mit.csail.sdg.alloy4.ConstList.TempList;
@@ -153,8 +149,57 @@ public final class ExprQt extends Expr {
             sub.toString(out, indent + 2);
         }
     }
+    public void print(StringBuilder out, int indent) {
+        Set<Integer> xcolor=new HashSet<>();
+        StringBuilder colorF=new StringBuilder();
+        StringBuilder colorB=new StringBuilder();
+        if(indent>0)
+        printcolor(colorF,colorB,xcolor);
 
+            boolean first = true;
+            if (op != Op.COMPREHENSION)
+                out.append('(').append(colorF).append(op).append(' ');
+            else{
+                out.append(colorF);
+                out.append('{');}
+            for (Decl d : decls){
+                if(d.disjoint!=null)
+                    out.append( " disj ");
+                boolean firstName=true;
+                for (ExprHasName v : d.names) {
+                    v.parentColor=color.keySet();
+                    if (!firstName)
+                        out.append(',');
+                    firstName = false;
+                    v.print(out,-1);
+                }
 
+                out.append(": ");
+                if (!first)
+                    out.append(',');
+                if(d.expr instanceof ExprUnary && ((ExprUnary) d.expr).op.equals(ONEOF)){
+                    ((ExprUnary) d.expr).sub.parentColor=((ExprUnary) d.expr).color.keySet();
+                    ((ExprUnary) d.expr).sub.print(out,-1);
+                }else{
+                    d.expr.parentColor=color.keySet();
+                   d.expr.print(out,-1);
+                }
+            }
+            if (op != Op.COMPREHENSION || !(sub instanceof ExprConstant) || ((ExprConstant) sub).op != ExprConstant.Op.TRUE) {
+                out.append(" | ");
+                if(sub instanceof ExprList){
+                    if(indent>0) sub.print(out, 2);
+                    else sub.print(out, -2);
+                }else
+                    sub.print(out, indent);
+            }
+
+            out.append(colorB);
+            if (op != Op.COMPREHENSION)
+                out.append(')');
+            else
+                out.append('}');
+    }
 
     // =============================================================================================================//
 

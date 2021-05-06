@@ -18,10 +18,7 @@ package edu.mit.csail.sdg.ast;
 import java.awt.BorderLayout;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -204,25 +201,19 @@ public abstract class Browsable {
             tree.listeners.add(listener);
         return x;
     }
-
-
-
-    /*
-     * private void changeTypepOfField(ConstList.TempList<Sig> finalSig) { for(int
-     * i=0;i<finalSig.size();i++){ for (Sig.Field f: finalSig.get(i).getFields()){
-     * Type t=f.type; ConstList.TempList<Type.ProductType> entries =new
-     * ConstList.TempList<>(); // ConstList<ProductType> for(Type.ProductType
-     * productTypes :t.getEntities()){ Sig.PrimSig newPrimsigs[]=new
-     * Sig.PrimSig[productTypes.getTypes().length]; // PrimSig[] types; for (int
-     * j=0; j< productTypes.getTypes().length;j++){
-     * if(sigOld2new.containsKey(productTypes.get(j))&&
-     * sigOld2new.get(productTypes.get(j))!=null){ newPrimsigs[j]=(Sig.PrimSig)
-     * sigOld2new.get(productTypes.get(j)); } else
-     * newPrimsigs[j]=productTypes.get(j); } Type.ProductType p=new
-     * Type.ProductType(newPrimsigs); entries.add(p); } Type newType=new
-     * Type(t.is_bool,entries.makeConst(),t.arity()); f.type=newType; } } } /* /**
-     * construct sigs in the new AST tree
+    /**
+     * return sub set (a-b)
+     * @param a
+     * @param b
+     * @return
      */
-
+    public HashSet<Integer> subColor(Set<Integer> a, Set<Integer> b) {
+        List<Integer> result = new ArrayList<>();
+        if(a!=null){
+            result = new ArrayList<>(a);
+            result.removeAll(b);
+        }
+        return new HashSet<>(result);
+    }
 
 }

@@ -17,10 +17,7 @@ package edu.mit.csail.sdg.ast;
 
 import static edu.mit.csail.sdg.ast.Sig.UNIV;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.ErrorWarning;
@@ -81,7 +78,25 @@ public final class ExprConstant extends Expr {
             out.append('\n');
         }
     }
+    public void print(StringBuilder out, int indent) {
+        Set<Integer> xcolor=new HashSet<>();
+        StringBuilder colorF=new StringBuilder();
+        StringBuilder colorB=new StringBuilder();
+        printcolor(colorF,colorB,xcolor);
+        out.append(colorF);
+        if (indent < 0) {
 
+            if (op == Op.NUMBER)
+                out.append(num);
+            else if (op == Op.STRING)
+                out.append(string);
+            else
+                out.append(op);
+        } else {
+
+        }
+        out.append(colorB);
+    }
 
 
     /**

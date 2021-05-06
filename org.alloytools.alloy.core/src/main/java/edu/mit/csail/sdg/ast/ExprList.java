@@ -103,6 +103,36 @@ public final class ExprList extends Expr {
         }
     }
 
+    /**
+     * @param out
+     * @param indent print model,indent<0: expressions without feature annotations(-2: with"and" String;-1);
+     *               indent=1: expr with annotations
+     *               indent=0: ama
+     */
+    public void print(StringBuilder out, int indent) {
+        String name=op.name();
+        if(name.equals("AND")) {
+            if(indent==-2 || indent==2)name=" and ";
+            else name="\r\n    ";
+
+        }
+        if(name.equals("OR")) name=" or ";
+
+        Set<Integer> xcolor=new HashSet<>();
+        StringBuilder coloF=new StringBuilder();
+        StringBuilder colorB=new StringBuilder();
+        printcolor(coloF,colorB,xcolor);
+        out.append(coloF);
+
+        for (int i = 0; i < args.size(); i++) {
+           args.get(i).parentColor=color.keySet();
+
+            if (i > 0 && i<args.size())
+                    out.append(name);
+            args.get(i).print(out, -1);
+        }
+        out.append(colorB);
+    }
 
 
     // ============================================================================================================//

@@ -75,44 +75,8 @@ public abstract class Sig extends Expr implements Clause {
     public final String toString() {
         return label;
     }
-
-    public String toExtendedString() {
-        StringBuilder sb = new StringBuilder();
-        if (this.builtin) {
-            sb.append("builtin ");
-        }
-        if (isPrivate != null)
-            sb.append("private ");
-        if (isAbstract != null)
-            sb.append("abstract ");
-
-        if (isLone != null)
-            sb.append("lone ");
-
-        if (isOne != null)
-            sb.append("one ");
-
-        if (isOne != null)
-            sb.append("some ");
-
-        if (isSubset != null)
-            sb.append("subset ");
-
-        if (isMeta != null)
-            sb.append("meta ");
-
-        if (isEnum != null)
-            sb.append("enum ");
-
-        sb.append(label).append("{");
-        String del = "";
-        for (Field f : realFields) {
-            sb.append(del);
-            sb.append(f.label);
-            del = ", ";
-        }
-        sb.append("}");
-        return sb.toString();
+    public final String print() {
+        return label;
     }
 
     /** {@inheritDoc} */
@@ -127,7 +91,12 @@ public abstract class Sig extends Expr implements Clause {
             out.append("sig ").append(label).append(" with type=").append(type).append('\n');
         }
     }
-
+    public final void print(StringBuilder out, int indent) {
+        if (indent < 0) {
+            out.append(label.contains("/")?label.substring(label.indexOf("/")+1):label);
+        } else {
+        }
+    }
 
 
     /** {@inheritDoc} */
@@ -782,7 +751,17 @@ public abstract class Sig extends Expr implements Clause {
                 out.append("field ").append(sig.label).append(" <: ").append(label).append(" with type=").append(type).append('\n');
             }
         }
-
+        public void print(StringBuilder out, int indent) {
+            if (indent < 0) {
+                //out.append("(").append(sig.label).append(" <: ").append(label).append(")");
+                out.append(label);
+            } else {
+                for (int i = 0; i < indent; i++) {
+                    out.append(' ');
+                }
+                out.append("field ").append(sig.label).append(" <: ").append(label).append(" with type=").append(type).append('\n');
+            }
+        }
 
 
         /** {@inheritDoc} */

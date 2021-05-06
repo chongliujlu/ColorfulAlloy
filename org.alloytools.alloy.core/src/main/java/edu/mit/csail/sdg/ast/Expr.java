@@ -39,7 +39,11 @@ import edu.mit.csail.sdg.ast.Sig.PrimSig;
  */
 
 public abstract class Expr extends Browsable {
-
+    //colorful merge
+    /**
+     * Help to print the Expr. To remove redudant feature annotations.
+     */
+    public Set<Integer> parentColor=new HashSet<>();
     /**
      * The filename, line, and column position in the original Alloy model file
      * (cannot be null).
@@ -158,7 +162,13 @@ public abstract class Expr extends Browsable {
      * without line break)
      */
     public abstract void toString(StringBuilder out, int indent);
-
+    //colorful merge
+    public abstract void print(StringBuilder out, int indent);
+    public String print(){
+        StringBuilder sb = new StringBuilder();
+        print(sb, -1);
+        return sb.toString();
+    }
     /**
      * Print a brief text description of it and all subnodes.
      */
@@ -1250,7 +1260,8 @@ public abstract class Expr extends Browsable {
      * @param colfront record the front color annotation:➂➁➊
      * @param colback record the back color annotation
      */
-    public void printcolor(StringBuilder colfront, StringBuilder colback,Set<Integer> color) {
+    public void printcolor(StringBuilder colfront, StringBuilder colback,Set<Integer> xcolor) {
+        xcolor=subColor(color.keySet(),parentColor);
         final String PFEAT1="\u2780";
         final String PFEAT2="\u2781";
         final String PFEAT3="\u2782" ;
@@ -1269,7 +1280,7 @@ public abstract class Expr extends Browsable {
         final String NFEAT7="\u2790" ;
         final String NFEAT8="\u2791" ;
         final String NFEAT9="\u2792" ;
-        for(Integer i: color){
+        for(Integer i: xcolor){
             if(i==1) {
                 colfront.append(PFEAT1+" ");
                 colback.insert(0,PFEAT1);

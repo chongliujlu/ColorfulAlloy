@@ -83,7 +83,21 @@ public final class ExprChoice extends Expr {
             out.append("" + choices.size() + " choices with combined type=").append(type).append('\n');
         }
     }
-
+    public void print(StringBuilder out, int indent) {
+        if (indent < 0) {
+            out.append("<");
+            for (Expr e : choices) {
+                e.print(out, -1);
+                out.append(";");
+            }
+            out.append(">");
+        } else {
+            for (int i = 0; i < indent; i++) {
+                out.append(' ');
+            }
+            out.append("" + choices.size() + " choices with combined type=").append(type).append('\n');
+        }
+    }
 
 
     // ============================================================================================================//

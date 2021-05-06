@@ -117,7 +117,16 @@ final class Macro extends ExprCustom {
             out.append("macro\"").append(name).append("\"\n");
         }
     }
-
+    public void print(StringBuilder out, int indent) {
+        if (indent < 0) {
+            out.append(" macro\"").append(name).append("\" ");
+        } else {
+            for (int i = 0; i < indent; i++) {
+                out.append(' ');
+            }
+            out.append("macro\"").append(name).append("\"\n");
+        }
+    }
 
 
     /** {@inheritDoc} */

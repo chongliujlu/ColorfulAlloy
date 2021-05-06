@@ -17,10 +17,7 @@ package edu.mit.csail.sdg.ast;
 
 import static edu.mit.csail.sdg.ast.Type.EMPTY;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import edu.mit.csail.sdg.alloy4.ConstList;
 import edu.mit.csail.sdg.alloy4.ConstList.TempList;
@@ -102,7 +99,34 @@ public final class ExprCall extends Expr {
             }
         }
     }
+    public void print(StringBuilder out, int indent) {
+        if (indent < 0) {
+            Set<Integer> xcolor=new HashSet<>();
+            StringBuilder colorF=new StringBuilder();
+            StringBuilder colorB=new StringBuilder();
+            printcolor(colorF,colorB,xcolor);
+            out.append(colorF);
 
+            //colorful merge
+            if(fun.label.contains("/"))
+                out.append(fun.label.substring(fun.label.indexOf("/")+1));
+            else
+                out.append(fun.label);
+            if (args.size() == 0)
+                return;
+            out.append('[');
+            for (int i = 0; i < args.size(); i++) {
+                args.get(i).parentColor=color.keySet();
+                if (i > 0)
+                    out.append(", ");
+                args.get(i).print(out, -1);
+            }
+            out.append(']');
+            out.append(colorB);
+        } else {
+
+        }
+    }
 
 
     // ============================================================================================================//

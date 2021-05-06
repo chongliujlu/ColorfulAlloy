@@ -17,11 +17,7 @@ package edu.mit.csail.sdg.ast;
 
 import static edu.mit.csail.sdg.ast.Type.EMPTY;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.ErrorSyntax;
@@ -160,7 +156,25 @@ public final class ExprBinary extends Expr {
             right.toString(out, indent + 2);
         }
     }
+    public void print(StringBuilder out, int indent) {
+            Set<Integer> xcolor=new HashSet<>();
+            StringBuilder colorF=new StringBuilder();
+            StringBuilder colorB=new StringBuilder();
+            printcolor(colorF,colorB,xcolor);
+            out.append(colorF);
 
+            if (op == Op.ISSEQ_ARROW_LONE)
+                out.append("seq ");
+            else {
+                left.parentColor=color.keySet();
+                left.print(out, -1);
+                out.append(' ').append(op).append(' ');
+            }
+            right.parentColor=color.keySet();
+            right.print(out, -1);
+
+        out.append(colorB);
+    }
 
 
     // ============================================================================================================//

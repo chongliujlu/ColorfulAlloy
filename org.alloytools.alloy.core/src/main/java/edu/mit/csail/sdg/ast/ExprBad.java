@@ -56,6 +56,16 @@ public final class ExprBad extends Expr {
             out.append("ExprBad: ").append(originalText).append('\n');
         }
     }
+    public void print(StringBuilder out, int indent) {
+        if (indent < 0) {
+            out.append(originalText);
+        } else {
+            for (int i = 0; i < indent; i++) {
+                out.append(' ');
+            }
+            out.append("ExprBad: ").append(originalText).append('\n');
+        }
+    }
 
     /** Constructs an ExprBad object. */
     public ExprBad(Pos pos, String originalText, Err error) {

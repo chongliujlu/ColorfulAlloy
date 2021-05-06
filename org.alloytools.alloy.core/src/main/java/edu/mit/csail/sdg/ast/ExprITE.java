@@ -17,10 +17,7 @@ package edu.mit.csail.sdg.ast;
 
 import static edu.mit.csail.sdg.ast.Type.EMPTY;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.ErrorSyntax;
@@ -81,7 +78,27 @@ public final class ExprITE extends Expr {
             right.toString(out, indent + 2);
         }
     }
+    public void print(StringBuilder out, int indent) {
+        Set<Integer> xcolor=new HashSet<>();
+        StringBuilder colorF=new StringBuilder();
+        StringBuilder colorB=new StringBuilder();
+        printcolor(colorF,colorB,xcolor);
+        if (indent < 0) {
+            out.append('(').append(colorF);
+            cond.parentColor=color.keySet();
+            cond.print(out, -1);
+            out.append(" => ");
 
+            left.parentColor=color.keySet();
+            left.print(out, -1);
+            out.append(" else ");
+
+            right.parentColor=color.keySet();
+            right.print(out, -1);
+            out.append(colorB).append(')');
+        } else {
+        }
+    }
 
 
     /** Constructs a ExprITE expression. */

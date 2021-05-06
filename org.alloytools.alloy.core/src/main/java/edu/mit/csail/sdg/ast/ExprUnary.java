@@ -19,11 +19,7 @@ import static edu.mit.csail.sdg.ast.Sig.SIGINT;
 import static edu.mit.csail.sdg.ast.Sig.UNIV;
 import static edu.mit.csail.sdg.ast.Type.EMPTY;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import edu.mit.csail.sdg.alloy4.DirectedGraph;
 import edu.mit.csail.sdg.alloy4.Err;
@@ -115,6 +111,59 @@ public final class ExprUnary extends Expr {
             sub.toString(out, indent + 2);
         }
     }
+    public void print(StringBuilder out, int indent){
+        Set<Integer> xcolor=new HashSet<>();
+        StringBuilder colorF=new StringBuilder();
+        StringBuilder colorB=new StringBuilder();
+        printcolor(colorF,colorB,xcolor);
+       out.append(colorF);
+
+            switch (op) {
+                case SOMEOF :
+                    out.append("some ");
+                    break;
+               case LONEOF :
+                    out.append("lone ");
+                    break;
+                    case ONEOF :
+                    out.append("one ");
+                    break;
+                case SETOF :
+                    out.append("set ");
+                    break;
+                case EXACTLYOF :
+                    out.append("exactly ");
+                    break;
+                case RCLOSURE :
+                case CLOSURE  :
+                    out.append(op).append("(");
+                    break;
+                case CAST2INT :
+                    out.append("int[");
+                    sub.print(out, -1);
+                    out.append(']');
+                    return;
+                case CAST2SIGINT :
+                    out.append("Int[");
+                    sub.print(out, -1);
+                    out.append(']');
+                    return;
+                case NOOP :
+                    break;
+                default :
+                    out.append(op).append(' ');
+            }
+            sub.parentColor=color.keySet();
+            sub.print(out, -1);
+            switch(op){
+                case RCLOSURE:
+                case CLOSURE :
+                    out.append(")");
+            }
+            out.append(colorB);
+
+    }
+
     // ============================================================================================================//
 
     /** Constructs an unary expression. */

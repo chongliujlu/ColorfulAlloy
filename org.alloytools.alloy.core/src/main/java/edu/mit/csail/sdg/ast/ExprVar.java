@@ -15,11 +15,7 @@
 
 package edu.mit.csail.sdg.ast;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.ErrorWarning;
@@ -46,7 +42,19 @@ public final class ExprVar extends ExprHasName implements Clause {
             out.append("Var ").append(label).append(" at position <").append(pos).append("> with type=").append(type).append('\n');
         }
     }
+    public void print(StringBuilder out, int indent) {
+        if (indent < 0) {
+            Set<Integer> xcolor=new HashSet<>();
+            StringBuilder colorF=new StringBuilder();
+            StringBuilder colorB=new StringBuilder();
+            printcolor(colorF,colorB,xcolor);
+            out.append(colorF);
+            out.append(label);
+            out.append(colorB);
+        } else {
 
+        }
+    }
 
 
     /** Constructs an ExprVar object */
