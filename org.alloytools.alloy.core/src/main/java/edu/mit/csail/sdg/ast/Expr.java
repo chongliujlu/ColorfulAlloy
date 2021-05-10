@@ -1346,4 +1346,23 @@ public abstract class Expr extends Browsable {
         printcolor(colfront, colback, color.keySet());
     }
 
+    /**
+     *help methord, print the prefix for the expressions that marked with features
+     *
+     * @param Features the features marked,
+     * @param out to add the prifix
+     * @param inOrNot string "in " or "not in "
+     * @param operator "and" or "or"
+     *for examples, marked with ➊,➁
+     */
+    public void addFeatureprefix(Set<Integer> Features,StringBuilder out, String inOrNot,String operator) {
+        int op=0;
+        for (Integer i: Features){
+            if (op!=0)
+                out.append( " " + operator + " ");
+            out.append(" _F"+i + " "+inOrNot+" _Product_ ");
+            op++;
+        }
+    }
+
 }

@@ -113,19 +113,20 @@ public final class ExprUnary extends Expr {
     }
     public void print(StringBuilder out, int indent){
         Set<Integer> xcolor=new HashSet<>();
-        StringBuilder colorF=new StringBuilder();
-        StringBuilder colorB=new StringBuilder();
-        printcolor(colorF,colorB,xcolor);
-       out.append(colorF);
+        if(indent==-1){
+            StringBuilder colorF=new StringBuilder();
+            StringBuilder colorB=new StringBuilder();
+            printcolor(colorF,colorB,xcolor);
+            out.append(colorF);
 
             switch (op) {
                 case SOMEOF :
                     out.append("some ");
                     break;
-               case LONEOF :
+                case LONEOF :
                     out.append("lone ");
                     break;
-                    case ONEOF :
+                case ONEOF :
                     out.append("one ");
                     break;
                 case SETOF :
@@ -161,6 +162,82 @@ public final class ExprUnary extends Expr {
                     out.append(")");
             }
             out.append(colorB);
+        }else if(indent==1){
+            xcolor=subColor(color.keySet(),parentColor);
+            sub.parentColor=color.keySet();
+            if(xcolor.size()>0){
+                Set<Integer> NFeatures = new HashSet<>();
+                Set<Integer> PFeatures = new HashSet<>();
+                for (Integer i : xcolor) {
+                    if (i < 0)
+                        NFeatures.add(-i);
+                    else PFeatures.add(i);
+                }
+                out.append("(");
+                if (!NFeatures.isEmpty()) {
+                    if (xcolor.size() > 1)
+                        out.append("(");
+                    addFeatureprefix(NFeatures, out, "not in", "and");
+                    if (PFeatures.isEmpty()) {
+                        if (xcolor.size() > 1)
+                            out.append(")");
+                        out.append(" implies ");
+                    }
+
+                }
+                if (!PFeatures.isEmpty()) {
+                    if (xcolor.size() > 1 && NFeatures.isEmpty())
+                        out.append("(");
+                    addFeatureprefix(PFeatures, out, "in", "and");
+
+                    if (xcolor.size() > 1)
+                        out.append(")");
+                    out.append(" implies ");
+                }
+            }
+
+            switch (op) {
+                case SOMEOF :
+                    out.append("some ");
+                    break;
+                case LONEOF :
+                    out.append("lone ");
+                    break;
+                case ONEOF :
+                    out.append("one ");
+                    break;
+                case SETOF :
+                    out.append("set ");
+                    break;
+                case EXACTLYOF :
+                    out.append("exactly ");
+                    break;
+                case RCLOSURE :
+                case CLOSURE  :
+                    out.append(op).append("(");
+                    break;
+                case CAST2INT :
+                    out.append("int[");
+                    sub.print(out, -1);
+                    out.append(']');
+                    return;
+                case CAST2SIGINT :
+                    out.append("Int[");
+                    sub.print(out, -1);
+                    out.append(']');
+                    return;
+                case NOOP :
+                    break;
+                default :
+                    out.append(op).append(' ');
+            }
+            sub.print(out, 1);
+            if(xcolor.size()>0){
+                out.append(")");
+            }
+
+        }
+
 
     }
 

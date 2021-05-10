@@ -879,10 +879,6 @@ final class SimpleReporter extends A4Reporter {
                 if(sig_map.getValue().size()>1){
                     int i=0;
                     for(Map.Entry<Map<Integer, Pos>, Sig> sig_old:sig_map.getValue().entrySet()){
-                        //if(!sig_old.getValue().label.contains("_")){
-                         //   sig_old.getValue().label=sig_old.getValue().label+"_"+i+"_";
-                        //    i++;
-                       // }
                         sig_old.getValue().label=sig_old.getValue().label+"_"+i+"_";
                         i++;
 
@@ -1130,7 +1126,6 @@ final class SimpleReporter extends A4Reporter {
            Map<String,ArrayList<Func>> map= world.getFunc();
             printAmalgamatedExpr.setParentFeats(new HashSet<>());
            for (Map.Entry<String,ArrayList<Func>> enty:map.entrySet()){
-
                if(enty.getKey().startsWith("run$"))
                    continue;
                if(!(enty.getKey().contains("$$Default"))){

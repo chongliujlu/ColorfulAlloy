@@ -3344,17 +3344,17 @@ public final class CompModule extends Browsable implements Module {
      * used when resolve Sig/Field in expressions, check if there is a Sig/Field that has less than or equal number of color marked.
      *for example, (required,offered)-->(12,12): equal
      *                                  (123,12),(12-3,12),(1-23,1-2),(1-2-3,1-2),(-1-2,-1) :subset
-     *                                  (12,1-3),(12-3-4,1-3-4): PFeat1>=PFeat2 && NFeat1<=NFeat2
+     *                                  (12,1-3),(12-3-4,1-3-4): PFeat1>=PFeat2 && NFeat1<=NFeat2 (remove this when merge)
      * @param required the colors marked in the expression
      * @param offered colors marked in current the Sig/Field that visited.
      * @return
      */
     private boolean checkColor(Set<Integer> required, Set<Integer> offered) {
-        boolean match=false;
+        //boolean match=false;
         if(required.containsAll(offered))
             return true;
 
-        Set<Integer> PFeat1=new HashSet();
+      /*  Set<Integer> PFeat1=new HashSet();
         Set<Integer> NFeat1=new HashSet();
         Set<Integer> PFeat2=new HashSet();
         Set<Integer> NFeat2=new HashSet();
@@ -3379,8 +3379,9 @@ public final class CompModule extends Browsable implements Module {
         }
             if(PFeat1.containsAll(PFeat2) && (NFeat2.containsAll(NFeat1)))
                 match=true;
-
-        return match;
+*/
+        //return match;
+        return false;
     }
 
     //colorful Merge
@@ -3917,6 +3918,73 @@ public final class CompModule extends Browsable implements Module {
         }
     }
 
+    void printFun(StringBuilder out, int indent){
+        //Amalgamated
+        if(indent==1)
+        for (Map.Entry<String,ArrayList<Func>> enty:funcs.entrySet()){
+            if(enty.getKey().startsWith("run$"))
+                continue;
+            if(!(enty.getKey().contains("$$Default"))){
+                out.append("\r\n");
+                if(enty.getValue().size()>0){
+                    if (enty.getValue().get(0).isPred )
+                        out.append("pred " +enty.getKey()+" ");
+                    else
+                        out.append("fun "+enty.getKey()+" ");
+
+                    if(enty.getValue().get(0).decls.size()>0) {
+                        out.append("[");
+                        for (Decl decl :enty.getValue().get(0).decls){
+                            if(decl.disjoint!=null)
+                                out.append( " disj "); //"disj" key word
+
+                            for (int i=0 ; i< decl.names.size();i++ ){
+                                if (i!=0)
+                                    out.append(",");
+                                Expr expr= decl.names.get(i);
+                                    expr.print(out,1);
+                            }
+
+                            out.append(": ");
+                            HashSet par=new HashSet();
+                            for(Func ent:enty.getValue()){
+                                par.addAll(ent.color.keySet());
+                            }
+                            par.add(decl.color.keySet());
+
+
+                            decl.expr.parentColor=par;
+                            decl.expr.print(out,1);
+
+                        }
+                        out.append("]");
+                    }
+
+                    if(!enty.getValue().get(0).isPred && !enty.getValue().get(0).returnDecl.equals(ExprConstant.Op.FALSE)) {
+                        out.append(":");
+                        HashSet par=new HashSet();
+                        for(Func ent:enty.getValue()){
+                            par.addAll(ent.color.keySet());
+                        }
+
+                        enty.getValue().get(0).returnDecl.parentColor=par;
+                        enty.getValue().get(0).returnDecl.print(out, 1);
+
+                    }
+                    out.append("{");
+                    for(Func func: enty.getValue()){
+                        //filter cases such as pred show{}: pred show{true }
+                        if(!(func.getBody() instanceof ExprConstant)) {
+                            out.append("\r\n        ");
+                            func.getBody().print(out, 1);
+                        }
+                    }
+
+                    out.append("\r\n        }\r\n");
+                }
+            }
+        }
+    }
 
 }
 

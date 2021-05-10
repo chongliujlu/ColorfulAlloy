@@ -157,7 +157,8 @@ public final class ExprBinary extends Expr {
         }
     }
     public void print(StringBuilder out, int indent) {
-            Set<Integer> xcolor=new HashSet<>();
+        Set<Integer> xcolor=new HashSet<>();
+        if(indent==-1){
             StringBuilder colorF=new StringBuilder();
             StringBuilder colorB=new StringBuilder();
             printcolor(colorF,colorB,xcolor);
@@ -173,7 +174,16 @@ public final class ExprBinary extends Expr {
             right.parentColor=color.keySet();
             right.print(out, -1);
 
-        out.append(colorB);
+            out.append(colorB);
+        }else if(indent==1){
+            //only for + ,&  operator
+            xcolor=subColor(color.keySet(),parentColor);
+            //sub.parentColor=color.keySet();
+
+        }
+
+
+
     }
 
 
